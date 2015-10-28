@@ -45,7 +45,7 @@ sudo python3.5 get-pip.py
 rm get-pip.py
 sudo apt-get -y install build-essential
 sudo python3.5 -m easy_install pyzmq hiredis
-sudo python3.5 -m pip -r minqlx/plugins/requirements.txt
+sudo python3.5 -m pip install -r minqlx/plugins/requirements.txt
 ```
 
 - You now need to configure both the config in `qlds/minqlx/config.cfg` and Redis.
