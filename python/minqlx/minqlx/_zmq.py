@@ -67,7 +67,6 @@ class StatsListener():
                 elif stats["TYPE"] == "ROUND_OVER":
                     minqlx.EVENT_DISPATCHERS["round_end"].dispatch(stats["DATA"])
                 elif stats["TYPE"] == "MATCH_REPORT":
-                    global _in_progress
                     # MATCH_REPORT event goes off with a map change and map_restart,
                     # but we really only want it for when the game actually ends.
                     # We use a variable instead of Game().state because by the
