@@ -54,6 +54,9 @@ make sure you add your SteamID64 (there are converters out there, just google it
 to the `Owner` field in the config, otherwise you won't be able to execute any
 admin commands, since it won't know you are the owner of it.
 
+- You're almost there. Now simply edit the scripts you use to launch the server, but
+make it point to `run_server_x64_minqlx.sh` instead of `run_server_x64.sh`.
+
 Compiling
 =========
 It's just a makefile for now. No autoconf or anything, so you might need to edit the file in some cases.
