@@ -63,7 +63,7 @@ It's just a makefile for now. No autoconf or anything, so you might need to edit
 It assumes you have GCC and that `python3.5-config` is Python 3.5's python-config. On Debian, install
 `python3.5-dev` and it should compile right off the bat assuming you have all the build tools.
 
-To compile, just do a `make` and you should get a `minqlx.so`. If you do not want to use this without
+To compile, just do a `make` and you should get a `minqlx.so`. If you do not want to use this with
 Python, you can compile it with `make nopy` and you should get a `minqlx_nopy.so`.
 
 Contribute
