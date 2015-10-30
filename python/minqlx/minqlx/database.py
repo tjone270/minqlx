@@ -204,7 +204,7 @@ class Redis(AbstractDatabase):
                     if "Password" in conf["Redis"] and conf["Redis"]["Password"]:
                         Redis._pass = conf["Redis"]["Password"]
                     Redis._pool = redis.ConnectionPool(host=split_host[0],
-                        port=port, db=db, password=Redis._pass)
+                        port=port, db=db, password=Redis._pass, decode_responses=True)
                     Redis._conn = redis.StrictRedis(connection_pool=Redis._pool, decode_responses=True)
                     # TODO: Why does self._conn get set when doing Redis._conn?
                     self._conn = None
