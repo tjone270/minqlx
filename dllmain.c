@@ -98,7 +98,7 @@ static void SearchFunctions(void) {
 	strcpy(module.name, qzeroded);
 	int res = GetModuleInfo(&module);
 	if (res <= 0) {
-		DebugError("GetModuleInfo() returned %d.", __FILE__, __LINE__, __func__, res);
+		DebugError("GetModuleInfo() returned %d.\n", __FILE__, __LINE__, __func__, res);
 		failed = 1;
 	}
 
