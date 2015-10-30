@@ -85,7 +85,10 @@ class Player():
                     .format(client_id))
 
         self._steam_id = self._cvars["steam_id"]
-        self._name = self._cvars["name"]
+        try:
+            self._name = self._cvars["name"]
+        except KeyError:
+            self._name = self._cvars["n"]
 
     def __repr__(self):
         if not self._valid:
