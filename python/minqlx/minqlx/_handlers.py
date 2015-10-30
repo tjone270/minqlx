@@ -24,10 +24,11 @@ import re
 #                        REGULAR EXPRESSIONS
 # ====================================================================
 
-_re_say = re.compile(r"^say \"?(?P<msg>.+)\"?$")
-_re_say_team = re.compile(r"^say_team \"?(?P<msg>.+)\"?$")
-_re_callvote = re.compile(r"^(?:cv|callvote) (?P<cmd>[^ ]+)(?: \"?(?P<args>.+?)\"?)?$")
-_re_vote = re.compile(r"^vote *(?P<arg>.)")
+_re_say = re.compile(r"^say +\"?(?P<msg>.+)\"?$", flags=re.IGNORECASE)
+_re_say_team = re.compile(r"^say_team +\"?(?P<msg>.+)\"?$", flags=re.IGNORECASE)
+_re_callvote = re.compile(r"^(?:cv|callvote) +(?P<cmd>[^ ]+)(?: \"?(?P<args>.+?)\"?)?$", flags=re.IGNORECASE)
+_re_vote = re.compile(r"^vote +(?P<arg>.)", flags=re.IGNORECASE)
+_re_team = re.compile(r"^team +(?P<arg>.)", flags=re.IGNORECASE)
 _re_vote_ended = re.compile(r"^print \"Vote (?P<result>passed|failed).\n\"$")
 
 # ====================================================================
@@ -81,11 +82,25 @@ def handle_client_command(client_id, cmd):
 
         res = _re_vote.match(cmd)
         if res and minqlx.Plugin.is_vote_active():
-            arg = res.group("arg")
-            if arg.lower() == "y" or arg == "1":
+            arg = res.group("arg").lower()
+            if arg == "y" or arg == "1":
                 return minqlx.EVENT_DISPATCHERS["vote"].dispatch(True)
-            elif arg.lower() == "n" or arg == "1":
+            elif arg == "n" or arg == "1":
                 return minqlx.EVENT_DISPATCHERS["vote"].dispatch(False)
+
+        res = _re_team.match(cmd)
+        if res:
+            arg = res.group("arg").lower()
+            if arg == "f":
+                return minqlx.EVENT_DISPATCHERS["team_switch"].dispatch(player, player.team, "free")
+            elif arg == "r":
+                return minqlx.EVENT_DISPATCHERS["team_switch"].dispatch(player, player.team, "red")
+            elif arg == "b":
+                return minqlx.EVENT_DISPATCHERS["team_switch"].dispatch(player, player.team, "blue")
+            elif arg == "s":
+                return minqlx.EVENT_DISPATCHERS["team_switch"].dispatch(player, player.team, "spectator")
+            elif arg == "a":
+                return minqlx.EVENT_DISPATCHERS["team_switch"].dispatch(player, player.team, "any")
     except:
         minqlx.log_exception()
         return True
