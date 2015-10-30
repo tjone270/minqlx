@@ -145,8 +145,8 @@ _zmq_warning_issued = False
 def handle_new_game():
     # This is called early in the launch process, so it's a good place to warn
     # the owner if ZMQ stats are disabled.
+    global _zmq_warning_issued
     if not bool(int(minqlx.get_cvar("zmq_stats_enable"))) and not _zmq_warning_issued:
-        global _zmq_warning_issued
         logger = minqlx.get_logger()
         logger.warning("Some events will not work because ZMQ stats is not enabled. "
             "Launch the server with \"zmq_stats_enable 1\"")
