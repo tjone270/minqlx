@@ -338,7 +338,7 @@ class VoteCalledDispatcher(EventDispatcher):
     name = "vote_called"
 
     def dispatch(self, player, vote, args):
-        super().dispatch(player, vote, args)
+        return super().dispatch(player, vote, args)
 
 class VoteEndedDispatcher(EventDispatcher):
     name = "vote_ended"
