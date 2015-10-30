@@ -4,7 +4,7 @@
 
 #include "maps_parser.h"
 
-const char fmt[] = ("%" SCNxPTR "-%" SCNxPTR " %s %x %x:%x %u %s");
+const char fmt[] = ("%" SCNxPTR "-%" SCNxPTR " %s %x %x:%x %u %[^\n]");
 
 /*
  * Pass it a module_info_t pointer with its name initialized, get it full of info back.
@@ -16,13 +16,15 @@ int GetModuleInfo(module_info_t* module_info) {
 	int ret = 0;
 	pint start, end;
 	int file_offset, dev_major, dev_minor, inode;
-	char flags[32], path[4096];
+	char flags[32], path[4096], linebuf[8192];
 
 	// Check if the name's initialized before we do anything.
 	if (!strlen(module_info->name)) return -1;
 
 	FILE* fp = fopen("/proc/self/maps", "r");
-	while (fscanf(fp, fmt, &start, &end, flags, &file_offset, &dev_major, &dev_minor, &inode, path)) {
+	while (fgets(linebuf, sizeof(linebuf), fp) != 0) {
+		sscanf(linebuf, fmt, &start, &end, flags, &file_offset, &dev_major, &dev_minor, &inode, path);
+
 		// Some pages have no module name. Ignore those.
 		size_t pathlen = strlen(path);
 		if (!pathlen) continue;
