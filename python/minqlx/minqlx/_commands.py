@@ -61,7 +61,7 @@ class Command:
 
     def is_eligible_name(self, name):
         if self.prefix:
-            if name[0] != minqlx.command_prefix():
+            if name[0] != minqlx.get_cvar("qlx_commandPrefix"):
                 return False
             name = name[1:]
         
@@ -83,16 +83,17 @@ class Command:
     def is_eligible_player(self, player, is_client_cmd):
         """Check if a player has the rights to execute the command."""
         # Check if config overrides permission.
-        conf = minqlx.get_config()
         perm = self.permission
         client_cmd_perm = self.client_cmd_perm
         perm_key = "perm_" + self.name[0]
         client_cmd_perm_key = "client_cmd_perm_" + self.name[0]
-        if self.plugin.name in conf:
-            if perm_key in conf[self.plugin.name]:
-                perm = int(conf[self.plugin.name][perm_key])
-            if is_client_cmd and client_cmd_perm_key in conf[self.plugin.name]:
-                client_cmd_perm = int(conf[self.plugin.name][client_cmd_perm_key])
+        cvar = minqlx.get_cvar(perm_key)
+        cvar_client_cmd = minqlx.get_cvar(client_cmd_perm_key)
+
+        if cvar != None:
+            perm = int(cvar)
+        if is_client_cmd and cvar_client_cmd != None:
+            client_cmd_perm = int(cvar_client_cmd)
 
         if (player.steam_id == minqlx.owner() or
             (not is_client_cmd and perm == 0) or

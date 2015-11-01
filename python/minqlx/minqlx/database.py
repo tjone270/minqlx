@@ -184,27 +184,21 @@ class Redis(AbstractDatabase):
         """
         if not host and not self._conn: # Resort to default settings in config?
             if not Redis._conn:
-                conf = minqlx.get_config()
-                if not "Redis" in conf or not "Host" in conf["Redis"] or not "Database" in conf["Redis"]:
-                    raise RuntimeError("No host and/or database number passed nor set in config.")
-                elif "UseUnixSocket" in conf["Redis"] and conf.getboolean("Redis", "UseUnixSocket"):
-                    db = int(conf["Redis"]["Database"])
-                    if "Password" in conf["Redis"] and conf["Redis"]["Password"]:
-                        Redis._pass = conf["Redis"]["Password"]
-                    Redis._conn = redis.StrictRedis(unix_socket_path=conf["Redis"]["Host"],
-                        db=db, password=Redis._pass, decode_responses=True)
+                cvar_host = minqlx.get_cvar("qlx_redisHost")
+                cvar_db = int(minqlx.get_cvar("qlx_redisDatabase"))
+                cvar_unixsocket = bool(int(minqlx.get_cvar("qlx_redisUnixSocket")))
+                Redis._pass = minqlx.get_cvar("qlx_redisPassword")
+                if cvar_unixsocket:
+                    Redis._conn = redis.StrictRedis(unix_socket_path=cvar_host,
+                        db=cvar_db, password=Redis._pass, decode_responses=True)
                 else:
-                    host = conf["Redis"]["Host"]
-                    split_host = host.split(":")
+                    split_host = cvar_host.split(":")
                     if len(split_host) > 1:
                         port = int(split_host[1])
                     else:
                         port = 6379 # Default port.
-                    db = int(conf["Redis"]["Database"])
-                    if "Password" in conf["Redis"] and conf["Redis"]["Password"]:
-                        Redis._pass = conf["Redis"]["Password"]
                     Redis._pool = redis.ConnectionPool(host=split_host[0],
-                        port=port, db=db, password=Redis._pass, decode_responses=True)
+                        port=port, db=cvar_db, password=Redis._pass, decode_responses=True)
                     Redis._conn = redis.StrictRedis(connection_pool=Redis._pool, decode_responses=True)
                     # TODO: Why does self._conn get set when doing Redis._conn?
                     self._conn = None

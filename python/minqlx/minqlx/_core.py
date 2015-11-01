@@ -96,8 +96,9 @@ def _configure_logger():
     logger.setLevel(logging.DEBUG)
     
     # File
+    homepath = minqlx.get_cvar("fs_homepath")
     file_fmt = logging.Formatter("(%(asctime)s) [%(levelname)s @ %(name)s.%(funcName)s] %(message)s", "%H:%M:%S")
-    file_handler = logging.FileHandler("minqlx/pyminqlx.log", mode="w", encoding="utf-8")
+    file_handler = logging.FileHandler(os.path.join(homepath, "minqlx.log"), mode="w", encoding="utf-8")
     file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(file_fmt)
     logger.addHandler(file_handler)
@@ -137,27 +138,36 @@ def uptime():
     """Returns a :class:`datetime.timedelta` instance of the time since initialized."""
     return datetime.datetime.now() - _init_time
 
-# This is initialized in load_config. It's the SteamID64 of the owner.
-# It's used to bypass any permission checks so that the owner can do
-# stuff without having to initialize the database first.
-_owner = "-1"
-
 def owner():
     """Returns the SteamID64 of the owner. This is set in the config."""
-    return _owner
-
-# Can be overriden in the config by setting "CommandPrefix" under the Core section.
-_command_prefix = "!"
-
-def command_prefix():
-    """Returns the command prefix."""
-    return _command_prefix
+    try:
+        sid = int(minqlx.get_cvar("qlx_owner"))
+        if sid == -1:
+            raise RuntimeError
+        return sid
+    except:
+        logger = minqlx.get_logger()
+        logger.error("Failed to parse the Owner Steam ID. Make sure it's in SteamID64 format.")
 
 _stats = None
 
 def stats_listener():
     """Returns the :class:`minqlx.StatsListener` instance used to listen for stats."""
     return _stats
+
+def set_cvar_once(name, value, flags=0):
+    if minqlx.get_cvar(name) == None:
+        minqlx.set_cvar(name, value, flags)
+        return True
+
+    return False
+
+def set_cvar_limit_once(name, value, minimum, maximum, flags=0):
+    if minqlx.get_cvar(name) == None:
+        minqlx.set_cvar_limit(name, value, minimum, maximum, flags)
+        return True
+
+    return False
 
 # ====================================================================
 #                              DECORATORS
@@ -231,84 +241,38 @@ class PluginLoadError(Exception):
 class PluginUnloadError(Exception):
     pass
 
-def load_config():
-    config = get_config()
-    config_file = "minqlx/config.cfg"
-    if os.path.isfile(config_file):
-        config.read(config_file)
-        config["DEFAULT"] = { 
-                                "PluginsFolder" : "minqlx/plugins",
-                                "CommandPrefix" : "!"
-                            }
-
-        # Set default database if present.
-        if "Database" in config["Core"]:
-            db = config["Core"]["Database"]
-            if db.lower() == "redis":
-                minqlx.Plugin.database = minqlx.database.Redis
-
-        # Set owner.
-        # TODO: Convert regular SteamID format to 64-bit format automatically.
-        if "Owner" in config["Core"]:
-            try:
-                global _owner
-                _owner = int(config["Core"]["Owner"])
-            except ValueError:
-                logger = minqlx.get_logger()
-                logger.error("Failed to parse the Owner Steam ID. Make sure it's in SteamID64 format.")
-        else:
-            logger = minqlx.get_logger()
-            logger.warning("Owner not set in the config. Consider setting it.")
-
-        sys.path.append(os.path.dirname(config["Core"]["PluginsFolder"]))
-        global _command_prefix
-        _command_prefix = config["Core"]["CommandPrefix"].strip()
-        return config
-    else:
-        raise(RuntimeError("Config file '{}' not found.".format(os.path.abspath(config_file))))
-
-def reload_config():
-    load_config()
-    load_preset_plugins() # Will not double-load plugins.
-
-_config = None
-
-def get_config():
-    global _config
-    if not _config:
-        _config = configparser.ConfigParser()
-
-    return _config
-
 def load_preset_plugins():
-    config = get_config()
-    if os.path.isdir(config["Core"]["PluginsFolder"]):
-        # Filter out already loaded plugins. This allows us to safely call this function after reloading the config.
-        plugins = [p.strip() for p in config["Core"]["Plugins"].split(",") if "plugins." + p not in sys.modules]
+    plugins_cvar = minqlx.get_cvar("qlx_plugins")
+    plugins_folder = minqlx.get_cvar("qlx_pluginsFolder")
+    if plugins_cvar:
+        # Filter out already loaded plugins.
+        plugins = [p.strip() for p in plugins_cvar.split(",") if "plugins." + p not in sys.modules]
         for plugin in plugins:
             load_plugin(plugin.strip())
     else:
         raise(PluginLoadError("Cannot find the plugins directory '{}'."
-            .format(os.path.abspath(config["Core"]["PluginsFolder"]))))
+            .format(os.path.abspath(plugins_folder))))
 
 def load_plugin(plugin):
     logger = get_logger(None)
     logger.info("Loading plugin '{}'...".format(plugin))
     plugins = minqlx.Plugin._loaded_plugins
-    conf = get_config()
+    plugins_folder = minqlx.get_cvar("qlx_pluginsFolder")
 
-    if not os.path.isfile(os.path.join(conf["Core"]["PluginsFolder"], plugin + ".py")):
+    if not os.path.isfile(os.path.join(plugins_folder, plugin + ".py")):
         raise PluginLoadError("No such plugin exists.")
     elif plugin in plugins:
         return reload_plugin(plugin)
     try:
         module = importlib.import_module("plugins." + plugin)
+        # We add the module regardless of whether it fails or not, otherwise we can't reload later.
+        global _modules
+        _modules[plugin] = module
+        
         if not hasattr(module, plugin):
             raise(PluginLoadError("The plugin needs to have a class with the exact name as the file, minus the .py."))
         
-        global _modules
         plugin_class = getattr(module, plugin)
-        _modules[plugin] = module
         if issubclass(plugin_class, minqlx.Plugin):
             plugins[plugin] = plugin_class()
         else:
@@ -355,34 +319,48 @@ def reload_plugin(plugin):
         log_exception(plugin)
         raise
 
+def initialize_cvars():
+    # Core
+    minqlx.set_cvar_once("qlx_owner", "-1")
+    minqlx.set_cvar_once("qlx_pluginsFolder", "minqlx/plugins")
+    minqlx.set_cvar_once("qlx_database", "Redis")
+    minqlx.set_cvar_once("qlx_commandPrefix", "!")
+    # Redis
+    minqlx.set_cvar_once("qlx_redisHost", "127.0.0.1")
+    minqlx.set_cvar_once("qlx_redisDatabase", "0")
+    minqlx.set_cvar_once("qlx_redisUnixSocket", "0")
+    minqlx.set_cvar_once("qlx_redisPassword", "")
+
 
 # ====================================================================
 #                                 MAIN
 # ====================================================================
 
 def initialize():
-    _configure_logger()
-    logger = get_logger()
-    # Set our own exception handler so that we can log them if unhandled.
-    sys.excepthook = handle_exception
-
-    logger.info("Loading config...")
-    load_config()
-    logger.info("Loading preset plugins...")
-    load_preset_plugins()
-    logger.info("Registering handlers...")
     minqlx.register_handlers()
+    
+    # next_frame to ensure it gets called after QLDS is initialized.
+    @next_frame
+    def late_init():
+        minqlx.initialize_cvars()
+        _configure_logger()
+        logger = get_logger()
+        # Set our own exception handler so that we can log them if unhandled.
+        sys.excepthook = handle_exception
 
-    # Needs to be called after server initialization, so a simple
-    # next_frame will make sure that's the case.
-    @minqlx.next_frame
-    def start_stats_listener():
+        # Add qlx_pluginsFolder to path so that plugins can be imported later.
+        sys.path.append(os.path.dirname(minqlx.get_cvar("qlx_pluginsFolder")))
+        
+        logger.info("Loading preset plugins...")
+        load_preset_plugins()
+
         if bool(int(minqlx.get_cvar("zmq_stats_enable"))):
             global _stats
             _stats = minqlx.StatsListener()
             logger.info("Stats listener started on {}.".format(_stats.address))
             # Start polling. Not blocking due to decorator magic. Aw yeah.
             _stats.keep_receiving()
-    start_stats_listener()
 
-    logger.info("We're good to go!")
+        logger.info("We're good to go!")
+
+    late_init()
