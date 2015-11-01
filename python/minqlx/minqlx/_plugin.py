@@ -91,11 +91,6 @@ class Plugin():
         return self._commands.copy()
 
     @property
-    def config(self):
-        """minqlx's config. Same as :func:`minqlx.get_config()`."""
-        return minqlx.get_config()
-
-    @property
     def game(self):
         """A Game instance."""
         try:
@@ -140,6 +135,116 @@ class Plugin():
         for cmd in self._commands:
             if cmd.name == name and cmd.handler == handler:
                 minqlx.COMMANDS.remove_command(cmd)
+
+    @classmethod
+    def get_cvar(cls, name, return_type=str):
+        """Gets the value of a cvar as a string.
+
+        :param name: The name of the cvar.
+        :type name: str
+        :param return_type: The type the cvar should be returned in.
+            Supported types: str, int, float, bool, list, tuple
+
+        """
+        res = minqlx.get_cvar(name)
+        if return_type == str:
+            return res
+        elif return_type == int:
+            return int(res)
+        elif return_type == float:
+            return float(res)
+        elif return_type == bool:
+            return bool(int(res))
+        elif return_type == list:
+            return [s.strip() for s in res.split(",")]
+        elif return_type == tuple:
+            return tuple([s.strip() for s in res.split(",")])
+        else:
+            raise ValueError("Invalid return type: {}".format(return_type))
+
+    @classmethod
+    def set_cvar(cls, name, value, flags=0):
+        """Sets a cvar. If the cvar exists, it will be set as if set from the console,
+        otherwise create it.
+
+        :param name: The name of the cvar.
+        :type name: str
+        :param value: The value of the cvar.
+        :type value: Anything with an __str__ method.
+        :param flags: The flags to set if, and only if, the cvar does not exist and has to be created.
+        :type flags: int
+        :returns: True if a new cvar was created, False if an existing cvar was set.
+        :rtype: bool
+
+        """
+        if cls.get_cvar(name) == None:
+            minqlx.set_cvar(name, value, flags)
+            return True
+        else:
+            minqlx.console_command("{} \"{}\"".format(name, value))
+            return False
+
+    @classmethod
+    def set_cvar_limit(cls, name, value, minimum, maximum, flags=0):
+        """Sets a cvar with upper and lower limits. If the cvar exists, it will be set
+        as if set from the console, otherwise create it.
+
+        :param name: The name of the cvar.
+        :type name: str
+        :param value: The value of the cvar.
+        :type value: int, float
+        :param minimum: The minimum value of the cvar.
+        :type value: int, float
+        :param maximum: The maximum value of the cvar.
+        :type value: int, float
+        :param flags: The flags to set if, and only if, the cvar does not exist and has to be created.
+        :type flags: int
+        :returns: True if a new cvar was created, False if an existing cvar was set.
+        :rtype: bool
+
+        """
+        if cls.get_cvar(name) == None:
+            minqlx.set_cvar(name, value, flags)
+            return True
+        else:
+            minqlx.console_command("{} \"{}\"".format(name, value))
+            return False
+
+    @classmethod
+    def set_cvar_once(cls, name, value, flags=0):
+        """Sets a cvar. If the cvar exists, do nothing.
+
+        :param name: The name of the cvar.
+        :type name: str
+        :param value: The value of the cvar.
+        :type value: Anything with an __str__ method.
+        :param flags: The flags to set if, and only if, the cvar does not exist and has to be created.
+        :type flags: int
+        :returns: True if a new cvar was created, False if an existing cvar was set.
+        :rtype: bool
+
+        """
+        return minqlx.set_cvar_once(name, value, flags)
+
+    @classmethod
+    def set_cvar_limit_once(cls, name, value, minimum, maximum, flags=0):
+        """Sets a cvar with upper and lower limits. If the cvar exists, not do anything.
+
+        :param name: The name of the cvar.
+        :type name: str
+        :param value: The value of the cvar.
+        :type value: int, float
+        :param minimum: The minimum value of the cvar.
+        :type value: int, float
+        :param maximum: The maximum value of the cvar.
+        :type value: int, float
+        :param flags: The flags to set if, and only if, the cvar does not exist and has to be created.
+        :type flags: int
+        :returns: True if a new cvar was created, False if an existing cvar was set.
+        :rtype: bool
+
+        """
+        return minqlx.set_cvar_limit_once(name, value, minimum, maximum, flags)
 
     @classmethod
     def players(cls):
