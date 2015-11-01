@@ -9,6 +9,7 @@ else
 	SOURCES_NOPY =  HDE/hde32.c
 endif
 
+BINDIR = bin
 CC = gcc
 CFLAGS += -shared -std=gnu11
 LDFLAGS_NOPY += -ldl
@@ -17,13 +18,14 @@ SOURCES_NOPY += dllmain.c commands.c simple_hook.c hooks.c misc.c maps_parser.c
 SOURCES += dllmain.c commands.c python_embed.c python_dispatchers.c simple_hook.c hooks.c misc.c maps_parser.c
 OBJS = $(SOURCES:.c=.o)
 OBJS_NOPY = $(SOURCES_NOPY:.c=.o)
-OUTPUT = minqlx.so
-OUTPUT_NOPY = minqlx_nopy.so
+OUTPUT = $(BINDIR)/minqlx.so
+OUTPUT_NOPY = $(BINDIR)/minqlx_nopy.so
+PYMODULE = $(BINDIR)/minqlx.zip
 
 .PHONY: depend clean
 
 all: CFLAGS += $(shell python3.5-config --cflags)
-all: $(OUTPUT)
+all: $(OUTPUT) $(PYMODULE)
 	@echo Done!
 
 debug: CFLAGS += $(shell python3.5-config --includes) -gdwarf-2 -Wall -O0 -fvar-tracking
@@ -44,13 +46,15 @@ $(OUTPUT): $(OBJS)
 $(OUTPUT_NOPY): $(OBJS_NOPY) 
 	$(CC) $(CFLAGS) -o $(OUTPUT_NOPY) $(OBJS_NOPY) $(LDFLAGS_NOPY)
 
+$(PYMODULE):
+	@python3.5 -m zipfile -c $(PYMODULE) python/minqlx
+
 .c.o:
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
 	@echo Cleaning...
-	@$(RM) *.o *~ $(OUTPUT)
-	@$(RM) HDE/*.o HDE/*~ $(OUTPUT)
-	@$(RM) *.o *~ $(OUTPUT_NOPY)
-	@$(RM) HDE/*.o HDE/*~ $(OUTPUT_NOPY)
+	@$(RM) *.o *~ $(OUTPUT) $(OUTPUT_NOPY)
+	@$(RM) HDE/*.o HDE/*~ $(OUTPUT) $(OUTPUT_NOPY)
+	@$(RM) $(PYMODULE)
 	@echo Done!
