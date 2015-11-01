@@ -317,13 +317,29 @@ static PyObject* PyMinqlx_GetCvar(PyObject* self, PyObject* args) {
 */
 
 static PyObject* PyMinqlx_SetCvar(PyObject* self, PyObject* args) {
-    char* name;
-    char* value;
-    if (!PyArg_ParseTuple(args, "ss:set_cvar", &name, &value))
+    char *name, *value;
+    int flags = 0;
+    if (!PyArg_ParseTuple(args, "ss|i:set_cvar", &name, &value, &flags))
         return NULL;
 
-	Cvar_Set2(name, value, qfalse);
+	Cvar_Get(name, value, flags);
 	Py_RETURN_NONE;
+}
+
+/*
+ * ================================================================
+ *                           set_cvar_limit
+ * ================================================================
+*/
+
+static PyObject* PyMinqlx_SetCvarLimit(PyObject* self, PyObject* args) {
+    char *name, *value, *min, *max;
+    int flags = 0;
+    if (!PyArg_ParseTuple(args, "ssss|i:set_cvar_limit", &name, &value, &min, &max, &flags))
+        return NULL;
+
+    Cvar_GetLimit(name, value, min, max, flags);
+    Py_RETURN_NONE;
 }
 
 /*
@@ -572,6 +588,8 @@ static PyMethodDef minqlxMethods[] = {
 	 "Gets a cvar."},
 	{"set_cvar", PyMinqlx_SetCvar, METH_VARARGS,
 	 "Sets a cvar."},
+    {"set_cvar_limit", PyMinqlx_SetCvarLimit, METH_VARARGS,
+     "Sets a non-string cvar with a minimum and maximum value."},
 	{"admin_command", PyMinqlx_AdminCommand, METH_VARARGS,
 	 "Executes an admin command."},
 	{"kick", PyMinqlx_Kick, METH_VARARGS,
@@ -621,6 +639,19 @@ static PyObject* PyMinqlx_InitModule(void) {
     PyModule_AddIntMacro(module, PRI_NORMAL);
     PyModule_AddIntMacro(module, PRI_LOW);
     PyModule_AddIntMacro(module, PRI_LOWEST);
+
+    // Cvar flags.
+    PyModule_AddIntMacro(module, CVAR_ARCHIVE);
+    PyModule_AddIntMacro(module, CVAR_USERINFO);
+    PyModule_AddIntMacro(module, CVAR_SERVERINFO);
+    PyModule_AddIntMacro(module, CVAR_SYSTEMINFO);
+    PyModule_AddIntMacro(module, CVAR_INIT);
+    PyModule_AddIntMacro(module, CVAR_LATCH);
+    PyModule_AddIntMacro(module, CVAR_ROM);
+    PyModule_AddIntMacro(module, CVAR_USER_CREATED);
+    PyModule_AddIntMacro(module, CVAR_TEMP);
+    PyModule_AddIntMacro(module, CVAR_CHEAT);
+    PyModule_AddIntMacro(module, CVAR_NORESTART);
     
     return module;
 }
