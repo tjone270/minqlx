@@ -1319,7 +1319,6 @@ char* __cdecl My_GetClientName(int clientNum);
 #endif
 
 // Custom commands added using Cmd_AddCommand during initialization.
-void __cdecl TestCommand(void); // "test"
 void __cdecl SendServerCommand(void); // "cmd"
 void __cdecl CenterPrint(void); // "cp"
 void __cdecl RegularPrint(void); // "p"

@@ -328,7 +328,6 @@ void InitializeStatic(void) {
     // Set the seed for our RNG.
     srand(time(NULL));
 
-    Cmd_AddCommand("test", TestCommand);
     Cmd_AddCommand("cmd", SendServerCommand);
     Cmd_AddCommand("cp", CenterPrint);
     Cmd_AddCommand("print", RegularPrint);

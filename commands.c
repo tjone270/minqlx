@@ -17,29 +17,6 @@ uint64_t pending_slap = 0LL;
 int slap_damages[64];
 uint64_t pending_slay = 0LL;
 
-void __cdecl TestCommand(void) {
-	SV_DropClient(&svs->clients[0], "FUCK OFF!");
-	/*
-	char timeBuf[64];
-	strncpy(level->voteString, "cointoss \"\"", MAX_STRING_CHARS);
-	strncpy(level->voteDisplayString, "cointoss", MAX_STRING_CHARS);
-	level->voteTime = level->time + atoi(Cmd_Argv(1));
-	level->voteYes = 1;
-	level->voteNo = 0;
-
-	for (int i = 0 ; i < level->maxclients ; i++ ) {
-		level->clients[i].ps.eFlags &= ~EF_VOTED;
-	}
-	//level->voteExecuteTime = level->time + 10000;
-	sprintf(timeBuf, "%i", level->voteTime);
-	SV_SetConfigstring(CS_VOTE_TIME, timeBuf);
-	SV_SetConfigstring(CS_VOTE_STRING, level->voteDisplayString);
-	SV_SetConfigstring(CS_VOTE_YES, "1");
-	SV_SetConfigstring(CS_VOTE_NO, "0");
-	*/
-	Com_Printf("Done!\n");
-}
-
 void __cdecl SendServerCommand(void) {
     SV_SendServerCommand(NULL, "%s\n", Cmd_Args());
 }
