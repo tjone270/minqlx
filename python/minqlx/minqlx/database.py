@@ -217,9 +217,9 @@ class Redis(AbstractDatabase):
                 port = 6379 # Default port.
             
             if unix_socket:
-                self._conn = redis.StrictRedis(unix_socket_path=host, db=db, password=password, decode_responses=True)
+                self._conn = redis.StrictRedis(unix_socket_path=host, db=database, password=password, decode_responses=True)
             else:
-                self._pool = redis.ConnectionPool(host=split_host[0], port=port, db=db, password=password)
+                self._pool = redis.ConnectionPool(host=split_host[0], port=port, db=database, password=password, decode_responses=True)
                 self._conn = redis.StrictRedis(connection_pool=self._pool, decode_responses=True)
         return self._conn
 
