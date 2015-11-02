@@ -12,6 +12,10 @@ but I added x64 support and decided to keep only one of them up to date because 
 frequency of updates during the beta was a bit too much to keep up with, since key
 structures were changing all the time. Once the frequency drops, I will do it.
 
+If you have any questions, the IRC channel for the old bot,
+[#minqlbot on Quakenet](http://webchat.quakenet.org/?channels=minqlbot),
+is being used for this one as well. Feel free to drop by.
+
 Installation
 ============
 These instructions are for Debian 7 or 8 (use the latter if you can choose). For Ubuntu,
