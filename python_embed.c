@@ -67,7 +67,11 @@ static handler_t handlers[] = {
 
 static PyObject* makePlayerDict(int client_id) {
 	PyObject* ret = PyDict_New();
-	if (!ret) Py_RETURN_NONE;
+	if (!ret) {
+        DebugError("Failed to create a new dictionary.\n",
+                __FILE__, __LINE__, __func__);
+        Py_RETURN_NONE;
+    }
 
 	// CLIENT ID
 	PyObject* cid = PyLong_FromLong(client_id);
@@ -169,8 +173,10 @@ static PyObject* PyMinqlx_PlayerInfo(PyObject* self, PyObject* args) {
         return NULL;
         
     }
-    else if (!in_clientconnect && (svs->clients[i].state == CS_FREE))
+    else if (!in_clientconnect && (svs->clients[i].state == CS_FREE)) {
+        DebugPrint("WARNING: PyMinqlx_PlayerInfo called for CS_FREE client %d.", i);
         Py_RETURN_NONE;
+    }
 
     return makePlayerDict(i);
 }
