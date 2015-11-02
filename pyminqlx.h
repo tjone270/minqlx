@@ -2,7 +2,7 @@
 #define PYMINQLX_H
 
 #define PYTHON_FILENAME L"python3.5"
-#define MAIN_SUBFOLDER "minqlx"
+#define CORE_MODULE "minqlx.zip"
 
 #include <Python.h>
 

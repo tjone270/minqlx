@@ -31,7 +31,8 @@ static int initialized = 0;
 static const char loader[] = "import traceback\n" \
     "try:\n" \
     "  import sys\n" \
-	"  sys.path.append('" MAIN_SUBFOLDER "')\n" \
+	"  sys.path.append('" CORE_MODULE "')\n" \
+    "  sys.path.append('.')\n" \
 	"  import minqlx\n" \
 	"  minqlx.initialize()\n" \
     "  ret = True\n" \
