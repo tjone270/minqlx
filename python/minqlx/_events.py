@@ -362,7 +362,7 @@ class VoteEndedDispatcher(EventDispatcher):
 class VoteDispatcher(EventDispatcher):
     name = "vote"
 
-    def dispatch(self, yes):
+    def dispatch(self, player, yes):
         super().dispatch(yes)
 
 class GameCountdownDispatcher(EventDispatcher):

@@ -84,9 +84,9 @@ def handle_client_command(client_id, cmd):
         if res and minqlx.Plugin.is_vote_active():
             arg = res.group("arg").lower()
             if arg == "y" or arg == "1":
-                return minqlx.EVENT_DISPATCHERS["vote"].dispatch(True)
+                return minqlx.EVENT_DISPATCHERS["vote"].dispatch(player, True)
             elif arg == "n" or arg == "1":
-                return minqlx.EVENT_DISPATCHERS["vote"].dispatch(False)
+                return minqlx.EVENT_DISPATCHERS["vote"].dispatch(player, False)
 
         res = _re_team.match(cmd)
         if res:
