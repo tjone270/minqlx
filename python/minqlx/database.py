@@ -184,7 +184,7 @@ class Redis(AbstractDatabase):
         """
         if not host and not self._conn: # Resort to default settings in config?
             if not Redis._conn:
-                cvar_host = minqlx.get_cvar("qlx_redisHost")
+                cvar_host = minqlx.get_cvar("qlx_redisAddress")
                 cvar_db = int(minqlx.get_cvar("qlx_redisDatabase"))
                 cvar_unixsocket = bool(int(minqlx.get_cvar("qlx_redisUnixSocket")))
                 Redis._pass = minqlx.get_cvar("qlx_redisPassword")

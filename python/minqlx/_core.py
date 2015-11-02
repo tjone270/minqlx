@@ -349,7 +349,7 @@ def initialize_cvars():
     minqlx.set_cvar_once("qlx_database", "Redis")
     minqlx.set_cvar_once("qlx_commandPrefix", "!")
     # Redis
-    minqlx.set_cvar_once("qlx_redisHost", "127.0.0.1")
+    minqlx.set_cvar_once("qlx_redisAddress", "127.0.0.1")
     minqlx.set_cvar_once("qlx_redisDatabase", "0")
     minqlx.set_cvar_once("qlx_redisUnixSocket", "0")
     minqlx.set_cvar_once("qlx_redisPassword", "")
