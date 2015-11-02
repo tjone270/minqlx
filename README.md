@@ -73,21 +73,21 @@ see the [plugins repository](https://github.com/MinoMino/minqlx-plugins).
 - `qlx_owner`: The SteamID64 of the server owner. This is should be set, otherwise minqlx
 can't tell who the owner is and will refuse to execute admin commands.
 - `qlx_plugins`: A comma-separated list of plugins that should be loaded at launch.
-  - Default: `"plugin_manager, essentials, motd, permission, ban"`.
+  - Default: `plugin_manager, essentials, motd, permission, ban, clan`.
 - `qlx_pluginsPath`: The path (either relative or absolute) to the directory with the plugins.
-  - Default: `"minqlx-plugins"`
+  - Default: `minqlx-plugins`
 - `qlx_database`: The default database to use. You should not change this unless you know what you're doing.
-  - Default: `"Redis"`
+  - Default: `Redis`
 - `qlx_commandPrefix`: The prefix used before command names in order to execute them.
-  - Default: `"!"`
+  - Default: `!`
 - `qlx_redisAddress`: The address to the Redis database. Can be a path if `qlx_redisUnixSocket` is `"1"`.
-  - Default: `"127.0.0.1"`
+  - Default: `127.0.0.1`
 - `qlx_redisDatabase`: The Redis database number.
-  - Default: `"0"`
+  - Default: `0`
 - `qlx_redisUnixSocket`: A boolean that determines whether or not `qlx_redisAddress` is a path to a UNIX socket.
-  - Default: `"0"`
+  - Default: `0`
 - `qlx_redisPassword`: The password to the Redis server, if any.
-  - Default: `""`
+  - Default: None
 
 Compiling
 =========
