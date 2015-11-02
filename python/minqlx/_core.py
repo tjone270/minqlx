@@ -367,6 +367,11 @@ def initialize():
     def late_init():
         minqlx.initialize_cvars()
 
+        # Set the default database plugins should use.
+        # TODO: Make Plugin.database setting generic.
+        if minqlx.get_cvar("qlx_database").lower() == "redis":
+            minqlx.Plugin.database = minqlx.database.Redis
+
         # Get the plugins path and set minqlx.__plugins_version__.
         plugins_path = os.path.abspath(minqlx.get_cvar("qlx_pluginsPath"))
         set_plugins_version(plugins_path)
