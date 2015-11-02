@@ -25,11 +25,13 @@ PYMODULE = $(BINDIR)/minqlx.zip
 .PHONY: depend clean
 
 all: CFLAGS += $(shell python3.5-config --cflags)
-all: $(OUTPUT) $(PYMODULE)
+all: version $(OUTPUT) $(PYMODULE)
+	@python3.5 python/version.py -unset
 	@echo Done!
 
 debug: CFLAGS += $(shell python3.5-config --includes) -gdwarf-2 -Wall -O0 -fvar-tracking
-debug: $(OUTPUT)
+debug: version_debug $(OUTPUT)
+	@python3.5 python/version.py -unset_debug
 	@echo Done!
 
 nopy: CFLAGS += -Wall -DNOPY
@@ -40,10 +42,16 @@ nopy_debug: CFLAGS +=  -gdwarf-2 -Wall -O0 -DNOPY
 nopy_debug: $(OUTPUT_NOPY)
 	@echo Done!
 
-$(OUTPUT): $(OBJS) 
+version:
+	@python3.5 python/version.py -set
+
+version_debug:
+	@python3.5 python/version.py -set_debug
+
+$(OUTPUT): $(OBJS)
 	$(CC) $(CFLAGS) -o $(OUTPUT) $(OBJS) $(LDFLAGS)
 
-$(OUTPUT_NOPY): $(OBJS_NOPY) 
+$(OUTPUT_NOPY): $(OBJS_NOPY)
 	$(CC) $(CFLAGS) -o $(OUTPUT_NOPY) $(OBJS_NOPY) $(LDFLAGS_NOPY)
 
 $(PYMODULE):
