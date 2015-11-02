@@ -22,14 +22,15 @@
 
 import minqlx
 import minqlx.database
-import configparser
 import collections
+import subprocess
 import threading
 import traceback
 import importlib
 import datetime
 import os.path
 import logging
+import shlex
 import sys
 import os
 
@@ -261,28 +262,31 @@ class PluginUnloadError(Exception):
 
 def load_preset_plugins():
     plugins_cvar = minqlx.get_cvar("qlx_plugins")
-    plugins_folder = minqlx.get_cvar("qlx_pluginsFolder")
-    if plugins_cvar:
+    plugins_path = os.path.abspath(minqlx.get_cvar("qlx_pluginsPath"))
+    plugins_dir = os.path.basename(plugins_path)
+
+    if os.path.isdir(plugins_path):
         # Filter out already loaded plugins.
-        plugins = [p.strip() for p in plugins_cvar.split(",") if "plugins." + p not in sys.modules]
+        plugins = [p.strip() for p in plugins_cvar.split(",") if "{}.{}".format(plugins_dir, p) not in sys.modules]
         for plugin in plugins:
             load_plugin(plugin.strip())
     else:
         raise(PluginLoadError("Cannot find the plugins directory '{}'."
-            .format(os.path.abspath(plugins_folder))))
+            .format(os.path.abspath(plugins_path))))
 
 def load_plugin(plugin):
     logger = get_logger(None)
     logger.info("Loading plugin '{}'...".format(plugin))
     plugins = minqlx.Plugin._loaded_plugins
-    plugins_folder = minqlx.get_cvar("qlx_pluginsFolder")
+    plugins_path = os.path.abspath(minqlx.get_cvar("qlx_pluginsPath"))
+    plugins_dir = os.path.basename(plugins_path)
 
-    if not os.path.isfile(os.path.join(plugins_folder, plugin + ".py")):
+    if not os.path.isfile(os.path.join(plugins_path, plugin + ".py")):
         raise PluginLoadError("No such plugin exists.")
     elif plugin in plugins:
         return reload_plugin(plugin)
     try:
-        module = importlib.import_module("plugins." + plugin)
+        module = importlib.import_module("{}.{}".format(plugins_dir, plugin))
         # We add the module regardless of whether it fails or not, otherwise we can't reload later.
         global _modules
         _modules[plugin] = module
@@ -361,13 +365,19 @@ def initialize():
     @next_frame
     def late_init():
         minqlx.initialize_cvars()
+
+        # Get the plugins path and set minqlx.__plugins_version__.
+        plugins_path = os.path.abspath(minqlx.get_cvar("qlx_pluginsPath"))
+        set_plugins_version(plugins_path)
+
+        # Initialize the logger now that we have fs_basepath.
         _configure_logger()
         logger = get_logger()
         # Set our own exception handler so that we can log them if unhandled.
         sys.excepthook = handle_exception
 
-        # Add qlx_pluginsFolder to path so that plugins can be imported later.
-        sys.path.append(os.path.dirname(minqlx.get_cvar("qlx_pluginsFolder")))
+        # Add the plugins path to PATH so that we can load plugins later.
+        sys.path.append(os.path.dirname(plugins_path))
         
         logger.info("Loading preset plugins...")
         load_preset_plugins()
