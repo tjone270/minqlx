@@ -228,6 +228,24 @@ def thread(func, force=False):
     
     return f
 
+def set_plugins_version(path):
+    args = shlex.split("git describe --long --tags --dirty --always")
+
+    # We keep environment variables, but remove LD_PRELOAD to avoid a warning the OS might throw.
+    env = dict(os.environ)
+    del env["LD_PRELOAD"]
+    try:
+        p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=path, env=env)
+        p.wait(timeout=1)
+        if p.returncode != 0:
+            setattr(minqlx, "__plugins_version__", "NOT_SET")
+            return
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        setattr(minqlx, "__plugins_version__", "NOT_SET")
+        return
+
+    setattr(minqlx, "__plugins_version__", p.stdout.read().decode().strip())
+
 # ====================================================================
 #                       CONFIG AND PLUGIN LOADING
 # ====================================================================
