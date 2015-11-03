@@ -18,6 +18,7 @@ PyObject* frame_handler = NULL;
 PyObject* custom_command_handler = NULL;
 PyObject* new_game_handler = NULL;
 PyObject* set_configstring_handler = NULL;
+PyObject* rcon_handler = NULL;
 
 static PyThreadState* mainstate;
 static int initialized = 0;
@@ -56,6 +57,7 @@ static handler_t handlers[] = {
 		{"custom_command", 		&custom_command_handler},
 		{"new_game",			&new_game_handler},
 		{"set_configstring", 	&set_configstring_handler},
+        {"rcon",                &rcon_handler},
 		{NULL, NULL}
 };
 

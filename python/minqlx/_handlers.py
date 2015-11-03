@@ -36,6 +36,14 @@ _re_vote_ended = re.compile(r"^print \"Vote (?P<result>passed|failed).\n\"$")
 #        These are all called by the C code, not within Python.  
 # ====================================================================
 
+def handle_rcon(cmd):
+    """Console commands that are to be processed as regular pyminqlx
+    commands as if the owner executes it. This allows the owner to
+    interact with the Python part of minqlx without having to connect.
+
+    """
+    minqlx.COMMANDS.handle_input(minqlx.RconDummyPlayer(), cmd, minqlx.CONSOLE_CHANNEL)
+
 def handle_client_command(client_id, cmd):
     """Client commands are commands such as "say", "say_team", "scores",
     "disconnect" and so on. This function parses those and passes it
@@ -284,6 +292,7 @@ def handle_player_disconnect(client_id):
         return True
 
 def register_handlers():
+    minqlx.register_handler("rcon", handle_rcon)
     minqlx.register_handler("client_command", handle_client_command)
     minqlx.register_handler("server_command", handle_server_command)
     minqlx.register_handler("frame", handle_frame)

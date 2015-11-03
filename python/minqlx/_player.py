@@ -19,6 +19,15 @@
 import minqlx
 import re
 
+_DUMMY_USERINFO = ("ui_singlePlayerActive\\0\\cg_autoAction\\1\\cg_autoHop\\0"
+    "\\cg_predictItems\\1\\model\\bitterman/sport_blue\\headmodel\\crash/red"
+    "\\handicap\\100\\cl_anonymous\\0\\color1\\4\\color2\\23\\sex\\male"
+    "\\teamtask\\0\\rate\\25000\\country\\NO")
+
+_DUMMY_CONFIGSTRING = ("t\\3\\model\\bitterman/sport_blue"
+    "\\hmodel\\crash/red\\c1\\4\\c2\\23\\hc\\300\\w\\0\\l\\0\\tt\\0"
+    "\\tl\\0\\rp\\0\\p\\2\\so\\0\\pq\\0\\c\\NO")
+
 def _player(client_id):
     """A wrapper for minqlx.Player to make the output more usable."""
     info = minqlx.player_info(client_id)
@@ -278,3 +287,27 @@ class Player():
     @classmethod
     def all_players(cls):
         return [cls(pd["client_id"], player_dict=pd) for pd in _players()]
+
+class AbstractDummyPlayer(Player):
+    def __init__(self):
+        self._cvars = minqlx.parse_variables(_DUMMY_CONFIGSTRING)
+        self._cvars.update(minqlx.parse_variables(_DUMMY_USERINFO))
+
+    @property
+    def id(self):
+        raise AttributeError("Dummy players do not have client IDs.")
+
+    @property
+    def steam_id(self):
+        raise NotImplementedError("steam_id property needs to be implemented.")
+
+    def tell(self, msg):
+        raise NotImplementedError("tell() needs to be implemented.")
+    
+class RconDummyPlayer(AbstractDummyPlayer):
+    @property
+    def steam_id(self):
+        return minqlx.owner()
+
+    def tell(self, msg):
+        minqlx.CONSOLE_CHANNEL.reply(msg)

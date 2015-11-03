@@ -1310,6 +1310,9 @@ void __cdecl RegularPrint(void); // "p"
 void __cdecl Slap(void); // "slap"
 void __cdecl Slay(void); // "slay"
 #ifndef NOPY
+// PyRcon gives the owner the ability to execute pyminqlx commands as if the
+// owner executed them.
+void __cdecl PyRcon(void);
 // PyCommand is special. It'll serve as the handler for console commands added
 // using Python. This means it can serve as the handler for a bunch of commands,
 // and it'll take care of redirecting it to Python.

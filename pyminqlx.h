@@ -55,6 +55,7 @@ extern PyObject* client_disconnect_handler;
 extern PyObject* frame_handler;
 extern PyObject* new_game_handler;
 extern PyObject* set_configstring_handler;
+extern PyObject* rcon_handler;
 
 // Custom console command handler. These are commands added through Python that can be used
 // from the console or using RCON.
@@ -79,5 +80,6 @@ int ClientLoadedDispatcher(int client_id);
 void ClientDisconnectDispatcher(int client_id);
 void NewGameDispatcher(void);
 char* SetConfigstringDispatcher(int index, char* value);
+void RconDispatcher(const char* cmd);
 
 #endif /* PYMINQLX_H */

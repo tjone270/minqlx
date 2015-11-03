@@ -82,8 +82,14 @@ void __cdecl Slay(void) {
 }
 
 #ifndef NOPY
+// Execute a pyminqlx command as if it were the owner executing it.
+// Output will appear in the console.
+void __cdecl PyRcon(void) {
+    RconDispatcher(Cmd_Args());
+}
+
 void __cdecl PyCommand(void) {
-	if (!frame_handler) {
+	if (!custom_command_handler) {
 	        return; // No registered handler.
 	}
 	PyGILState_STATE gstate = PyGILState_Ensure();

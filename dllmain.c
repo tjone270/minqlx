@@ -318,7 +318,8 @@ void InitializeStatic(void) {
     Cmd_AddCommand("slap", Slap);
     Cmd_AddCommand("slay", Slay);
 #ifndef NOPY
-    Cmd_AddCommand("py", PyCommand);
+    Cmd_AddCommand("py", PyRcon);
+    Cmd_AddCommand("pycmd", PyCommand);
     Cmd_AddCommand("pyrestart", RestartPython);
 #endif
 	

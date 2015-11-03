@@ -180,3 +180,20 @@ char* SetConfigstringDispatcher(int index, char* value) {
 	PyGILState_Release(gstate);
 	return ret;
 }
+
+void RconDispatcher(const char* cmd) {
+    if (!rcon_handler)
+        return; // No registered handler.
+
+    PyGILState_STATE gstate = PyGILState_Ensure();
+
+    PyObject* result = PyObject_CallFunction(rcon_handler, "s", cmd);
+
+    if (result == NULL)
+        DebugError("PyObject_CallFunction() returned NULL.\n",
+                __FILE__, __LINE__, __func__);
+    Py_XDECREF(result);
+
+    PyGILState_Release(gstate);
+}
+

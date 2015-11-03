@@ -357,7 +357,7 @@ class ConsoleChannel(AbstractChannel):
         super().__init__("console")
 
     def reply(self, msg):
-        print(str(msg))
+        minqlx.console_print(str(msg))
 
 class ClientCommandChannel(AbstractChannel):
     """Wraps a TellChannel, but with its own name."""
