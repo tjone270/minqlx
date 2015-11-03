@@ -329,8 +329,14 @@ static PyObject* PyMinqlx_SetCvar(PyObject* self, PyObject* args) {
     if (!PyArg_ParseTuple(args, "ss|i:set_cvar", &name, &value, &flags))
         return NULL;
 
-	Cvar_Get(name, value, flags);
-	Py_RETURN_NONE;
+    cvar_t* var = Cvar_FindVar(name);
+    if (!var) {
+        Cvar_Get(name, value, flags);
+        Py_RETURN_TRUE;
+    }
+    
+    Cvar_Set2(name, value, qfalse);
+    Py_RETURN_FALSE;
 }
 
 /*
