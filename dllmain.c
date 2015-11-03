@@ -398,10 +398,6 @@ void EntryPoint(void) {
 	if (strcmp(__progname, qzeroded))
 		return;
 
-#ifdef DEBUG
-	printf("minqlx successfully preloaded. Press enter to initialize and launch the server.\n");
-	getchar();
-#endif
 	SearchFunctions();
 
 	// Initialize some key structure pointers before hooking, since we

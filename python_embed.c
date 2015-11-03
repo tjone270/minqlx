@@ -184,7 +184,9 @@ static PyObject* PyMinqlx_PlayerInfo(PyObject* self, PyObject* args) {
         
     }
     else if (!in_clientconnect && (svs->clients[i].state == CS_FREE)) {
-        DebugPrint("WARNING: PyMinqlx_PlayerInfo called for CS_FREE client %d.", i);
+        #ifndef NDEBUG
+        DebugPrint("WARNING: PyMinqlx_PlayerInfo called for CS_FREE client %d.\n", i);
+        #endif
         Py_RETURN_NONE;
     }
 
@@ -644,7 +646,7 @@ static PyObject* PyMinqlx_InitModule(void) {
     PyModule_AddStringConstant(module, "__version__", MINQLX_VERSION);
     
     // Set IS_DEBUG.
-    #ifdef DEBUG
+    #ifndef NDEBUG
     PyModule_AddObject(module, "DEBUG", Py_True);
     #else
     PyModule_AddObject(module, "DEBUG", Py_False);
