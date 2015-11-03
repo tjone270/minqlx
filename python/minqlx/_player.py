@@ -30,9 +30,13 @@ def _player(client_id):
         if key == "configstring":
             d.update(minqlx.parse_variables(info["configstring"]))
         elif key == "userinfo":
-            d.update(minqlx.parse_variables(info["userinfo"]))
+            userinfo = minqlx.parse_variables(info["userinfo"])
+            if "name" in userinfo:
+                del userinfo["name"]
+            d.update(userinfo)
         else:
             d[key] = info[key]
+
     return d
 
 def _players():

@@ -117,6 +117,16 @@ static PyObject* makePlayerDict(int client_id) {
 	}
 	Py_DECREF(userinfo);
 
+    // NAME
+    PyObject* name = PyUnicode_FromString(svs->clients[client_id].name);
+    if (PyDict_SetItemString(ret, "name", name) == -1) {
+        DebugError("Failed to add 'name' to the dictionary.\n",
+                __FILE__, __LINE__, __func__);
+        Py_DECREF(ret);
+        Py_RETURN_NONE;
+    }
+    Py_DECREF(name);
+
 	// STEAM ID
 	PyObject* steam_id = PyLong_FromLongLong(svs->clients[client_id].steam_id);
 	if (PyDict_SetItemString(ret, "steam_id", steam_id) == -1) {
