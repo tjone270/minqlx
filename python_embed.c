@@ -293,7 +293,7 @@ static PyObject* PyMinqlx_ConsoleCommand(PyObject* self, PyObject* args) {
     if (!PyArg_ParseTuple(args, "s:console_command", &cmd))
         return NULL;
 
-    Cbuf_ExecuteText(EXEC_APPEND, cmd);
+    Cbuf_ExecuteText(EXEC_INSERT, cmd);
 
     Py_RETURN_NONE;
 }
