@@ -1218,12 +1218,6 @@ typedef struct {
 extern void* qagame;
 extern void* qagame_dllentry;
 
-// In order to execute admin commands that aren't meant to be used from the console, we
-// need a fake client to fool the system into thinking a connected admin is doing it.
-extern gentity_t fake_entity;
-extern gclient_t fake_client;
-extern int is_fake_admin;
-
 // Additional key struct pointers.
 extern server_t* sv;
 extern serverStatic_t* svs;
@@ -1232,11 +1226,6 @@ extern level_locals_t* level;
 extern adminCmd_t* admin_commands;
 // Cvars.
 extern cvar_t* sv_maxclients;
-
-// Pending action bitfields and stuff.
-extern uint64_t pending_slap;
-extern int slap_damages[64];
-extern uint64_t pending_slay;
 
 // Internal QL function pointer types.
 typedef void (__cdecl *Com_Printf_ptr)(char* fmt, ...);
@@ -1263,7 +1252,6 @@ typedef void (__cdecl *SV_DropClient_ptr)(client_t* drop, const char* reason);
 typedef void (__cdecl *FS_Startup_ptr)(const char* gameName);
 typedef void (__cdecl *Sys_SetModuleOffset_ptr)(char* moduleName, void* offset);
 typedef void (__cdecl *SV_LinkEntity_ptr)(sharedEntity_t* gEnt);
-typedef char* (__cdecl *va_ptr)(char *format, ...);
 // VM functions.
 typedef void (__cdecl *G_RunFrame_ptr)(int time);
 typedef void (__cdecl *G_AddEvent_ptr)(gentity_t* ent, int event, int eventParm);
@@ -1271,7 +1259,6 @@ typedef void (__cdecl *G_InitGame_ptr)(int levelTime, int randomSeed, int restar
 typedef int (__cdecl *CheckPrivileges_ptr)(gentity_t* ent, char* cmd);
 typedef char* (__cdecl *ClientConnect_ptr)(int clientNum, qboolean firstTime, qboolean isBot);
 typedef void (__cdecl *ClientDisconnect_ptr)(int clientNum);
-typedef char* (__cdecl *GetClientName_ptr)(int clientNum);
 
 // Some of them are initialized by Initialize(), but not all of them necessarily.
 extern Com_Printf_ptr Com_Printf;
@@ -1302,7 +1289,6 @@ extern G_InitGame_ptr G_InitGame;
 extern CheckPrivileges_ptr CheckPrivileges;
 extern ClientConnect_ptr ClientConnect;
 extern ClientDisconnect_ptr ClientDisconnect;
-extern GetClientName_ptr GetClientName;
 
 // Server replacement functions for hooks.
 void __cdecl My_Cmd_AddCommand(char* cmd, void* func);
@@ -1315,7 +1301,6 @@ void __cdecl My_G_RunFrame(int time);
 void __cdecl My_G_InitGame(int levelTime, int randomSeed, int restart);
 char* __cdecl My_ClientConnect(int clientNum, qboolean firstTime, qboolean isBot);
 void __cdecl My_ClientDisconnect(int clientNum);
-char* __cdecl My_GetClientName(int clientNum);
 #endif
 
 // Custom commands added using Cmd_AddCommand during initialization.
@@ -1324,7 +1309,6 @@ void __cdecl CenterPrint(void); // "cp"
 void __cdecl RegularPrint(void); // "p"
 void __cdecl Slap(void); // "slap"
 void __cdecl Slay(void); // "slay"
-void __cdecl AdminCommand(void); // All the admin commands.
 #ifndef NOPY
 // PyCommand is special. It'll serve as the handler for console commands added
 // using Python. This means it can serve as the handler for a bunch of commands,

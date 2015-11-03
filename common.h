@@ -46,7 +46,6 @@ void DebugError(const char* fmt, const char* file, int line, const char* func, .
 // Misc.
 int GetPendingPlayer(uint64_t* players);
 void SetPendingPlayer(uint64_t* players, int client_id);
-int ExecuteAdminCommand(int client_id, const char* args);
 float RandomFloat(void);
 float RandomFloatWithNegative(void);
 void* PatternSearch(void* address, size_t length, const char* pattern, const char* mask);

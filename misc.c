@@ -5,8 +5,6 @@
 #include "quake_common.h"
 #include "maps_parser.h"
 
-int is_fake_admin = 0;
-
 /* Takes a 64-bit integer used as a bit field as flags for which player
  * has an action pending, removes the flag and returns the client ID.
  * The server only allows up to 64 players, so a 64-bit int covers it all.
@@ -33,38 +31,6 @@ int GetPendingPlayer(uint64_t* players) {
 // Set a flag on client ID to indicate a pending action on the player.
 void SetPendingPlayer(uint64_t* players, int client_id) {
     *players |= 1LL << client_id;
-}
-
-int ExecuteAdminCommand(int client_id, const char* args) {
-	Cmd_TokenizeString(args);
-	char* cmd = Cmd_Argv(0);
-	gentity_t* executor;
-	if (client_id == -1)
-		executor = &fake_entity;
-	else
-		executor = &g_entities[client_id];
-
-	for (adminCmd_t* ac = admin_commands; ac->cmd; ac++) {
-		if (!strcmp(ac->cmd, cmd)) {
-			if (client_id == -1 && (!strcmp(ac->cmd, "opsay") || !strcmp(ac->cmd, "abort") ||
-				!strcmp(ac->cmd, "pause") || !strcmp(ac->cmd, "unpause") || !strcmp(ac->cmd, "timeout") ||
-				!strcmp(ac->cmd, "put") || !strcmp(ac->cmd, "timein")))
-			{
-				// The above commands prints the caller's name, so we tell our hooked "GetClientName"
-				// to print "An admin" instead when we use a fake client. Otherwise it'll try
-				// to access the name of a nonexsistent player and segfault.
-				is_fake_admin = 1;
-				ac->admin_func(executor);
-				is_fake_admin = 0;
-			}
-			else {
-				ac->admin_func(executor);
-			}
-			return 0;
-		}
-	}
-
-	return 1;
 }
 
 // (0.0f, 1.0f)

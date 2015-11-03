@@ -142,13 +142,6 @@ void __cdecl My_ClientDisconnect(int clientNum) {
 	ClientDisconnect(clientNum);
 }
 
-char* __cdecl My_GetClientName(int clientNum) {
-	if (is_fake_admin)
-		return "An admin";
-
-	return GetClientName(clientNum);
-}
-
 void __cdecl My_SV_SetConfigstring(int index, char* value) {
 	// Indices 16 and 66X are spammed a ton every frame for some reason,
 	// so we add some exceptions for those. I don't think we should have any
@@ -254,12 +247,6 @@ void HookVm(void) {
 	res = Hook((void*)ClientDisconnect, My_ClientDisconnect, (void*)&ClientDisconnect);
 	if (res) {
 		DebugPrint("ERROR: Failed to hook ClientDisconnect: %d\n", res);
-		failed = 1;
-	}
-
-	res = Hook((void*)GetClientName, My_GetClientName, (void*)&GetClientName);
-	if (res) {
-		DebugPrint("ERROR: Failed to hook GetClientName: %d\n", res);
 		failed = 1;
 	}
 

@@ -369,50 +369,6 @@ static PyObject* PyMinqlx_SetCvarLimit(PyObject* self, PyObject* args) {
 
 /*
  * ================================================================
- *                        admin_command
- * ================================================================
-*/
-
-static PyObject* PyMinqlx_AdminCommand(PyObject* self, PyObject* args) {
-    int i;
-    char* cmd;
-    PyObject* client_id;
-    if (!PyArg_ParseTuple(args, "Os:admin_command", &client_id, &cmd))
-        return NULL;
-
-    if (client_id == Py_None) {
-		if (!ExecuteAdminCommand(-1, cmd))
-			Py_RETURN_NONE;
-		else {
-			PyErr_Format(PyExc_ValueError, "Invalid admin command.");
-			return NULL;
-		}
-	}
-	else if (PyLong_Check(client_id)) {
-		i = PyLong_AsLong(client_id);
-		if (i >= 0 && i < sv_maxclients->integer) {
-			if (svs->clients[i].state != CS_ACTIVE) {
-				PyErr_Format(PyExc_ValueError,
-						"client_id must be None or the ID of an active player.");
-				return NULL;
-			}
-			else if (!ExecuteAdminCommand(i, cmd))
-				Py_RETURN_NONE;
-			else {
-				PyErr_Format(PyExc_ValueError, "Invalid admin command.");
-				return NULL;
-			}
-		}
-	}
-
-    PyErr_Format(PyExc_ValueError,
-    		"client_id needs to be a number from 0 to %d, or None.",
-			sv_maxclients->integer);
-	return NULL;
-}
-
-/*
- * ================================================================
  *                             kick
  * ================================================================
 */
@@ -615,8 +571,6 @@ static PyMethodDef minqlxMethods[] = {
 	 "Sets a cvar."},
     {"set_cvar_limit", PyMinqlx_SetCvarLimit, METH_VARARGS,
      "Sets a non-string cvar with a minimum and maximum value."},
-	{"admin_command", PyMinqlx_AdminCommand, METH_VARARGS,
-	 "Executes an admin command."},
 	{"kick", PyMinqlx_Kick, METH_VARARGS,
 	 "Kick a player and allowing the admin to supply a reason for it."},
 	{"console_print", PyMinqlx_ConsolePrint, METH_VARARGS,

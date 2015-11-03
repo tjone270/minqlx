@@ -53,7 +53,7 @@ SV_SetConfigstring_ptr SV_SetConfigstring;
 SV_GetConfigstring_ptr SV_GetConfigstring;
 SV_DropClient_ptr SV_DropClient;
 Sys_SetModuleOffset_ptr Sys_SetModuleOffset;
-va_ptr va;
+
 // VM functions
 G_RunFrame_ptr G_RunFrame;
 G_AddEvent_ptr G_AddEvent;
@@ -61,7 +61,6 @@ G_InitGame_ptr G_InitGame;
 CheckPrivileges_ptr CheckPrivileges;
 ClientConnect_ptr ClientConnect;
 ClientDisconnect_ptr ClientDisconnect;
-GetClientName_ptr GetClientName;
 
 // VM global variables.
 gentity_t* g_entities;
@@ -250,13 +249,6 @@ static void SearchFunctions(void) {
 	}
 	else DebugPrint("Sys_SetModuleOffset: %p\n", Sys_SetModuleOffset);
 
-	va = (va_ptr)PatternSearchModule(&module, PTRN_VA, MASK_VA);
-	if (va == NULL) {
-		DebugPrint("ERROR: Unable to find va.\n");
-		failed = 1;
-	}
-	else DebugPrint("va: %p\n", va);
-
 	// Cmd_Argc is really small, making it hard to search for, so we use a reference to it instead.
 	Cmd_Argc = (Cmd_Argc_ptr)(*(int32_t*)OFFSET_RELP_CMD_ARGC + OFFSET_RELP_CMD_ARGC + 4);
 
@@ -305,14 +297,6 @@ void SearchVmFunctions(void) {
 	}
 	else DebugPrint("ClientDisconnect: %p\n", ClientDisconnect);
 
-	GetClientName = (GetClientName_ptr)PatternSearch((void*)((pint)qagame + 0xB000),
-			0xB0000, PTRN_GETCLIENTNAME, MASK_GETCLIENTNAME);
-	if (GetClientName == NULL) {
-		DebugPrint("ERROR: Unable to find GetClientName.\n");
-		failed = 1;
-	}
-	else DebugPrint("GetClientName: %p\n", GetClientName);
-
 	if (failed) {
 			DebugPrint("Exiting.\n");
 			exit(1);
@@ -333,27 +317,6 @@ void InitializeStatic(void) {
     Cmd_AddCommand("print", RegularPrint);
     Cmd_AddCommand("slap", Slap);
     Cmd_AddCommand("slay", Slay);
-    // Slightly hacky way to make a bunch of admin commands work through the console.
-    /* sponge added these in an update. Keeping them around for now just in case.
-    Cmd_AddCommand("allready", AdminCommand);
-    Cmd_AddCommand("pause", AdminCommand);
-    Cmd_AddCommand("unpause", AdminCommand);
-    Cmd_AddCommand("lock", AdminCommand);
-    Cmd_AddCommand("unlock", AdminCommand);
-    Cmd_AddCommand("put", AdminCommand);
-    Cmd_AddCommand("mute", AdminCommand);
-    Cmd_AddCommand("unmute", AdminCommand);
-    Cmd_AddCommand("ban", AdminCommand);
-    Cmd_AddCommand("unban", AdminCommand);
-    Cmd_AddCommand("opsay", AdminCommand);
-    Cmd_AddCommand("addadmin", AdminCommand);
-    Cmd_AddCommand("addmod", AdminCommand);
-    Cmd_AddCommand("demote", AdminCommand);
-    Cmd_AddCommand("abort", AdminCommand);
-    Cmd_AddCommand("addscore", AdminCommand);
-    Cmd_AddCommand("addteamscore", AdminCommand);
-    Cmd_AddCommand("setmatchtime", AdminCommand);
-    */
 #ifndef NOPY
     Cmd_AddCommand("py", PyCommand);
     Cmd_AddCommand("pyrestart", RestartPython);
@@ -388,7 +351,6 @@ void InitializeVm(void) {
 // Called after the game is initialized.
 void InitializeCvars(void) {
     sv_maxclients = Cvar_FindVar("sv_maxclients");
-    Cvar_GetLimit("sv_fps", "40", "10", "100000", 0x1000);
     
     cvars_initialized = 1;
 }
