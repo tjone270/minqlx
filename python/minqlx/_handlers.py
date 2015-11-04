@@ -99,16 +99,19 @@ def handle_client_command(client_id, cmd):
         res = _re_team.match(cmd)
         if res:
             arg = res.group("arg").lower()
-            if arg == "f":
-                return minqlx.EVENT_DISPATCHERS["team_switch"].dispatch(player, player.team, "free")
+            if arg == player.team[0]:
+                # Don't trigger if player is joining the same team.
+                return
+            elif arg == "f":
+                return minqlx.EVENT_DISPATCHERS["team_switch_attempt"].dispatch(player, player.team, "free")
             elif arg == "r":
-                return minqlx.EVENT_DISPATCHERS["team_switch"].dispatch(player, player.team, "red")
+                return minqlx.EVENT_DISPATCHERS["team_switch_attempt"].dispatch(player, player.team, "red")
             elif arg == "b":
-                return minqlx.EVENT_DISPATCHERS["team_switch"].dispatch(player, player.team, "blue")
+                return minqlx.EVENT_DISPATCHERS["team_switch_attempt"].dispatch(player, player.team, "blue")
             elif arg == "s":
-                return minqlx.EVENT_DISPATCHERS["team_switch"].dispatch(player, player.team, "spectator")
+                return minqlx.EVENT_DISPATCHERS["team_switch_attempt"].dispatch(player, player.team, "spectator")
             elif arg == "a":
-                return minqlx.EVENT_DISPATCHERS["team_switch"].dispatch(player, player.team, "any")
+                return minqlx.EVENT_DISPATCHERS["team_switch_attempt"].dispatch(player, player.team, "any")
     except:
         minqlx.log_exception()
         return True

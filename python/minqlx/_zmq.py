@@ -96,6 +96,16 @@ class StatsListener():
                     minqlx.EVENT_DISPATCHERS["death"].dispatch(player, player_killer, stats["DATA"])
                     if player_killer:
                         minqlx.EVENT_DISPATCHERS["kill"].dispatch(player, player_killer, stats["DATA"])
+                elif stats["TYPE"] == "PLAYER_SWITCHTEAM":
+                    # No idea why they named it "KILLER" here, but whatever.
+                    player = minqlx.Plugin.player(int(stats["DATA"]["KILLER"]["STEAM_ID"]))
+                    old_team = stats["DATA"]["KILLER"]["OLD_TEAM"].lower()
+                    new_team = stats["DATA"]["KILLER"]["TEAM"].lower()
+                    if old_team != new_team:
+                        res = minqlx.EVENT_DISPATCHERS["team_switch"].dispatch(player, old_team, new_team)
+                        if res == False:
+                            player.put(old_team)
+
         except zmq.error.Again:
             pass
         except Exception:
