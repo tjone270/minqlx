@@ -85,15 +85,15 @@ class Command:
         # Check if config overrides permission.
         perm = self.permission
         client_cmd_perm = self.client_cmd_perm
-        perm_key = "qlx_perm_" + self.name[0]
-        client_cmd_perm_key = "qlx_ccmd_perm_" + self.name[0]
-        cvar = minqlx.get_cvar(perm_key)
-        cvar_client_cmd = minqlx.get_cvar(client_cmd_perm_key)
 
-        if cvar != None:
-            perm = int(cvar)
-        if is_client_cmd and cvar_client_cmd != None:
-            client_cmd_perm = int(cvar_client_cmd)
+        if is_client_cmd:
+            cvar_client_cmd = minqlx.get_cvar("qlx_ccmd_perm_" + self.name[0])
+            if cvar_client_cmd:
+                client_cmd_perm = int(cvar_client_cmd)
+        else:
+            cvar = minqlx.get_cvar("qlx_perm_" + self.name[0])
+            if cvar:
+                perm = int(cvar)
 
         if (player.steam_id == minqlx.owner() or
             (not is_client_cmd and perm == 0) or
