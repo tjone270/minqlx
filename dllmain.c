@@ -65,13 +65,9 @@ ClientDisconnect_ptr ClientDisconnect;
 // VM global variables.
 gentity_t* g_entities;
 level_locals_t* level;
-adminCmd_t* admin_commands;
 
 // Cvars.
 cvar_t* sv_maxclients;
-// Fake admin stuff.
-gentity_t fake_entity = {0};
-gclient_t fake_client = {0};
 
 // TODO: Make it output everything to a file too.
 void DebugPrint(const char* fmt, ...) {
@@ -341,10 +337,8 @@ void InitializeVm(void) {
     DebugPrint("Initializing VM pointers...\n");
 #if defined(__x86_64__) || defined(_M_X64)
     g_entities = (gentity_t*)(*(int32_t*)OFFSET_RELP_G_ENTITIES + OFFSET_RELP_G_ENTITIES + 4);
-    admin_commands = (adminCmd_t*)(*(int32_t*)OFFSET_RELP_ADMINCOMMANDS + OFFSET_RELP_ADMINCOMMANDS + 4);
     level = (level_locals_t*)(*(int32_t*)OFFSET_RELP_LEVEL + OFFSET_RELP_LEVEL + 4);
 #elif defined(__i386) || defined(_M_IX86)
-    // TODO: admin_commands x86
     g_entities = (gentity_t*)(*(int32_t*)OFFSET_RELP_G_ENTITIES + 0xCAFF4 + (pint)qagame);
 #endif
 }
@@ -378,9 +372,4 @@ void EntryPoint(void) {
     //       when building and then make it print it here.
     DebugPrint("Shared library loaded!\n");
     HookStatic();
-
-    // Initialize our fake admin stuff here, since it doesn't depend on anything
-    // else being initialized, and we only need to do it once.
-    fake_entity.client = &fake_client;
-    fake_client.privileges = PRIV_ADMIN;
 }

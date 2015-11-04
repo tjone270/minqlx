@@ -1223,7 +1223,6 @@ extern server_t* sv;
 extern serverStatic_t* svs;
 extern gentity_t* g_entities;
 extern level_locals_t* level;
-extern adminCmd_t* admin_commands;
 // Cvars.
 extern cvar_t* sv_maxclients;
 
