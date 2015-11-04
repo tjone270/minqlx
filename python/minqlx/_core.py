@@ -30,6 +30,7 @@ import importlib
 import datetime
 import os.path
 import logging
+import shutil
 import shlex
 import sys
 import os
@@ -97,9 +98,12 @@ def _configure_logger():
     logger.setLevel(logging.DEBUG)
     
     # File
-    homepath = minqlx.get_cvar("fs_homepath")
+    file_path = os.path.join(minqlx.get_cvar("fs_homepath"), "minqlx.log")
+    if os.path.isfile(file_path):
+        # If the file already exists, we back it up before we start logging.
+        shutil.move(file_path, file_path + ".bak")
     file_fmt = logging.Formatter("(%(asctime)s) [%(levelname)s @ %(name)s.%(funcName)s] %(message)s", "%H:%M:%S")
-    file_handler = logging.FileHandler(os.path.join(homepath, "minqlx.log"), mode="w", encoding="utf-8")
+    file_handler = logging.FileHandler(file_path, mode="w", encoding="utf-8")
     file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(file_fmt)
     logger.addHandler(file_handler)

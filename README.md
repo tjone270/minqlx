@@ -110,7 +110,7 @@ Contribute
 ==========
 If you'd like to contribute with code, you can fork this or the plugin repository and create pull requests for changes. If you found a bug, please open an issue here on Github and include the relevant part from either the
 server's console output or from `minqlx.log` which is in your `fs_homepath`, preferably the latter as it is
-more verbose. Note that `minqlx.log` does get truncated between runs.
+more verbose. Note that `minqlx.log` starts with a new file every run, but saves the last run as `minqlx.log.bak`.
 
 Both when compiling and when using binaries, the core module is in a zip file. If you want to modify
 the code, simply unzip the contents of it in the same directory and then delete the zip file. minqlx will
