@@ -85,8 +85,8 @@ class Command:
         # Check if config overrides permission.
         perm = self.permission
         client_cmd_perm = self.client_cmd_perm
-        perm_key = "perm_" + self.name[0]
-        client_cmd_perm_key = "client_cmd_perm_" + self.name[0]
+        perm_key = "qlx_perm_" + self.name[0]
+        client_cmd_perm_key = "qlx_ccmd_perm_" + self.name[0]
         cvar = minqlx.get_cvar(perm_key)
         cvar_client_cmd = minqlx.get_cvar(client_cmd_perm_key)
 
