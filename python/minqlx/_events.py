@@ -363,67 +363,85 @@ class VoteDispatcher(EventDispatcher):
     name = "vote"
 
     def dispatch(self, player, yes):
-        super().dispatch(yes)
+        return super().dispatch(yes)
 
 class GameCountdownDispatcher(EventDispatcher):
     name = "game_countdown"
     
     def dispatch(self):
-        super().dispatch()
+        return super().dispatch()
 
 class GameStartDispatcher(EventDispatcher):
     name = "game_start"
     
     def dispatch(self, data):
-        super().dispatch(data)
+        return super().dispatch(data)
 
 class GameEndDispatcher(EventDispatcher):
     name = "game_end"
     
     def dispatch(self, data):
-        super().dispatch(data)
+        return super().dispatch(data)
 
 class RoundCountdownDispatcher(EventDispatcher):
     name = "round_countdown"
     
     def dispatch(self, round_number):
-        super().dispatch(round_number)
+        return super().dispatch(round_number)
 
 class RoundStartDispatcher(EventDispatcher):
     name = "round_start"
     
     def dispatch(self, round_number):
-        super().dispatch(round_number)
+        return super().dispatch(round_number)
 
 class RoundEndDispatcher(EventDispatcher):
     name = "round_end"
     
     def dispatch(self, data):
-        super().dispatch(data)
+        return super().dispatch(data)
 
 class TeamSwitchDispatcher(EventDispatcher):
+    """For when a player switches teams. If cancelled,
+    simply put the player back in the old team.
+
+    If possible, consider using team_switch_attempt for a cleaner
+    solution if you need to cancel the event."""
     name = "team_switch"
     
     def dispatch(self, player, old_team, new_team):
-        super().dispatch(player, old_team, new_team)
+        return super().dispatch(player, old_team, new_team)
+
+class TeamSwitchAttemptDispatcher(EventDispatcher):
+    """For when a player attempts to join a team. Prevents the player from doing it when cancelled.
+
+    When players click the Join Match button, it sends "team a" (with the "a" being "any",
+    presumably), meaning the new_team argument can also be "any" in addition to all the
+    other teams.
+
+    """
+    name = "team_switch_attempt"
+    
+    def dispatch(self, player, old_team, new_team):
+        return super().dispatch(player, old_team, new_team)
 
 class MapDispatcher(EventDispatcher):
     name = "map"
     
     def dispatch(self, mapname, factory):
-        super().dispatch(mapname, factory)
+        return super().dispatch(mapname, factory)
 
 class KillDispatcher(EventDispatcher):
     name = "kill"
     
     def dispatch(self, victim, killer, data):
-        super().dispatch(victim, killer, data)
+        return super().dispatch(victim, killer, data)
 
 class DeathDispatcher(EventDispatcher):
     name = "death"
     
     def dispatch(self, victim, killer, data):
-        super().dispatch(victim, killer, data)
+        return super().dispatch(victim, killer, data)
 
 EVENT_DISPATCHERS = EventDispatcherManager()
 EVENT_DISPATCHERS.add_dispatcher(CommandDispatcher)
@@ -447,6 +465,7 @@ EVENT_DISPATCHERS.add_dispatcher(RoundCountdownDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(RoundStartDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(RoundEndDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(TeamSwitchDispatcher)
+EVENT_DISPATCHERS.add_dispatcher(TeamSwitchAttemptDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(MapDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(KillDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(DeathDispatcher)
