@@ -242,8 +242,8 @@ class Player():
         except NonexistentPlayerError:
             return False
 
-    def tell(self, msg):
-        return minqlx.Plugin.tell(msg, self)
+    def tell(self, msg, **kwargs):
+        return minqlx.Plugin.tell(msg, self, **kwargs)
 
     def kick(self, reason=""):
         return minqlx.Plugin.kick(self, reason)

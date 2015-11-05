@@ -287,18 +287,18 @@ class Plugin():
         return None
     
     @classmethod
-    def msg(cls, msg, chat_channel="chat"):
+    def msg(cls, msg, chat_channel="chat", **kwargs):
         """Send a message to the chat, or any other channel."""
         if isinstance(chat_channel, minqlx.AbstractChannel):
-            chat_channel.reply(msg)
+            chat_channel.reply(msg, **kwargs)
         elif chat_channel == minqlx.CHAT_CHANNEL:
-            minqlx.CHAT_CHANNEL.reply(msg)
+            minqlx.CHAT_CHANNEL.reply(msg, **kwargs)
         elif chat_channel == minqlx.RED_TEAM_CHAT_CHANNEL:
-            minqlx.RED_TEAM_CHAT_CHANNEL.reply(msg)
+            minqlx.RED_TEAM_CHAT_CHANNEL.reply(msg, **kwargs)
         elif chat_channel == minqlx.BLUE_TEAM_CHAT_CHANNEL:
-            minqlx.BLUE_TEAM_CHAT_CHANNEL.reply(msg)
+            minqlx.BLUE_TEAM_CHAT_CHANNEL.reply(msg, **kwargs)
         elif chat_channel == minqlx.CONSOLE_CHANNEL:
-            minqlx.CONSOLE_CHANNEL.reply(msg)
+            minqlx.CONSOLE_CHANNEL.reply(msg, **kwargs)
         else:
             raise ValueError("Invalid channel.")
     
@@ -402,7 +402,7 @@ class Plugin():
         return res
 
     @classmethod
-    def tell(cls, msg, recipient):
+    def tell(cls, msg, recipient, **kwargs):
         """Send a tell (private message) to someone.
 
         :param msg: The message to be sent.
@@ -412,7 +412,7 @@ class Plugin():
         :returns: bool -- True if succeeded, False otherwise.
         :raises: ValueError
         """
-        minqlx.TellChannel(recipient).reply(msg)
+        minqlx.TellChannel(recipient).reply(msg, **kwargs)
 
     @classmethod
     def is_vote_active(cls):

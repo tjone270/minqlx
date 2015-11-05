@@ -233,7 +233,7 @@ class AbstractChannel:
     def name(self):
         return self._name
 
-    def reply(self):
+    def reply(self, msg):
         raise NotImplementedError()
 
     def split_long_msg(self, msg, limit=100, delimiter=" "):
@@ -267,7 +267,7 @@ class ChatChannel(AbstractChannel):
         self.team = "all"
     
     @minqlx.next_frame
-    def reply(self, msg):
+    def reply(self, msg, limit=100, delimiter=" "):
         msg = str(msg)
         # Can deal with all the below ChatChannel subclasses.
         last_color = ""
@@ -284,7 +284,7 @@ class ChatChannel(AbstractChannel):
                 if p.team == self.team:
                     targets.append(p.id)
         
-        for s in self.split_long_msg(msg, limit=100):
+        for s in self.split_long_msg(msg, limit, delimiter):
             if not targets:
                 minqlx.send_server_command(None, self.fmt.format(last_color + s))
             else:
@@ -302,18 +302,12 @@ class RedTeamChatChannel(ChatChannel):
         self.fmt = "print \"{}\n\"\n"
         self.team = "red"
 
-    def reply(self, msg):
-        super().reply(msg)
-
 class BlueTeamChatChannel(ChatChannel):
     """A channel for in-game chat to and from the blue team."""
     def __init__(self):
         super(ChatChannel, self).__init__("blue_team_chat")
         self.fmt = "print \"{}\n\"\n"
         self.team = "blue"
-
-    def reply(self, msg):
-        super().reply(msg)
 
 class FreeChatChannel(ChatChannel):
     """A channel for in-game chat to and from the free team. The free team
@@ -325,18 +319,12 @@ class FreeChatChannel(ChatChannel):
         self.fmt = "print \"{}\n\"\n"
         self.team = "free"
 
-    def reply(self, msg):
-        super().reply(msg)
-
 class SpectatorChatChannel(ChatChannel):
     """A channel for in-game chat to and from the spectator team."""
     def __init__(self):
         super(ChatChannel, self).__init__("spectator_chat")
         self.fmt = "print \"{}\n\"\n"
         self.team = "spectator"
-
-    def reply(self, msg):
-        super().reply(msg)
 
 class TellChannel(ChatChannel):
     """A channel for private in-game messages."""
@@ -347,9 +335,6 @@ class TellChannel(ChatChannel):
 
     def __repr__(self):
         return "tell {}".format(minqlx.Plugin.player(self.recipient).steam_id)
-
-    def reply(self, msg):
-        super().reply(msg)
 
 class ConsoleChannel(AbstractChannel):
     """A channel that prints to the console."""
@@ -369,8 +354,8 @@ class ClientCommandChannel(AbstractChannel):
     def __repr__(self):
         return "client_command {}".format(minqlx.Plugin.player(self.recipient).id)
 
-    def reply(self, msg):
-        self.tell_channel.reply(msg)
+    def reply(self, msg, limit=100, delimiter=" "):
+        self.tell_channel.reply(msg, limit, delimiter)
 
 
 # ====================================================================
