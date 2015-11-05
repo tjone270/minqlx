@@ -43,9 +43,9 @@ void __cdecl Slap(void) {
     if (g_entities[i].inuse && g_entities[i].health > 0) {
         Com_Printf("Slapping...\n");
         if (dmg)
-            SV_SendServerCommand(NULL, "print \"%s was slapped for %d damage!\n\"\n", svs->clients[i].name, dmg);
+            SV_SendServerCommand(NULL, "print \"%s^7 was slapped for %d damage!\n\"\n", svs->clients[i].name, dmg);
         else
-            SV_SendServerCommand(NULL, "print \"%s was slapped!\n\"\n", svs->clients[i].name);
+            SV_SendServerCommand(NULL, "print \"%s^7 was slapped!\n\"\n", svs->clients[i].name);
         g_entities[i].client->ps.velocity[0] += RandomFloatWithNegative() * 200.0f;
         g_entities[i].client->ps.velocity[1] += RandomFloatWithNegative() * 200.0f;
         g_entities[i].client->ps.velocity[2] += 300.0f;
@@ -72,7 +72,7 @@ void __cdecl Slay(void) {
     }
     else if (g_entities[i].inuse && g_entities[i].health > 0) {
         Com_Printf("Slaying player...\n");
-        SV_SendServerCommand(NULL, "print \"%s was slain!\n\"\n", svs->clients[i].name);
+        SV_SendServerCommand(NULL, "print \"%s^7 was slain!\n\"\n", svs->clients[i].name);
         DebugPrint("Slaying '%s'!\n", svs->clients[i].name);
 		g_entities[i].health = -40;
 		G_AddEvent(&g_entities[i], EV_GIB_PLAYER, g_entities[i].s.number);
