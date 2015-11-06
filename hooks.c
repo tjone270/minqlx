@@ -268,9 +268,9 @@ static void SetTag(void) {
     cvar_t* sv_tags = Cvar_FindVar("sv_tags");
     if (strlen(sv_tags->string) > 2) { // Does it already have tags?
         snprintf(tags, sizeof(tags), "sv_tags \"" SV_TAGS_PREFIX ",%s\"", sv_tags->string);
-        Cbuf_ExecuteText(EXEC_APPEND, tags);
+        Cbuf_ExecuteText(EXEC_INSERT, tags);
     }
     else {
-        Cbuf_ExecuteText(EXEC_APPEND, "sv_tags \"" SV_TAGS_PREFIX "\"");
+        Cbuf_ExecuteText(EXEC_INSERT, "sv_tags \"" SV_TAGS_PREFIX "\"");
     }
 }
