@@ -167,16 +167,25 @@ def handle_frame():
         return True
 
 _zmq_warning_issued = False
+_first_game = True
 
 def handle_new_game():
-    # This is called early in the launch process, so it's a good place to warn
-    # the owner if ZMQ stats are disabled.
-    global _zmq_warning_issued
-    if not bool(int(minqlx.get_cvar("zmq_stats_enable"))) and not _zmq_warning_issued:
-        logger = minqlx.get_logger()
-        logger.warning("Some events will not work because ZMQ stats is not enabled. "
-            "Launch the server with \"zmq_stats_enable 1\"")
-        _zmq_warning_issued = True
+    # This is called early in the launch process, so it's a good place to initialize
+    # minqlx stuff that needs QLDS to be initialized.
+    global _first_game
+    if _first_game:
+        minqlx.late_init()
+        _first_game = False
+
+        # A good place to warn the owner if ZMQ stats are disabled.
+        global _zmq_warning_issued
+        if not bool(int(minqlx.get_cvar("zmq_stats_enable"))) and not _zmq_warning_issued:
+            logger = minqlx.get_logger()
+            logger.warning("Some events will not work because ZMQ stats is not enabled. "
+                "Launch the server with \"zmq_stats_enable 1\"")
+            _zmq_warning_issued = True
+
+    minqlx.set_map_subtitles()
 
     try:
         minqlx.EVENT_DISPATCHERS["map"].dispatch(

@@ -174,6 +174,29 @@ def set_cvar_limit_once(name, value, minimum, maximum, flags=0):
 
     return False
 
+def set_plugins_version(path):
+    args = shlex.split("git describe --long --tags --dirty --always")
+
+    # We keep environment variables, but remove LD_PRELOAD to avoid a warning the OS might throw.
+    env = dict(os.environ)
+    del env["LD_PRELOAD"]
+    try:
+        p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=path, env=env)
+        p.wait(timeout=1)
+        if p.returncode != 0:
+            setattr(minqlx, "__plugins_version__", "NOT_SET")
+            return
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        setattr(minqlx, "__plugins_version__", "NOT_SET")
+        return
+
+    setattr(minqlx, "__plugins_version__", p.stdout.read().decode().strip())
+
+def set_map_subtitles():
+    minqlx.set_configstring(678, "Running minqlx ^6{}^7 with plugins ^6{}^7."
+        .format(minqlx.__version__, minqlx.__plugins_version__))
+    minqlx.set_configstring(679, "Check ^6http://github.com/MinoMino/minqlx^7 for more details.")
+
 # ====================================================================
 #                              DECORATORS
 # ====================================================================
@@ -232,24 +255,6 @@ def thread(func, force=False):
             return t
     
     return f
-
-def set_plugins_version(path):
-    args = shlex.split("git describe --long --tags --dirty --always")
-
-    # We keep environment variables, but remove LD_PRELOAD to avoid a warning the OS might throw.
-    env = dict(os.environ)
-    del env["LD_PRELOAD"]
-    try:
-        p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=path, env=env)
-        p.wait(timeout=1)
-        if p.returncode != 0:
-            setattr(minqlx, "__plugins_version__", "NOT_SET")
-            return
-    except (FileNotFoundError, subprocess.TimeoutExpired):
-        setattr(minqlx, "__plugins_version__", "NOT_SET")
-        return
-
-    setattr(minqlx, "__plugins_version__", p.stdout.read().decode().strip())
 
 # ====================================================================
 #                       CONFIG AND PLUGIN LOADING
@@ -365,40 +370,40 @@ def initialize_cvars():
 
 def initialize():
     minqlx.register_handlers()
+
+def late_init():
+    """Initialization that needs to be called after QLDS has finished
+    its own initialization.
+
+    """
+    minqlx.initialize_cvars()
+
+    # Set the default database plugins should use.
+    # TODO: Make Plugin.database setting generic.
+    if minqlx.get_cvar("qlx_database").lower() == "redis":
+        minqlx.Plugin.database = minqlx.database.Redis
+
+    # Get the plugins path and set minqlx.__plugins_version__.
+    plugins_path = os.path.abspath(minqlx.get_cvar("qlx_pluginsPath"))
+    set_plugins_version(plugins_path)
+
+    # Initialize the logger now that we have fs_basepath.
+    _configure_logger()
+    logger = get_logger()
+    # Set our own exception handler so that we can log them if unhandled.
+    sys.excepthook = handle_exception
+
+    # Add the plugins path to PATH so that we can load plugins later.
+    sys.path.append(os.path.dirname(plugins_path))
     
-    # next_frame to ensure it gets called after QLDS is initialized.
-    @next_frame
-    def late_init():
-        minqlx.initialize_cvars()
+    logger.info("Loading preset plugins...")
+    load_preset_plugins()
 
-        # Set the default database plugins should use.
-        # TODO: Make Plugin.database setting generic.
-        if minqlx.get_cvar("qlx_database").lower() == "redis":
-            minqlx.Plugin.database = minqlx.database.Redis
+    if bool(int(minqlx.get_cvar("zmq_stats_enable"))):
+        global _stats
+        _stats = minqlx.StatsListener()
+        logger.info("Stats listener started on {}.".format(_stats.address))
+        # Start polling. Not blocking due to decorator magic. Aw yeah.
+        _stats.keep_receiving()
 
-        # Get the plugins path and set minqlx.__plugins_version__.
-        plugins_path = os.path.abspath(minqlx.get_cvar("qlx_pluginsPath"))
-        set_plugins_version(plugins_path)
-
-        # Initialize the logger now that we have fs_basepath.
-        _configure_logger()
-        logger = get_logger()
-        # Set our own exception handler so that we can log them if unhandled.
-        sys.excepthook = handle_exception
-
-        # Add the plugins path to PATH so that we can load plugins later.
-        sys.path.append(os.path.dirname(plugins_path))
-        
-        logger.info("Loading preset plugins...")
-        load_preset_plugins()
-
-        if bool(int(minqlx.get_cvar("zmq_stats_enable"))):
-            global _stats
-            _stats = minqlx.StatsListener()
-            logger.info("Stats listener started on {}.".format(_stats.address))
-            # Start polling. Not blocking due to decorator magic. Aw yeah.
-            _stats.keep_receiving()
-
-        logger.info("We're good to go!")
-
-    late_init()
+    logger.info("We're good to go!")
