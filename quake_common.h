@@ -1295,11 +1295,11 @@ void __cdecl My_Sys_SetModuleOffset(char* moduleName, void* offset);
 #ifndef NOPY
 void __cdecl My_SV_ClientEnterWorld(client_t* client, usercmd_t* cmd);
 void __cdecl My_SV_SetConfigstring(int index, char* value);
+void __cdecl My_SV_DropClient(client_t* drop, const char* reason);
 // VM replacement functions for hooks.
 void __cdecl My_G_RunFrame(int time);
 void __cdecl My_G_InitGame(int levelTime, int randomSeed, int restart);
 char* __cdecl My_ClientConnect(int clientNum, qboolean firstTime, qboolean isBot);
-void __cdecl My_ClientDisconnect(int clientNum);
 #endif
 
 // Custom commands added using Cmd_AddCommand during initialization.

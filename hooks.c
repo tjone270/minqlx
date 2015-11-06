@@ -118,6 +118,28 @@ void __cdecl My_SV_ClientEnterWorld(client_t* client, usercmd_t* cmd) {
 	}
 }
 
+void __cdecl My_SV_SetConfigstring(int index, char* value) {
+    // Indices 16 and 66X are spammed a ton every frame for some reason,
+    // so we add some exceptions for those. I don't think we should have any
+    // use for those particular ones anyway. If we don't do this, we get
+    // like a 25% increase in CPU usage on an empty server.
+    if (index == 16 || (index >= 662 && index < 670)) {
+        SV_SetConfigstring(index, value);
+        return;
+    }
+
+    char* res = SetConfigstringDispatcher(index, value);
+    // NULL means stop the event.
+    if (res)
+        SV_SetConfigstring(index, res);
+}
+
+void __cdecl My_SV_DropClient(client_t* drop, const char* reason) {
+    ClientDisconnectDispatcher(drop->gentity->s.clientNum, reason);
+
+    SV_DropClient(drop, reason);
+}
+
 void  __cdecl My_G_RunFrame(int time) {
     // Dropping frames is probably not a good idea, so we don't allow cancelling.
     FrameDispatcher();
@@ -134,28 +156,6 @@ char* __cdecl My_ClientConnect(int clientNum, qboolean firstTime, qboolean isBot
 	}
 
 	return ClientConnect(clientNum, firstTime, isBot);
-}
-
-void __cdecl My_ClientDisconnect(int clientNum) {
-	ClientDisconnectDispatcher(clientNum);
-
-	ClientDisconnect(clientNum);
-}
-
-void __cdecl My_SV_SetConfigstring(int index, char* value) {
-	// Indices 16 and 66X are spammed a ton every frame for some reason,
-	// so we add some exceptions for those. I don't think we should have any
-	// use for those particular ones anyway. If we don't do this, we get
-	// like a 25% increase in CPU usage on an empty server.
-	if (index == 16 || (index >= 662 && index < 670)) {
-		SV_SetConfigstring(index, value);
-		return;
-	}
-
-	char* res = SetConfigstringDispatcher(index, value);
-	// NULL means stop the event.
-	if (res)
-		SV_SetConfigstring(index, res);
 }
 #endif
 
@@ -191,17 +191,23 @@ void HookStatic(void) {
 		failed = 1;
 	}
 
-	res = Hook((void*)SV_SetConfigstring, My_SV_SetConfigstring, (void*)&SV_SetConfigstring);
-	if (res) {
-		DebugPrint("ERROR: Failed to hook SV_SetConfigstring: %d\n", res);
-		failed = 1;
-	}
-
 	res = Hook((void*)SV_SendServerCommand, My_SV_SendServerCommand, (void*)&SV_SendServerCommand);
 	if (res) {
 		DebugPrint("ERROR: Failed to hook SV_SendServerCommand: %d\n", res);
 		failed = 1;
 	}
+
+    res = Hook((void*)SV_SetConfigstring, My_SV_SetConfigstring, (void*)&SV_SetConfigstring);
+    if (res) {
+        DebugPrint("ERROR: Failed to hook SV_SetConfigstring: %d\n", res);
+        failed = 1;
+    }
+
+    res = Hook((void*)SV_DropClient, My_SV_DropClient, (void*)&SV_DropClient);
+    if (res) {
+        DebugPrint("ERROR: Failed to hook SV_DropClient: %d\n", res);
+        failed = 1;
+    }
 #endif
 
     if (failed) {
@@ -241,12 +247,6 @@ void HookVm(void) {
 	res = Hook((void*)ClientConnect, My_ClientConnect, (void*)&ClientConnect);
 	if (res) {
 		DebugPrint("ERROR: Failed to hook ClientConnect: %d\n", res);
-		failed = 1;
-	}
-
-	res = Hook((void*)ClientDisconnect, My_ClientDisconnect, (void*)&ClientDisconnect);
-	if (res) {
-		DebugPrint("ERROR: Failed to hook ClientDisconnect: %d\n", res);
 		failed = 1;
 	}
 

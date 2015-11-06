@@ -280,7 +280,7 @@ def handle_player_loaded(client_id):
         minqlx.log_exception()
         return True
 
-def handle_player_disconnect(client_id):
+def handle_player_disconnect(client_id, reason):
     """This will be called whenever a player disconnects.
 
     :param client_id: The client identifier.
@@ -289,7 +289,7 @@ def handle_player_disconnect(client_id):
     """
     try:
         player = minqlx.Player(client_id)
-        return minqlx.EVENT_DISPATCHERS["player_disconnect"].dispatch(player)
+        return minqlx.EVENT_DISPATCHERS["player_disconnect"].dispatch(player, reason)
     except:
         minqlx.log_exception()
         return True

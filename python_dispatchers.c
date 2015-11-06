@@ -97,13 +97,13 @@ char* ClientConnectDispatcher(int client_id, int is_bot) {
 	return ret;
 }
 
-void ClientDisconnectDispatcher(int client_id) {
+void ClientDisconnectDispatcher(int client_id, const char* reason) {
 	if (!client_disconnect_handler)
 		return; // No registered handler.
 
 	PyGILState_STATE gstate = PyGILState_Ensure();
 
-	PyObject* result = PyObject_CallFunction(client_disconnect_handler, "i", client_id);
+	PyObject* result = PyObject_CallFunction(client_disconnect_handler, "is", client_id, reason);
 	if (result == NULL)
 		DebugError("PyObject_CallFunction() returned NULL.\n",
 				__FILE__, __LINE__, __func__);

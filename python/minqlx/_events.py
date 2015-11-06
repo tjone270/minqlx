@@ -324,8 +324,8 @@ class PlayerDisonnectDispatcher(EventDispatcher):
     """Event that triggers whenever a player disconnects. Cannot be cancelled."""
     name = "player_disconnect"
     
-    def dispatch(self, player):
-        return super().dispatch(player)
+    def dispatch(self, player, reason):
+        return super().dispatch(player, reason)
 
 class StatsDispatcher(EventDispatcher):
     """Event that triggers whenever the server sends stats over ZMQ."""
