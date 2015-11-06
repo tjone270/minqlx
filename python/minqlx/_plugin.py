@@ -515,6 +515,14 @@ class Plugin():
         return True
 
     @classmethod
+    def stop_sound(cls, player=None):
+        minqlx.send_server_command(player.id if player else None, "clearSounds")
+
+    @classmethod
+    def stop_music(cls, player=None):
+        minqlx.send_server_command(player.id if player else None, "stopMusic")
+
+    @classmethod
     def slap(cls, player, damage=0):
         cid = cls.client_id(player)
         if cid == None:
