@@ -66,10 +66,7 @@ void __cdecl My_G_InitGame(int levelTime, int randomSeed, int restart) {
     InitializeCvars();
 
 #ifndef NOPY
-    // Only call it if we're loading a completely new game, otherwise it will also
-    // be called when people ready up and the game starts.
-    if (!restart)
-    	NewGameDispatcher();
+	NewGameDispatcher(restart);
 #endif
 }
 

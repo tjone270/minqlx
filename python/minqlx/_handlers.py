@@ -169,7 +169,7 @@ def handle_frame():
 _zmq_warning_issued = False
 _first_game = True
 
-def handle_new_game():
+def handle_new_game(is_restart):
     # This is called early in the launch process, so it's a good place to initialize
     # minqlx stuff that needs QLDS to be initialized.
     global _first_game
@@ -187,10 +187,17 @@ def handle_new_game():
 
     minqlx.set_map_subtitles()
 
+    if not is_restart:
+        try:
+            minqlx.EVENT_DISPATCHERS["map"].dispatch(
+                minqlx.get_cvar("mapname"), 
+                minqlx.get_cvar("g_factory"))
+        except:
+            minqlx.log_exception()
+            return True
+
     try:
-        minqlx.EVENT_DISPATCHERS["map"].dispatch(
-            minqlx.get_cvar("mapname"), 
-            minqlx.get_cvar("g_factory"))
+        minqlx.EVENT_DISPATCHERS["new_game"].dispatch()
     except:
         minqlx.log_exception()
         return True

@@ -431,6 +431,12 @@ class MapDispatcher(EventDispatcher):
     def dispatch(self, mapname, factory):
         return super().dispatch(mapname, factory)
 
+class NewGameDispatcher(EventDispatcher):
+    name = "new_game"
+    
+    def dispatch(self):
+        return super().dispatch()
+
 class KillDispatcher(EventDispatcher):
     name = "kill"
     
@@ -467,5 +473,6 @@ EVENT_DISPATCHERS.add_dispatcher(RoundEndDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(TeamSwitchDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(TeamSwitchAttemptDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(MapDispatcher)
+EVENT_DISPATCHERS.add_dispatcher(NewGameDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(KillDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(DeathDispatcher)

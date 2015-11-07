@@ -78,7 +78,7 @@ void FrameDispatcher(void);
 char* ClientConnectDispatcher(int client_id, int is_bot);
 int ClientLoadedDispatcher(int client_id);
 void ClientDisconnectDispatcher(int client_id, const char* reason);
-void NewGameDispatcher(void);
+void NewGameDispatcher(int restart);
 char* SetConfigstringDispatcher(int index, char* value);
 void RconDispatcher(const char* cmd);
 
