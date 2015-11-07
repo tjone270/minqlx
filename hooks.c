@@ -75,7 +75,7 @@ void __cdecl My_G_InitGame(int levelTime, int randomSeed, int restart) {
 #ifndef NOPY
 void __cdecl My_SV_ExecuteClientCommand(client_t *cl, const char *s, qboolean clientOK) {
     if (clientOK && cl->gentity) {
-        int res = ClientCommandDispatcher(cl->gentity->s.clientNum, s);
+        int res = ClientCommandDispatcher(cl - svs->clients, s);
         if (!res)
             return;
     }
@@ -93,7 +93,7 @@ void __cdecl My_SV_SendServerCommand(client_t* cl, const char* fmt, ...) {
 	va_end(argptr);
 
 	if (cl && cl->gentity)
-		res = ServerCommandDispatcher(cl->gentity->s.clientNum, buffer);
+		res = ServerCommandDispatcher(cl - svs->clients, buffer);
 	else if (cl == NULL)
 		res = ServerCommandDispatcher(-1, buffer);
 
@@ -111,7 +111,7 @@ void __cdecl My_SV_ClientEnterWorld(client_t* client, usercmd_t* cmd) {
 	// state is CS_PRIMED only if it's the first time they connect to the server,
 	// otherwise the dispatcher would also go off when a game starts and such.
 	if (client->gentity != NULL && state == CS_PRIMED) {
-		ClientLoadedDispatcher(client->gentity->s.clientNum);
+		ClientLoadedDispatcher(client - svs->clients);
 	}
 }
 
@@ -132,7 +132,7 @@ void __cdecl My_SV_SetConfigstring(int index, char* value) {
 }
 
 void __cdecl My_SV_DropClient(client_t* drop, const char* reason) {
-    ClientDisconnectDispatcher(drop->gentity->s.clientNum, reason);
+    ClientDisconnectDispatcher(drop - svs->clients, reason);
 
     SV_DropClient(drop, reason);
 }
