@@ -61,9 +61,10 @@ class Command:
 
     def is_eligible_name(self, name):
         if self.prefix:
-            if name[0] != minqlx.get_cvar("qlx_commandPrefix"):
+            prefix = minqlx.get_cvar("qlx_commandPrefix")
+            if not name.startswith(prefix):
                 return False
-            name = name[1:]
+            name = name[len(prefix):]
         
         return name.lower() in self.name
 
@@ -154,7 +155,7 @@ class CommandInvoker:
         if not msg.strip():
             return
 
-        name = msg.split(" ", 1)[0].lower()
+        name = msg.strip().split(" ", 1)[0].lower()
         is_client_cmd = channel == "client_command"
         pass_through = True
         
