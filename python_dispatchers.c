@@ -141,13 +141,13 @@ int ClientLoadedDispatcher(int client_id) {
 	return ret;
 }
 
-void NewGameDispatcher(void) {
+void NewGameDispatcher(int restart) {
 	if (!new_game_handler)
 		return; // No registered handler.
 
 	PyGILState_STATE gstate = PyGILState_Ensure();
 
-	PyObject* result = PyObject_CallFunction(new_game_handler, NULL);
+	PyObject* result = PyObject_CallFunction(new_game_handler, "O", restart ? Py_True : Py_False);
 
 	if (result == NULL)
 		DebugError("PyObject_CallFunction() returned NULL.\n", __FILE__, __LINE__, __func__);
