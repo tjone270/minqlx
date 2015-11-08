@@ -119,16 +119,6 @@ static PyObject* makePlayerDict(int client_id) {
 	}
 	Py_DECREF(userinfo);
 
-    // NAME
-    PyObject* name = PyUnicode_FromString(svs->clients[client_id].name);
-    if (PyDict_SetItemString(ret, "name", name) == -1) {
-        DebugError("Failed to add 'name' to the dictionary.\n",
-                __FILE__, __LINE__, __func__);
-        Py_DECREF(ret);
-        Py_RETURN_NONE;
-    }
-    Py_DECREF(name);
-
 	// STEAM ID
 	PyObject* steam_id = PyLong_FromLongLong(svs->clients[client_id].steam_id);
 	if (PyDict_SetItemString(ret, "steam_id", steam_id) == -1) {
@@ -139,36 +129,51 @@ static PyObject* makePlayerDict(int client_id) {
 	}
 	Py_DECREF(steam_id);
 
+    if (g_entities[client_id].client) {
+        // NAME
+        PyObject* name = PyUnicode_FromString(g_entities[client_id].client->pers.netname);
+        if (PyDict_SetItemString(ret, "name", name) == -1) {
+            DebugError("Failed to add 'name' to the dictionary.\n",
+                    __FILE__, __LINE__, __func__);
+            Py_DECREF(ret);
+            Py_RETURN_NONE;
+        }
+        Py_DECREF(name);
 
-	// Some info might not always be available, like if someone is trying to
-	// connect, but has not yet been allowed to join. No need to return
-	// None if that is the case. Instead return incomplete dict.
-	if (svs->clients[client_id].state != CS_FREE) {
-		// CONFIGSTRING
-		PyObject* configstring = PyUnicode_FromString(sv->configstrings[529 + client_id]);
-		if (PyDict_SetItemString(ret, "configstring", configstring) == -1) {
-			DebugError("Failed to add 'configstring' to the dictionary.\n",
-					__FILE__, __LINE__, __func__);
-			Py_DECREF(ret);
-			Py_RETURN_NONE;
-		}
-		Py_DECREF(configstring);
+        // TEAM
+        PyObject* team;
+        if (g_entities[client_id].client->pers.connected == CON_DISCONNECTED)
+            team = PyLong_FromLongLong(3); // Set team to spectator if not yet connected.
+        else
+            team = PyLong_FromLongLong(g_entities[client_id].client->sess.sessionTeam);
 
-		// PRIVILEGES
-		PyObject* priv = Py_None;
-		if (g_entities[client_id].client->privileges == 0)
-			{}
-		else if (g_entities[client_id].client->privileges == 1)
-			priv = PyUnicode_FromString("mod");
-		else if (g_entities[client_id].client->privileges == 2)
-			priv = PyUnicode_FromString("admin");
-		if (PyDict_SetItemString(ret, "privileges", priv) == -1) {
-			DebugError("Failed to add 'privileges' to the dictionary.\n",
-					__FILE__, __LINE__, __func__);
-			Py_DECREF(ret);
-			Py_RETURN_NONE;
-		}
-	}
+        if (PyDict_SetItemString(ret, "team", team) == -1) {
+            DebugError("Failed to add 'team' to the dictionary.\n",
+                    __FILE__, __LINE__, __func__);
+            Py_DECREF(ret);
+            Py_RETURN_NONE;
+        }
+        Py_DECREF(team);
+
+        // PRIVILEGES
+        PyObject* priv = Py_None;
+        if (g_entities[client_id].client->sess.privileges == PRIV_NONE)
+            {}
+        else if (g_entities[client_id].client->sess.privileges == PRIV_MOD)
+            priv = PyUnicode_FromString("mod");
+        else if (g_entities[client_id].client->sess.privileges == PRIV_ADMIN)
+            priv = PyUnicode_FromString("admin");
+        if (PyDict_SetItemString(ret, "privileges", priv) == -1) {
+            DebugError("Failed to add 'privileges' to the dictionary.\n",
+                    __FILE__, __LINE__, __func__);
+            Py_DECREF(ret);
+            Py_RETURN_NONE;
+        }
+    }
+    else {
+        DebugError("gclient %d was NULL.\n",
+                __FILE__, __LINE__, __func__, client_id);
+    }
 
 	return ret;
 }
@@ -485,7 +490,7 @@ static PyObject* PyMinqlx_ForceVote(PyObject* self, PyObject* args) {
     	// We tell the server every single client voted yes, making it pass in the next G_RunFrame.
 		for (int i = 0; i < sv_maxclients->integer; i++) {
 			if (svs->clients[i].state == CS_ACTIVE)
-				g_entities[i].client->pers.voteType = VOTE_YES;
+				g_entities[i].client->pers.voteState = VOTE_YES;
 		}
     }
     else if (!pass && level->voteTime) {

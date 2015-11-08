@@ -24,10 +24,6 @@ _DUMMY_USERINFO = ("ui_singlePlayerActive\\0\\cg_autoAction\\1\\cg_autoHop\\0"
     "\\handicap\\100\\cl_anonymous\\0\\color1\\4\\color2\\23\\sex\\male"
     "\\teamtask\\0\\rate\\25000\\country\\NO")
 
-_DUMMY_CONFIGSTRING = ("t\\3\\model\\bitterman/sport_blue"
-    "\\hmodel\\crash/red\\c1\\4\\c2\\23\\hc\\300\\w\\0\\l\\0\\tt\\0"
-    "\\tl\\0\\rp\\0\\p\\2\\so\\0\\pq\\0\\c\\NO")
-
 def _player(client_id):
     """A wrapper for minqlx.Player to make the output more usable."""
     info = minqlx.player_info(client_id)
@@ -36,9 +32,7 @@ def _player(client_id):
     
     d = {}
     for key in info:
-        if key == "configstring":
-            d.update(minqlx.parse_variables(info["configstring"]))
-        elif key == "userinfo":
+        if key == "userinfo":
             userinfo = minqlx.parse_variables(info["userinfo"])
             if "name" in userinfo:
                 del userinfo["name"]
@@ -54,9 +48,7 @@ def _players():
     for player in minqlx.players_info():
         d = {}
         for key in player:
-            if key == "configstring":
-                d.update(minqlx.parse_variables(player["configstring"]))
-            elif key == "userinfo":
+            if key == "userinfo":
                 d.update(minqlx.parse_variables(player["userinfo"]))
             else:
                 d[key] = player[key]
@@ -98,10 +90,7 @@ class Player():
                     .format(client_id))
 
         self._steam_id = self._cvars["steam_id"]
-        try:
-            self._name = self._cvars["name"]
-        except KeyError:
-            self._name = self._cvars["n"]
+        self._name = self._cvars["name"]
 
     def __repr__(self):
         if not self._valid:
@@ -174,7 +163,7 @@ class Player():
         fortunately the scoreboard still properly displays it if we manually
         set the configstring to use clan tags."""
         try:
-            return self["cn"]
+            return minqlx.parse_variables(minqlx.get_configstring(529 + self._id))["cn"]
         except KeyError:
             return ""
     
@@ -201,7 +190,7 @@ class Player():
     
     @property
     def team(self):
-        return minqlx.TEAMS[int(self["t"])]
+        return minqlx.TEAMS[int(self["team"])]
     
     @property
     def colors(self):
@@ -290,8 +279,7 @@ class Player():
 
 class AbstractDummyPlayer(Player):
     def __init__(self):
-        self._cvars = minqlx.parse_variables(_DUMMY_CONFIGSTRING)
-        self._cvars.update(minqlx.parse_variables(_DUMMY_USERINFO))
+        self._cvars = minqlx.parse_variables(_DUMMY_USERINFO)
 
     @property
     def id(self):

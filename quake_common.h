@@ -17,7 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 /*
- * Mino: Most of this is from Q3 sources, but obviously the structs aren't
+ * Mino: A lot of this is from Q3 sources, but obviously the structs aren't
  * exactly the same, so there's a good number of modifications to make it
  * fit QL. The end of the file has a bunch of stuff I added. Might want
  * to refactor it. TODO.
@@ -114,6 +114,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 typedef enum {qfalse, qtrue} qboolean;
 typedef unsigned char byte;
 
+typedef struct gentity_s gentity_t;
+typedef struct gclient_s gclient_t;
+
 typedef float vec_t;
 typedef vec_t vec2_t[2];
 typedef vec_t vec3_t[3];
@@ -124,20 +127,23 @@ typedef int fileHandle_t;
 
 // The permission levels used by QL's admin commands.
 typedef enum {
-	PRIV_NONE,
-	PRIV_MOD,
-	PRIV_ADMIN
+    PRIV_BANNED = 0xFFFFFFFF,
+    PRIV_NONE = 0x0,
+    PRIV_MOD = 0x1,
+    PRIV_ADMIN = 0x2,
+    PRIV_ROOT = 0x3,
 } privileges_t;
 
 // Vote type. As opposed to in Q3, votes are counted every frame.
 typedef enum {
 	VOTE_NONE,
-	VOTE_NO,
+	VOTE_PENDING,
 	VOTE_YES,
-	VOTE_ABSTAIN,
+	VOTE_NO,
 	VOTE_FORCE_PASS,
-	VOTE_FORCE_FAIL
-} voteType_t;
+	VOTE_FORCE_FAIL,
+    VOTE_EXPIRED
+} voteState_t;
 
 typedef enum {
     CS_FREE,        // can be reused for a new connection
@@ -147,6 +153,15 @@ typedef enum {
     CS_PRIMED,      // gamestate has been sent, but client hasn't sent a usercmd
     CS_ACTIVE       // client is fully in game
 } clientState_t;
+
+typedef enum {
+    PREGAME = 0x0,
+    ROUND_WARMUP = 0x1,
+    ROUND_SHUFFLE = 0x2,
+    ROUND_BEGUN = 0x3,
+    ROUND_OVER = 0x4,
+    POSTGAME = 0x5,
+} roundStateState_t;
 
 typedef enum {
 	GAME_INIT,	// ( int levelTime, int randomSeed, int restart );
@@ -182,113 +197,107 @@ typedef enum {
 } gameExport_t;
 
 typedef enum {
-	_EV_NONE,
-
-	EV_FOOTSTEP,
-	EV_FOOTSTEP_METAL,
-	EV_FOOTSPLASH,
-	EV_FOOTWADE,
-	EV_SWIM,
-
-	EV_FALL_SHORT,
-	EV_FALL_MEDIUM,
-	EV_FALL_FAR,
-
-	EV_JUMP_PAD,			// boing sound at origin, jump sound on player
-
-	EV_JUMP,
-	EV_WATER_TOUCH,	// foot touches
-	EV_WATER_LEAVE,	// foot leaves
-	EV_WATER_UNDER,	// head touches
-	EV_WATER_CLEAR,	// head leaves
-
-	EV_ITEM_PICKUP,			// normal item pickups are predictable
-	EV_GLOBAL_ITEM_PICKUP,	// powerup / team sounds are broadcast to everyone
-
-	EV_NOAMMO,
-	EV_CHANGE_WEAPON,
-    EV_UNKNOWN1, // Mino: Position is correct here. Makes no sound with param 1.
-	EV_FIRE_WEAPON,
-
-	EV_USE_ITEM0,
-	EV_USE_ITEM1,
-	EV_USE_ITEM2,
-	EV_USE_ITEM3,
-	EV_USE_ITEM4,
-	EV_USE_ITEM5,
-	EV_USE_ITEM6,
-	EV_USE_ITEM7,
-	EV_USE_ITEM8,
-	EV_USE_ITEM9,
-	EV_USE_ITEM10,
-	EV_USE_ITEM11,
-	EV_USE_ITEM12,
-	EV_USE_ITEM13,
-	EV_USE_ITEM14,
-	EV_USE_ITEM15,
-
-	EV_ITEM_RESPAWN,
-	EV_ITEM_POP,
-	EV_PLAYER_TELEPORT_IN,
-	EV_PLAYER_TELEPORT_OUT,
-
-	EV_GRENADE_BOUNCE,		// eventParm will be the soundindex
-
-	EV_GENERAL_SOUND,
-	EV_GLOBAL_SOUND,		// no attenuation
-	EV_GLOBAL_TEAM_SOUND,
-
-	EV_BULLET_HIT_FLESH,
-	EV_BULLET_HIT_WALL,
-
-	EV_MISSILE_HIT,
-	EV_MISSILE_MISS,
-	EV_MISSILE_MISS_METAL,
-	EV_RAILTRAIL,
-	EV_SHOTGUN,
-	EV_BULLET,				// otherEntity is the shooter
-
-	EV_PAIN,
-	EV_DEATH1,
-	EV_DEATH2,
-	EV_DEATH3,
-    EV_DROWN,
-	//EV_OBITUARY,
-    
-    EV_UNKNOWN2, // Mino: Position is correct. Makes no sound with param 0.
-
-	EV_POWERUP_QUAD,
-	EV_POWERUP_BATTLESUIT,
-	EV_POWERUP_REGEN,
-
-    EV_AMMO_PICKUP,
-	EV_GIB_PLAYER,			// gib a previously living player
-	EV_SCOREPLUM,			// score plum
-
-//#ifdef MISSIONPACK
-	EV_PROXIMITY_MINE_STICK,
-	EV_PROXIMITY_MINE_TRIGGER,
-	EV_KAMIKAZE,			// kamikaze explodes
-	EV_OBELISKEXPLODE,		// obelisk explodes
-	EV_OBELISKPAIN,			// obelisk is in pain
-	EV_INVUL_IMPACT,		// invulnerability sphere impact
-	EV_JUICED,				// invulnerability juiced effect
-	EV_LIGHTNINGBOLT,		// lightning bolt bounced of invulnerability sphere
-//#endif
-
-	EV_DEBUG_LINE,
-	EV_STOPLOOPINGSOUND,
-	EV_TAUNT,
-	EV_TAUNT_YES,
-	EV_TAUNT_NO,
-	EV_TAUNT_FOLLOWME,
-	EV_TAUNT_GETFLAG,
-	EV_TAUNT_GUARDBASE,
-	EV_TAUNT_PATROL,
-    EV_UNKNOWN3,
-    EV_UNKNOWN4,
-    EV_UNKNOWN5, // Mino: Makes the client (clients?) crash.
-
+    EV_NONE = 0x0,
+    EV_FOOTSTEP = 0x1,
+    EV_FOOTSTEP_METAL = 0x2,
+    EV_FOOTSPLASH = 0x3,
+    EV_FOOTWADE = 0x4,
+    EV_SWIM = 0x5,
+    EV_FALL_SHORT = 0x6,
+    EV_FALL_MEDIUM = 0x7,
+    EV_FALL_FAR = 0x8,
+    EV_JUMP_PAD = 0x9,
+    EV_JUMP = 0xA,
+    EV_WATER_TOUCH = 0xB,
+    EV_WATER_LEAVE = 0xC,
+    EV_WATER_UNDER = 0xD,
+    EV_WATER_CLEAR = 0xE,
+    EV_ITEM_PICKUP = 0xF,
+    EV_GLOBAL_ITEM_PICKUP = 0x10,
+    EV_NOAMMO = 0x11,
+    EV_CHANGE_WEAPON = 0x12,
+    EV_DROP_WEAPON = 0x13,
+    EV_FIRE_WEAPON = 0x14,
+    EV_USE_ITEM0 = 0x15,
+    EV_USE_ITEM1 = 0x16,
+    EV_USE_ITEM2 = 0x17,
+    EV_USE_ITEM3 = 0x18,
+    EV_USE_ITEM4 = 0x19,
+    EV_USE_ITEM5 = 0x1A,
+    EV_USE_ITEM6 = 0x1B,
+    EV_USE_ITEM7 = 0x1C,
+    EV_USE_ITEM8 = 0x1D,
+    EV_USE_ITEM9 = 0x1E,
+    EV_USE_ITEM10 = 0x1F,
+    EV_USE_ITEM11 = 0x20,
+    EV_USE_ITEM12 = 0x21,
+    EV_USE_ITEM13 = 0x22,
+    EV_USE_ITEM14 = 0x23,
+    EV_USE_ITEM15 = 0x24,
+    EV_ITEM_RESPAWN = 0x25,
+    EV_ITEM_POP = 0x26,
+    EV_PLAYER_TELEPORT_IN = 0x27,
+    EV_PLAYER_TELEPORT_OUT = 0x28,
+    EV_GRENADE_BOUNCE = 0x29,
+    EV_GENERAL_SOUND = 0x2A,
+    EV_GLOBAL_SOUND = 0x2B,
+    EV_GLOBAL_TEAM_SOUND = 0x2C,
+    EV_BULLET_HIT_FLESH = 0x2D,
+    EV_BULLET_HIT_WALL = 0x2E,
+    EV_MISSILE_HIT = 0x2F,
+    EV_MISSILE_MISS = 0x30,
+    EV_MISSILE_MISS_METAL = 0x31,
+    EV_RAILTRAIL = 0x32,
+    EV_SHOTGUN = 0x33,
+    EV_BULLET = 0x34,
+    EV_PAIN = 0x35,
+    EV_DEATH1 = 0x36,
+    EV_DEATH2 = 0x37,
+    EV_DEATH3 = 0x38,
+    EV_DROWN = 0x39,
+    EV_OBITUARY = 0x3A,
+    EV_POWERUP_QUAD = 0x3B,
+    EV_POWERUP_BATTLESUIT = 0x3C,
+    EV_POWERUP_REGEN = 0x3D,
+    EV_POWERUP_ARMORREGEN = 0x3E,
+    EV_GIB_PLAYER = 0x3F,
+    EV_SCOREPLUM = 0x40,
+    EV_PROXIMITY_MINE_STICK = 0x41,
+    EV_PROXIMITY_MINE_TRIGGER = 0x42,
+    EV_KAMIKAZE = 0x43,
+    EV_OBELISKEXPLODE = 0x44,
+    EV_OBELISKPAIN = 0x45,
+    EV_INVUL_IMPACT = 0x46,
+    EV_JUICED = 0x47,
+    EV_LIGHTNINGBOLT = 0x48,
+    EV_DEBUG_LINE = 0x49,
+    EV_TAUNT = 0x4A,
+    EV_TAUNT_YES = 0x4B,
+    EV_TAUNT_NO = 0x4C,
+    EV_TAUNT_FOLLOWME = 0x4D,
+    EV_TAUNT_GETFLAG = 0x4E,
+    EV_TAUNT_GUARDBASE = 0x4F,
+    EV_TAUNT_PATROL = 0x50,
+    EV_FOOTSTEP_SNOW = 0x51,
+    EV_FOOTSTEP_WOOD = 0x52,
+    EV_ITEM_PICKUP_SPEC = 0x53,
+    EV_OVERTIME = 0x54,
+    EV_GAMEOVER = 0x55,
+    EV_MISSILE_MISS_DMGTHROUGH = 0x56,
+    EV_THAW_PLAYER = 0x57,
+    EV_THAW_TICK = 0x58,
+    EV_SHOTGUN_KILL = 0x59,
+    EV_POI = 0x5A,
+    EV_DEBUG_HITBOX = 0x5B,
+    EV_LIGHTNING_DISCHARGE = 0x5C,
+    EV_RACE_START = 0x5D,
+    EV_RACE_CHECKPOINT = 0x5E,
+    EV_RACE_FINISH = 0x5F,
+    EV_DAMAGEPLUM = 0x60,
+    EV_AWARD = 0x61,
+    EV_INFECTED = 0x62,
+    EV_NEW_HIGH_SCORE = 0x63,
+    EV_NUM_ETYPES = 0x64,
 } entity_event_t;
 
 typedef enum {
@@ -306,26 +315,74 @@ typedef enum {
 } itemType_t;
 
 typedef enum {
-	WP_NONE,
+    PW_NONE = 0x0,
+    PW_SPAWNARMOR = 0x0,
+    PW_REDFLAG = 0x1,
+    PW_BLUEFLAG = 0x2,
+    PW_NEUTRALFLAG = 0x3,
+    PW_QUAD = 0x4,
+    PW_BATTLESUIT = 0x5,
+    PW_HASTE = 0x6,
+    PW_INVIS = 0x7,
+    PW_REGEN = 0x8,
+    PW_FLIGHT = 0x9,
+    PW_INVULNERABILITY = 0xA,
+    NOTPW_SCOUT = 0xB,
+    NOTPW_GUARD = 0xC,
+    NOTPW_DOUBLER = 0xD,
+    NOTPW_ARMORREGEN = 0xE,
+    PW_FREEZE = 0xF,
+    PW_NUM_POWERUPS = 0x10,
+} powerup_t;
 
-	WP_GAUNTLET,
-	WP_MACHINEGUN,
-	WP_SHOTGUN,
-	WP_GRENADE_LAUNCHER,
-	WP_ROCKET_LAUNCHER,
-	WP_LIGHTNING,
-	WP_RAILGUN,
-	WP_PLASMAGUN,
-	WP_BFG,
-	WP_GRAPPLING_HOOK,
-//#ifdef MISSIONPACK
-	WP_NAILGUN,
-	WP_PROX_LAUNCHER,
-	WP_CHAINGUN,
-//#endif
+typedef enum {
+    H_NONE = 0x0,
+    H_MEGA = 0x1,
+    H_LARGE = 0x2,
+    H_MEDIUM = 0x3,
+    H_SMALL = 0x4,
+    H_NUM_HEALTHS = 0x5,
+} healthPickup_t;
 
-	WP_NUM_WEAPONS
+typedef enum {
+    HI_NONE = 0x0,
+    HI_TELEPORTER = 0x1,
+    HI_MEDKIT = 0x2,
+    HI_KAMIKAZE = 0x3,
+    HI_PORTAL = 0x4,
+    HI_INVULNERABILITY = 0x5,
+    HI_FLIGHT = 0x6,
+    HI_NUM_HOLDABLE = 0x7,
+} holdable_t;
+
+typedef enum {
+    WP_NONE = 0x0,
+    WP_GAUNTLET = 0x1,
+    WP_MACHINEGUN = 0x2,
+    WP_SHOTGUN = 0x3,
+    WP_GRENADE_LAUNCHER = 0x4,
+    WP_ROCKET_LAUNCHER = 0x5,
+    WP_LIGHTNING = 0x6,
+    WP_RAILGUN = 0x7,
+    WP_PLASMAGUN = 0x8,
+    WP_BFG = 0x9,
+    WP_GRAPPLING_HOOK = 0xA,
+    WP_NAILGUN = 0xB,
+    WP_PROX_LAUNCHER = 0xC,
+    WP_CHAINGUN = 0xD,
+    WP_HMG = 0xE,
+    WP_HANDS = 0xF,
+    WP_NUM_WEAPONS = 0x10,
 } weapon_t;
+
+typedef enum {
+    RUNE_NONE = 0x0,
+    RUNE_SCOUT = 0x1,
+    RUNE_GUARD = 0x2,
+    RUNE_DAMAGE = 0x3,
+    RUNE_ARMORREGEN = 0x4,
+    RUNE_MAX = 0x5,
+} rune_t;
 
 typedef enum {
 	TEAM_BEGIN,		// Beginning a team game, spawn at base
@@ -363,27 +420,27 @@ typedef enum {
 } moverState_t;
 
 enum cvar_flags {
-  CVAR_ARCHIVE = 1,
-  CVAR_USERINFO = 2,
-  CVAR_SERVERINFO = 4,
-  CVAR_SYSTEMINFO = 8,
-  CVAR_INIT = 16,
-  CVAR_LATCH = 32,
-  CVAR_ROM = 64,
-  CVAR_USER_CREATED = 128,
-  CVAR_TEMP = 256,
-  CVAR_CHEAT = 512,
-  CVAR_NORESTART = 1024,
-  CVAR_UNKOWN1 = 2048,
-  CVAR_UNKOWN2 = 4096,
-  CVAR_UNKOWN3 = 8192,
-  CVAR_UNKOWN4 = 16384,
-  CVAR_UNKOWN5 = 32768,
-  CVAR_UNKOWN6 = 65536,
-  CVAR_UNKOWN7 = 131072,
-  CVAR_UNKOWN8 = 262144,
-  CVAR_UNKOWN9 = 524288,
-  CVAR_UNKOWN10 = 1048576
+    CVAR_ARCHIVE = 1,
+    CVAR_USERINFO = 2,
+    CVAR_SERVERINFO = 4,
+    CVAR_SYSTEMINFO = 8,
+    CVAR_INIT = 16,
+    CVAR_LATCH = 32,
+    CVAR_ROM = 64,
+    CVAR_USER_CREATED = 128,
+    CVAR_TEMP = 256,
+    CVAR_CHEAT = 512,
+    CVAR_NORESTART = 1024,
+    CVAR_UNKOWN1 = 2048,
+    CVAR_UNKOWN2 = 4096,
+    CVAR_UNKOWN3 = 8192,
+    CVAR_UNKOWN4 = 16384,
+    CVAR_UNKOWN5 = 32768,
+    CVAR_UNKOWN6 = 65536,
+    CVAR_UNKOWN7 = 131072,
+    CVAR_UNKOWN8 = 262144,
+    CVAR_UNKOWN9 = 524288,
+    CVAR_UNKOWN10 = 1048576
 };
 
 // paramters for command buffer stuffing
@@ -493,81 +550,115 @@ typedef struct {
     byte        unsentBuffer[MAX_MSGLEN];
 } netchan_t;
 
+typedef struct cplane_s {
+  vec3_t normal;
+  float dist;
+  byte type;
+  byte signbits;
+  byte pad[2];
+} cplane_t;
+
+// a trace is returned when a box is swept through the world
+typedef struct {
+  qboolean allsolid;
+  qboolean startsolid;
+  float fraction;
+  vec3_t endpos;
+  cplane_t plane;
+  int surfaceFlags;
+  int contents;
+  int entityNum;
+} trace_t;
+
 // playerState_t is a full superset of entityState_t as it is used by players,
 // so if a playerState_t is transmitted, the entityState_t can be fully derived
 // from it.
 typedef struct playerState_s {
-    int         commandTime;    // cmd->serverTime of last executed command
-    int         pm_type;
-    int         bobCycle;       // for view bobbing and footstep generation
-    int         pm_flags;       // ducked, jump_held, etc
-    int         pm_time;
-
-    vec3_t      origin;
-    vec3_t      velocity;
-    int         weaponTime;
-    int         gravity;
-    int         speed;
-    int         delta_angles[3];    // add to command angles to get view direction
-                                    // changed by spawns, rotating objects, and teleporters
-
-    int         groundEntityNum;// ENTITYNUM_NONE = in air
-
-    int         legsTimer;      // don't change low priority animations until this runs out
-    int         legsAnim;       // mask off ANIM_TOGGLEBIT
-
-    int         torsoTimer;     // don't change low priority animations until this runs out
-    int         torsoAnim;      // mask off ANIM_TOGGLEBIT
-
-    int         movementDir;    // a number 0 to 7 that represents the reletive angle
-                                // of movement to the view angle (axial and diagonals)
-                                // when at rest, the value will remain unchanged
-                                // used to twist the legs during strafing
-
-    vec3_t      grapplePoint;   // location of grapple to pull towards if PMF_GRAPPLE_PULL
-
-    int         eFlags;         // copied to entityState_t->eFlags
-
-    int         eventSequence;  // pmove generated events
-    int         events[MAX_PS_EVENTS];
-    int         eventParms[MAX_PS_EVENTS];
-
-    int         externalEvent;  // events set on player from another source
-    int         externalEventParm;
-
-    // Mino: I switched externalEventTime and clientNum so that clientNum alligns correctly,
-    //		 but I doubt externalEventTime is what it's supposed to be.
-    int         clientNum;      // ranges from 0 to MAX_CLIENTS-1
-    int         externalEventTime;
-
-
-    int         weapon;         // copied to entityState_t->weapon
-    int         weaponstate;
-
-    vec3_t      viewangles;     // for fixed views
-    int         viewheight;
-
-    // damage feedback
-    int         damageEvent;    // when it changes, latch the other parms
-    int         damageYaw;
-    int         damagePitch;
-    int         damageCount;
-
-    int         stats[MAX_STATS];
-    int         persistant[MAX_PERSISTANT]; // stats that aren't cleared on death
-    int         powerups[MAX_POWERUPS]; // level.time that the powerup runs out
-    int         ammo[MAX_WEAPONS];
-
-    int         generic1;
-    int         loopSound;
-    int         jumppad_ent;    // jumppad entity hit this frame
-
-    // not communicated over the net at all
-    int         ping;           // server to game info for scoreboard
-    int         pmove_framecount;   // FIXME: don't transmit over the network
-    int         jumppad_frame;
-    int         entityEventSequence;
+  int commandTime;
+  int pm_type;
+  int bobCycle;
+  int pm_flags;
+  int pm_time;
+  vec3_t origin;
+  vec3_t velocity;
+  int weaponTime;
+  int gravity;
+  int speed;
+  int delta_angles[3];
+  int groundEntityNum;
+  int legsTimer;
+  int legsAnim;
+  int torsoTimer;
+  int torsoAnim;
+  int movementDir;
+  vec3_t grapplePoint;
+  int eFlags;
+  int eventSequence;
+  int events[2];
+  int eventParms[2];
+  int externalEvent;
+  int externalEventParm;
+  int clientNum;
+  int location;
+  int weapon;
+  int weaponPrimary;
+  int weaponstate;
+  int fov;
+  vec3_t viewangles;
+  int viewheight;
+  int damageEvent;
+  int damageYaw;
+  int damagePitch;
+  int damageCount;
+  int stats[16];
+  int persistant[16];
+  int powerups[16];
+  int ammo[16];
+  int generic1;
+  int loopSound;
+  int jumppad_ent;
+  int jumpTime;
+  int doubleJumped;
+  int crouchTime;
+  int crouchSlideTime;
+  char forwardmove;
+  char rightmove;
+  char upmove;
+  int ping;
+  int pmove_framecount;
+  int jumppad_frame;
+  int entityEventSequence;
+  int freezetime;
+  int thawtime;
+  int thawClientNum_valid;
+  int thawClientNum;
+  int respawnTime;
+  int localPersistant[16];
+  int roundDamage;
+  int roundShots;
+  int roundHits;
 } playerState_t;
+
+typedef struct __attribute__((aligned(8))) {
+  playerState_t *ps;
+  usercmd_t cmd;
+  int tracemask;
+  int debugLevel;
+  int noFootsteps;
+  qboolean gauntletHit;
+  int numtouch;
+  int touchents[32];
+  vec3_t mins;
+  vec3_t maxs;
+  int watertype;
+  int waterlevel;
+  float xyspeed;
+  float stepHeight;
+  int stepTime;
+  void (*trace)(trace_t *, const vec_t *, const vec_t *, const vec_t *, const vec_t *, int, int);
+  int (*pointcontents)(const vec_t *, int);
+  qboolean hookEnemy;
+} pmove_t;
 
 typedef struct {
     int             areabytes;
@@ -589,93 +680,65 @@ typedef struct netchan_buffer_s {
 } netchan_buffer_t;
 
 typedef struct {
-    trType_t    trType;
-    int     trTime;
-    int     trDuration;         // if non 0, trTime + trDuration = stop time
-    vec3_t  trBase;
-    vec3_t  trDelta;            // velocity, etc
+  trType_t trType;
+  int trTime;
+  int trDuration;
+  vec3_t trBase;
+  vec3_t trDelta;
+  float gravity;
 } trajectory_t;
 
 typedef struct entityState_s {
-    int     number;         // entity index
-    int     eType;          // entityType_t
-    int     eFlags;
-
-    trajectory_t    pos;    // for calculating position
-    trajectory_t    apos;   // for calculating angles
-
-    int     time;
-    int     time2;
-
-    vec3_t  origin;
-    vec3_t  origin2;
-
-    vec3_t  angles;
-    vec3_t  angles2;
-    
-    // Mino:  Not sure where these go, but it'll line up clientNum correctly.
-    int8_t  _unknown1[8];
-
-    int     otherEntityNum; // shotgun sources, etc
-    int     otherEntityNum2;
-
-    int     groundEntityNum;    // -1 = in air
-
-    int     constantLight;  // r + (g<<8) + (b<<16) + (intensity<<24)
-    int     loopSound;      // constantly loop this sound
-
-    int     modelindex;
-    int     modelindex2;
-    int     clientNum;      // 0 to (MAX_CLIENTS - 1), for players and corpses
-    int     frame;
-
-    int     solid;          // for client side prediction, trap_linkentity sets this properly
-
-    int     event;          // impulse events -- muzzle flashes, footsteps, etc
-    int     eventParm;
-
-    // for players
-    int     powerups;       // bit flags
-    int     weapon;         // determines weapon and flash model, etc
-    int     legsAnim;       // mask off ANIM_TOGGLEBIT
-    int     torsoAnim;      // mask off ANIM_TOGGLEBIT
-
-    int     generic1;
+  int number;
+  int eType;
+  int eFlags;
+  trajectory_t pos;
+  trajectory_t apos;
+  int time;
+  int time2;
+  vec3_t origin;
+  vec3_t origin2;
+  vec3_t angles;
+  vec3_t angles2;
+  int otherEntityNum;
+  int otherEntityNum2;
+  int groundEntityNum;
+  int constantLight;
+  int loopSound;
+  int modelindex;
+  int modelindex2;
+  int clientNum;
+  int frame;
+  int solid;
+  int event;
+  int eventParm;
+  int powerups;
+  int health;
+  int armor;
+  int weapon;
+  int location;
+  int legsAnim;
+  int torsoAnim;
+  int generic1;
+  int jumpTime;
+  int doubleJumped;
 } entityState_t;
 
 typedef struct {
-    entityState_t   s;              // communicated by server to clients
-
-    qboolean    linked;             // qfalse if not in any good cluster
-    int         linkcount;
-
-    int         svFlags;            // SVF_NOCLIENT, SVF_BROADCAST, etc
-
-    // only send to this client when SVF_SINGLECLIENT is set    
-    // if SVF_CLIENTMASK is set, use bitmask for clients to send to (maxclients must be <= 32, up to the mod to enforce this)
-    int         singleClient;       
-
-    qboolean    bmodel;             // if false, assume an explicit mins / maxs bounding box
-                                    // only set by trap_SetBrushModel
-    vec3_t      mins, maxs;
-    int         contents;           // CONTENTS_TRIGGER, CONTENTS_SOLID, CONTENTS_BODY, etc
-                                    // a non-solid entity should set to 0
-
-    vec3_t      absmin, absmax;     // derived from mins/maxs and origin + rotation
-
-    // currentOrigin will be used for all collision detection and world linking.
-    // it will not necessarily be the same as the trajectory evaluation for the current
-    // time, because each entity must be moved one at a time after time is advanced
-    // to avoid simultanious collision issues
-    vec3_t      currentOrigin;
-    vec3_t      currentAngles;
-
-    // when a trace call is made and passEntityNum != ENTITYNUM_NONE,
-    // an ent will be excluded from testing if:
-    // ent->s.number == passEntityNum   (don't interact with self)
-    // ent->s.ownerNum = passEntityNum  (don't interact with your own missiles)
-    // entity[ent->s.ownerNum].ownerNum = passEntityNum (don't interact with other missiles from owner)
-    int         ownerNum;
+  entityState_t s;
+  qboolean linked;
+  int linkcount;
+  int svFlags;
+  int singleClient;
+  qboolean bmodel;
+  vec3_t mins;
+  vec3_t maxs;
+  int contents;
+  vec3_t absmin;
+  vec3_t absmax;
+  vec3_t currentOrigin;
+  vec3_t currentAngles;
+  int ownerNum;
 } entityShared_t;
 
 typedef struct {
@@ -738,9 +801,9 @@ typedef struct client_s {
     // Mino: Holy crap. A bunch of data was added. I have no idea where it actually goes,
     // but this will at least correct sizeof(client_t).
 #if defined(__x86_64__) || defined(_M_X64)
-    uint8_t         _unknown2[40776];
+    uint8_t         _unknown2[36808];
 #elif defined(__i386) || defined(_M_IX86)
-    uint8_t         _unknown2[40804]; // TODO: Outdated.
+    uint8_t         _unknown2[36836]; // TODO: Outdated.
 #endif
 
     // Mino: Woohoo! How nice of them to put the SteamID last.
@@ -830,41 +893,116 @@ typedef struct {
 } server_t;
 
 typedef struct {
-	playerTeamStateState_t	state;
-
-	int			location;
-
-	int			captures;
-	int			basedefense;
-	int			carrierdefense;
-	int			flagrecovery;
-	int			fragcarrier;
-	int			assists;
-
-	float		lasthurtcarrier;
-	float		lastreturnedflag;
-//	float		flagsince;
-//	float		lastfraggedcarrier;
+  playerTeamStateState_t state;
+  int captures;
+  int basedefense;
+  int carrierdefense;
+  int flagrecovery;
+  int fragcarrier;
+  int assists;
+  int flagruntime;
+  int flagrunrelays;
+  int lasthurtcarrier;
+  int lastreturnedflag;
+  int lastfraggedcarrier;
 } playerTeamState_t;
+
+typedef struct {
+  unsigned int statId;
+  int lastThinkTime;
+  int teamJoinTime;
+  int totalPlayTime;
+  int serverRank;
+  qboolean serverRankIsTied;
+  int teamRank;
+  qboolean teamRankIsTied;
+  int numKills;
+  int numDeaths;
+  int numSuicides;
+  int numTeamKills;
+  int numTeamKilled;
+  int numWeaponKills[16];
+  int numWeaponDeaths[16];
+  int shotsFired[16];
+  int shotsHit[16];
+  int damageDealt[16];
+  int damageTaken[16];
+  int powerups[16];
+  int holdablePickups[7];
+  int weaponPickups[16];
+  int weaponUsageTime[16];
+  int numCaptures;
+  int numAssists;
+  int numDefends;
+  int numHolyShits;
+  int totalDamageDealt;
+  int totalDamageTaken;
+  int previousHealth;
+  int previousArmor;
+  int numAmmoPickups;
+  int numFirstMegaHealthPickups;
+  int numMegaHealthPickups;
+  int megaHealthPickupTime;
+  int numHealthPickups;
+  int numFirstRedArmorPickups;
+  int numRedArmorPickups;
+  int redArmorPickupTime;
+  int numFirstYellowArmorPickups;
+  int numYellowArmorPickups;
+  int yellowArmorPickupTime;
+  int numFirstGreenArmorPickups;
+  int numGreenArmorPickups;
+  int greenArmorPickupTime;
+  int numQuadDamagePickups;
+  int numQuadDamageKills;
+  int numBattleSuitPickups;
+  int numRegenerationPickups;
+  int numHastePickups;
+  int numInvisibilityPickups;
+  int numRedFlagPickups;
+  int numBlueFlagPickups;
+  int numNeutralFlagPickups;
+  int numMedkitPickups;
+  int numArmorPickups;
+  int numDenials;
+  int killStreak;
+  int maxKillStreak;
+  int xp;
+  int domThreeFlagsTime;
+  int numMidairShotgunKills;
+} expandedStatObj_t;
 
 // client data that stays across multiple respawns, but is cleared
 // on each level change or team change at ClientBegin()
-typedef struct {
-	clientConnected_t	connected;	
-	usercmd_t	cmd;				// we would lose angles if not persistant
-	qboolean	localClient;		// true if "ip" info key is "localhost"
-	qboolean	initialSpawn;		// the first spawn should be at a cool location
-	qboolean	predictItemPickup;	// based on cg_predictItems userinfo
-	//qboolean	pmoveFixed;			//
-	char		netname[MAX_NETNAME];
-	int			maxHealth;			// for handicapping
-	int			enterTime;			// level.time the client entered the game
-	playerTeamState_t teamState;	// status in teamplay games
-	voteType_t voteType; // Mino: Stuff around here is iffy.
-	int unknown;
-	int			voteCount;			// to prevent people from constantly calling votes
-	int			teamVoteCount;		// to prevent people from constantly calling votes
-	qboolean	teamInfo;			// send team overlay updates?
+typedef struct __attribute__((aligned(8))) {
+  clientConnected_t connected;
+  usercmd_t cmd;
+  qboolean localClient;
+  qboolean initialSpawn;
+  qboolean predictItemPickup;
+  char netname[40];
+  char country[24];
+  uint64_t steamId;
+  int maxHealth;
+  int voteCount;
+  voteState_t voteState;
+  int complaints;
+  int complaintClient;
+  int complaintEndTime;
+  int damageFromTeammates;
+  int damageToTeammates;
+  qboolean ready;
+  int autoaction;
+  int timeouts;
+  int enterTime;
+  playerTeamState_t teamState;
+  int damageResidual;
+  int inactivityTime;
+  int inactivityWarning;
+  int lastUserinfoUpdate;
+  int userInfoFloodInfractions;
+  int lastMapVoteTime;
+  int lastMapVoteIndex;
 } clientPersistant_t;
 
 // client data that stays across multiple levels or tournament restarts
@@ -872,333 +1010,318 @@ typedef struct {
 // time and reading them back at connection time.  Anything added here
 // MUST be dealt with in G_InitSessionData() / G_ReadSessionData() / G_WriteSessionData()
 typedef struct {
-	team_t		sessionTeam;
-	int			spectatorTime;		// for determining next-in-line to play
-	spectatorState_t	spectatorState;
-	int			spectatorClient;	// for chasecam and follow mode
-	int			wins, losses;		// tournament stats
-	qboolean	teamLeader;			// true when this client is a team leader
+  team_t sessionTeam;
+  int spectatorTime;
+  spectatorState_t spectatorState;
+  int spectatorClient;
+  int weaponPrimary;
+  int wins;
+  int losses;
+  qboolean teamLeader;
+  privileges_t privileges;
+  int specOnly;
+  int playQueue;
+  qboolean updatePlayQueue;
+  int muted;
+  int prevScore;
 } clientSession_t;
 
-typedef struct gentity_s gentity_t;
-typedef struct gclient_s gclient_t;
+typedef struct gitem_s {
+  char *classname;
+  const char *pickup_sound;
+  const char *world_model[4];
+  const char *premium_model[4];
+  const char *icon;
+  const char *pickup_name;
+  int quantity;
+  itemType_t giType;
+  int giTag;
+  qboolean itemTimer;
+  unsigned int maskGametypeRenderSkip;
+  unsigned int maskGametypeForceSpawn;
+} gitem_t;
+
+struct gclient_s;
+
+struct __attribute__((aligned(8))) gentity_s {
+  entityState_t s;
+  entityShared_t r;
+  struct gclient_s *client;
+  qboolean inuse;
+  char *classname;
+  int spawnflags;
+  qboolean neverFree;
+  int flags;
+  char *model;
+  char *model2;
+  int freetime;
+  int eventTime;
+  qboolean freeAfterEvent;
+  qboolean unlinkAfterEvent;
+  qboolean physicsObject;
+  float physicsBounce;
+  int clipmask;
+  moverState_t moverState;
+  int soundPos1;
+  int sound1to2;
+  int sound2to1;
+  int soundPos2;
+  int soundLoop;
+  gentity_t *parent;
+  gentity_t *nextTrain;
+  gentity_t *prevTrain;
+  vec3_t pos1;
+  vec3_t pos2;
+  char *message;
+  char *cvar;
+  char *tourPointTarget;
+  char *tourPointTargetName;
+  char *noise;
+  int timestamp;
+  float angle;
+  char *target;
+  char *targetname;
+  char *targetShaderName;
+  char *targetShaderNewName;
+  gentity_t *target_ent;
+  float speed;
+  vec3_t movedir;
+  int nextthink;
+  void (*think)(gentity_t *);
+  void (*framethink)(gentity_t *);
+  void (*reached)(gentity_t *);
+  void (*blocked)(gentity_t *, gentity_t *);
+  void (*touch)(gentity_t *, gentity_t *);
+  void (*use)(gentity_t *, gentity_t *, gentity_t *);
+  void (*pain)(gentity_t *, gentity_t *, int);
+  void (*die)(gentity_t *, gentity_t *, gentity_t *, int, int);
+  int pain_debounce_time;
+  int fly_sound_debounce_time;
+  int health;
+  qboolean takedamage;
+  int damage;
+  int damageFactor;
+  int splashDamage;
+  int splashRadius;
+  int methodOfDeath;
+  int splashMethodOfDeath;
+  int count;
+  gentity_t *enemy;
+  gentity_t *activator;
+  const char *team;
+  gentity_t *teammaster;
+  gentity_t *teamchain;
+  int kamikazeTime;
+  int kamikazeShockTime;
+  int watertype;
+  int waterlevel;
+  int noise_index;
+  int bouncecount;
+  float wait;
+  float random;
+  int spawnTime;
+  const gitem_t *item;
+  int pickupCount;
+};
+
+typedef struct {
+  qboolean racingActive;
+  int startTime;
+  int lastTime;
+  int best_race[64];
+  int current_race[64];
+  int currentCheckPoint;
+  qboolean weaponUsed;
+  gentity_t *nextRacePoint;
+  gentity_t *nextRacePoint2;
+} raceInfo_t;
 
 // this structure is cleared on each ClientSpawn(),
 // except for 'client->pers' and 'client->sess'
-struct gclient_s {
-	// ps MUST be the first element, because the server expects it
-	playerState_t	ps;				// communicated by server to clients
-
-	uint8_t	unknown1[124];
-	// the rest of the structure is private to game
-	clientPersistant_t	pers;
-	clientSession_t		sess;
-
-	qboolean	readyToExit;		// wishes to leave the intermission
-
-	qboolean	noclip;
-
-	int			lastCmdTime;		// level.time of last usercmd_t, for EF_CONNECTION
-									// we can't just use pers.lastCommand.time, because
-									// of the g_sycronousclients case
-	int			buttons;
-	int			oldbuttons;
-	int			latched_buttons;
-
-	vec3_t		oldOrigin;
-
-	// sum up damage over an entire frame, so
-	// shotgun blasts give a single big kick
-	int			damage_armor;		// damage absorbed by armor
-	int			damage_blood;		// damage taken out of health
-	int			damage_knockback;	// impact damage
-	vec3_t		damage_from;		// origin for vector calculation
-	qboolean	damage_fromWorld;	// if true, don't use the damage_from vector
-
-	int			accurateCount;		// for "impressive" reward sound
-
-	int			accuracy_shots;		// total number of shots
-	int			accuracy_hits;		// total number of hits
-
-	//
-	int			lastkilled_client;	// last client that this client killed
-	int			lasthurt_client;	// last client that damaged this client
-	int			lasthurt_mod;		// type of damage the client did
-
-	// timers
-	int			respawnTime;		// can respawn when time > this, force after g_forcerespwan
-	int			inactivityTime;		// kick players when time > this
-	qboolean	inactivityWarning;	// qtrue if the five seoond warning has been given
-	int			rewardTime;			// clear the EF_AWARD_IMPRESSIVE, etc when time > this
-
-	//int			airOutTime;
-	privileges_t privileges; // Mino: Stuff above and under are probably completely wrong.
-
-	int			lastKillTime;		// for multiple kill rewards
-
-	qboolean	fireHeld;			// used for hook
-	gentity_t	*hook;				// grapple hook if out
-
-	int			switchTeamTime;		// time the player switched teams
-
-	// timeResidual is used to handle events that happen every second
-	// like health / armor countdowns and regeneration
-	int			timeResidual;
-
-//#ifdef MISSIONPACK
-	gentity_t	*persistantPowerup;
-	int			portalID;
-	int			ammoTimes[WP_NUM_WEAPONS];
-	int			invulnerabilityTime;
-//#endif
-
-	char		*areabits;
-};
-
-// plane_t structure
-// !!! if this is changed, it must be changed in asm code too !!!
-typedef struct cplane_s {
-	vec3_t	normal;
-	float	dist;
-	byte	type;			// for fast side tests: 0,1,2 = axial, 3 = nonaxial
-	byte	signbits;		// signx + (signy<<1) + (signz<<2), used as lookup during collision
-	byte	pad[2];
-} cplane_t;
-
-
-// a trace is returned when a box is swept through the world
-typedef struct {
-	qboolean	allsolid;	// if true, plane is not valid
-	qboolean	startsolid;	// if true, the initial point was in a solid area
-	float		fraction;	// time completed, 1.0 = didn't hit anything
-	vec3_t		endpos;		// final position
-	cplane_t	plane;		// surface normal at impact, transformed to world space
-	int			surfaceFlags;	// surface hit
-	int			contents;	// contents on other side of surface hit
-	int			entityNum;	// entity the contacted sirface is a part of
-} trace_t;
-
-typedef struct gitem_s {
-	char		*classname;	// spawning name
-	char		*pickup_sound;
-	char		*world_model[MAX_ITEM_MODELS];
-
-	char		*icon;
-	char		*pickup_name;	// for printing on pickup
-
-	int			quantity;		// for ammo how much, or duration of powerup
-	itemType_t  giType;			// IT_* flags
-
-	int			giTag;
-
-	char		*precaches;		// string of all models and images this item will use
-	char		*sounds;		// string of all sounds this item will use
-} gitem_t;
-
-struct gentity_s {
-	entityState_t	s;				// communicated by server to clients
-	entityShared_t	r;				// shared by both the server system and game
-    uint8_t _unknown1[40];
-
-	// DO NOT MODIFY ANYTHING ABOVE THIS, THE SERVER
-	// EXPECTS THE FIELDS IN THAT ORDER!
-	//================================
-
-	struct gclient_s	*client;			// NULL if not a client
-
-	qboolean	inuse;
-
-	char		*classname;			// set in QuakeEd
-	int			spawnflags;			// set in QuakeEd
-
-	qboolean	neverFree;			// if true, FreeEntity will only unlink
-									// bodyque uses this
-
-	int			flags;				// FL_* variables
-
-	char		*model;
-	char		*model2;
-	int			freetime;			// level.time when the object was freed
-	
-	int			eventTime;			// events will be cleared EVENT_VALID_MSEC after set
-	qboolean	freeAfterEvent;
-	qboolean	unlinkAfterEvent;
-
-	qboolean	physicsObject;		// if true, it can be pushed by movers and fall off edges
-									// all game items are physicsObjects, 
-	float		physicsBounce;		// 1.0 = continuous bounce, 0.0 = no bounce
-	int			clipmask;			// brushes with this content value will be collided against
-									// when moving.  items and corpses do not collide against
-									// players, for instance
-
-	// movers
-	moverState_t moverState;
-	int			soundPos1;
-	int			sound1to2;
-	int			sound2to1;
-	int			soundPos2;
-	int			soundLoop;
-	gentity_t	*parent;
-	gentity_t	*nextTrain;
-	gentity_t	*prevTrain;
-	vec3_t		pos1, pos2;
-
-	char		*message;
-
-	int			timestamp;		// body queue sinking, etc
-
-	float		angle;			// set in editor, -1 = up, -2 = down
-	char		*target;
-	char		*targetname;
-	char		*team;
-	char		*targetShaderName;
-	char		*targetShaderNewName;
-	gentity_t	*target_ent;
-
-	float		speed;
-	vec3_t		movedir;
-
-	int			nextthink;
-	void		(*think)(gentity_t *self);
-	void		(*reached)(gentity_t *self);	// movers call this when hitting endpoint
-	void		(*blocked)(gentity_t *self, gentity_t *other);
-	void		(*touch)(gentity_t *self, gentity_t *other, trace_t *trace);
-	void		(*use)(gentity_t *self, gentity_t *other, gentity_t *activator);
-	void		(*pain)(gentity_t *self, gentity_t *attacker, int damage);
-	void		(*die)(gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int mod);
-
-	// Mino: Not sure if these go here, but there are definitely 4 pointers somewhere here.
-	void* _unknown_p1;
-	void* _unknown_p2;
-	void* _unknown_p3;
-	void* _unknown_p4;
-	//int			pain_debounce_time;
-	int			fly_sound_debounce_time;	// wind tunnel
-	int			last_move_time;
-    
-	int			health;
-
-	qboolean	takedamage;
-
-	int			damage;
-	int			splashDamage;	// quad will increase this without increasing radius
-	int			splashRadius;
-	int			methodOfDeath;
-	int			splashMethodOfDeath;
-
-	int			count;
-
-	gentity_t	*chain;
-	gentity_t	*enemy;
-	gentity_t	*activator;
-	gentity_t	*teamchain;		// next entity in team
-	gentity_t	*teammaster;	// master of the team
-//#ifdef MISSIONPACK
-	int			kamikazeTime;
-	int			kamikazeShockTime;
-//#endif
-	int			watertype;
-	int			waterlevel;
-
-	int			noise_index;
-
-	// timing variables
-	float		wait;
-	float		random;
-
-	gitem_t		*item;			// for bonus items
-
-	int32_t _unknown3;
-    void* _unknown_p5;
-    void* _unknown_p6;
+struct __attribute__((aligned(8))) gclient_s {
+  playerState_t ps;
+  clientPersistant_t pers;
+  clientSession_t sess;
+  qboolean noclip;
+  int lastCmdTime;
+  int buttons;
+  int oldbuttons;
+  int damage_armor;
+  int damage_blood;
+  vec3_t damage_from;
+  qboolean damage_fromWorld;
+  int impressiveCount;
+  int accuracyCount;
+  int accuracy_shots;
+  int accuracy_hits;
+  int lastClientKilled;
+  int lastKilledClient;
+  int lastHurtClient[2];
+  int lastHurtMod[2];
+  int lastHurtTime[2];
+  int lastKillTime;
+  int lastGibTime;
+  int rampageCounter;
+  int revengeCounter[64];
+  int respawnTime;
+  int rewardTime;
+  int airOutTime;
+  qboolean fireHeld;
+  gentity_t *hook;
+  int switchTeamTime;
+  int timeResidual;
+  int timeResidualScout;
+  int timeResidualArmor;
+  int timeResidualHealth;
+  int timeResidualPingPOI;
+  int timeResidualSpecInfo;
+  qboolean healthRegenActive;
+  qboolean armorRegenActive;
+  gentity_t *persistantPowerup;
+  int portalID;
+  int ammoTimes[16];
+  int invulnerabilityTime;
+  expandedStatObj_t expandedStats;
+  int ignoreChatsTime;
+  int lastUserCmdTime;
+  qboolean freezePlayer;
+  int deferredSpawnTime;
+  int deferredSpawnCount;
+  raceInfo_t race;
+  int shotgunDmg[64];
+  int round_shots;
+  int round_hits;
+  int round_damage;
+  qboolean queuedSpectatorFollow;
+  int queuedSpectatorClient;
 };
 
 typedef struct {
-	struct gclient_s	*clients;		// [maxclients]
+  roundStateState_t eCurrent;
+  roundStateState_t eNext;
+  int tNext;
+  int startTime;
+  int turn;
+  int round;
+  team_t prevRoundWinningTeam;
+  qboolean touch;
+  qboolean capture;
+} roundState_t;
 
-	struct gentity_s	*gentities;
-	int			gentitySize;
-	int			num_entities;		// current number, <= MAX_GENTITIES
-
-	int			warmupTime;			// restart match at this time
-
-	fileHandle_t	logFile;
-
-	// store latched cvars here that we want to get at often
-	int			maxclients;
-
-	int			time;					// in msec
-	int			previousTime;			// so movers can back up when blocked
-
-	int			startTime;				// level.time the map was started
-
-	int	unknown_int1; // Mino: Q3 has frameNum before. I think it's gone?
-	int unknown_int2;
-
-	int			teamScores[TEAM_NUM_TEAMS];
-	int			lastTeamLocationTime;		// last time of client team location update
-
-	qboolean	newSession;				// don't use any old session data, because
-										// we changed gametype
-
-	qboolean	restarted;				// waiting for a map_restart to fire
-
-	int			numConnectedClients;
-	int			numNonSpectatorClients;	// includes connecting clients
-	int			numPlayingClients;		// connected, non-spectators
-	int			sortedClients[MAX_CLIENTS];		// sorted by score
-	int			follow1, follow2;		// clientNums for auto-follow spectators
-
-	int			snd_fry;				// sound index for standing in lava
-
-	int			warmupModificationCount;	// for detecting if g_warmup is changed
-
-	int unknown_int3[3];
-
-	// voting state
-	char		voteString[MAX_STRING_CHARS];
-	char		voteDisplayString[MAX_STRING_CHARS];
-	int			voteExecuteTime;		// time the vote is executed
-	int			voteTime;				// level.time vote was called
-
-	int			voteYes;
-	int			voteNo;
-	int			numVotingClients;		// set by CalculateRanks
-
-	// team voting state
-	char		teamVoteString[2][MAX_STRING_CHARS];
-	int			teamVoteTime[2];		// level.time vote was called
-	int			teamVoteYes[2];
-	int			teamVoteNo[2];
-	int			numteamVotingClients[2];// set by CalculateRanks
-
-	// spawn variables
-	qboolean	spawning;				// the G_Spawn*() functions are valid
-	int			numSpawnVars;
-	char		*spawnVars[MAX_SPAWN_VARS][2];	// key / value pairs
-	int			numSpawnVarChars;
-	char		spawnVarChars[MAX_SPAWN_VARS_CHARS];
-
-	// intermission state
-	int			intermissionQueued;		// intermission was qualified, but
-										// wait INTERMISSION_DELAY_TIME before
-										// actually going there so the last
-										// frag can be watched.  Disable future
-										// kills during this delay
-	int			intermissiontime;		// time the intermission was started
-	char		*changemap;
-	qboolean	readyToExit;			// at least one client wants to exit
-	int			exitTime;
-	vec3_t		intermission_origin;	// also used for spectator spawns
-	vec3_t		intermission_angle;
-
-	qboolean	locationLinked;			// target_locations get linked
-	gentity_t	*locationHead;			// head of the location list
-	int			bodyQueIndex;			// dead bodies
-	gentity_t	*bodyQue[BODY_QUEUE_SIZE];
-	int			portalSequence;
-
-	uint8_t 	unknown1[10144]; // Mino: A shit ton of new stuff. TODO: x86-outdated.
+typedef struct __attribute__((aligned(8))) {
+  struct gclient_s *clients;
+  struct gentity_s *gentities;
+  int gentitySize;
+  int num_entities;
+  int warmupTime;
+  fileHandle_t logFile;
+  int maxclients;
+  int time;
+  int frametime;
+  int startTime;
+  int teamScores[4];
+  int nextTeamInfoTime;
+  qboolean newSession;
+  qboolean restarted;
+  qboolean shufflePending;
+  int shuffleReadyTime;
+  int numConnectedClients;
+  int numNonSpectatorClients;
+  int numPlayingClients;
+  int numReadyClients;
+  int numReadyHumans;
+  int numStandardClients;
+  int sortedClients[64];
+  int follow1;
+  int follow2;
+  int snd_fry;
+  int warmupModificationCount;
+  char voteString[1024];
+  char voteDisplayString[1024];
+  int voteExecuteTime;
+  int voteTime;
+  int voteYes;
+  int voteNo;
+  int pendingVoteCaller;
+  qboolean spawning;
+  int numSpawnVars;
+  char *spawnVars[64][2];
+  int numSpawnVarChars;
+  char spawnVarChars[4096];
+  int intermissionQueued;
+  int intermissionTime;
+  qboolean readyToExit;
+  qboolean votingEnded;
+  int exitTime;
+  vec3_t intermission_origin;
+  vec3_t intermission_angle;
+  qboolean locationLinked;
+  gentity_t *locationHead;
+  int timePauseBegin;
+  int timeOvertime;
+  int timeInitialPowerupSpawn;
+  int bodyQueIndex;
+  gentity_t *bodyQue[8];
+  int portalSequence;
+  qboolean gameStatsReported;
+  qboolean mapIsTrainingMap;
+  int clientNum1stPlayer;
+  int clientNum2ndPlayer;
+  char scoreboardArchive1[1024];
+  char scoreboardArchive2[1024];
+  char firstScorer[40];
+  char lastScorer[40];
+  char lastTeamScorer[40];
+  char firstFrag[40];
+  vec3_t red_flag_origin;
+  vec3_t blue_flag_origin;
+  int spawnCount[4];
+  int runeSpawns[5];
+  int itemCount[60];
+  int suddenDeathRespawnDelay;
+  int suddenDeathRespawnDelayLastAnnounced;
+  int numRedArmorPickups[4];
+  int numYellowArmorPickups[4];
+  int numGreenArmorPickups[4];
+  int numMegaHealthPickups[4];
+  int numQuadDamagePickups[4];
+  int numBattleSuitPickups[4];
+  int numRegenerationPickups[4];
+  int numHastePickups[4];
+  int numInvisibilityPickups[4];
+  int quadDamagePossessionTime[4];
+  int battleSuitPossessionTime[4];
+  int regenerationPossessionTime[4];
+  int hastePossessionTime[4];
+  int invisibilityPossessionTime[4];
+  int numFlagPickups[4];
+  int numMedkitPickups[4];
+  int flagPossessionTime[4];
+  gentity_t *dominationPoints[5];
+  int dominationPointCount;
+  int dominationPointsTallied;
+  int racePointCount;
+  qboolean disableDropWeapon;
+  qboolean teamShuffleActive;
+  int lastTeamScores[4];
+  int lastTeamRoundScores[4];
+  team_t attackingTeam;
+  roundState_t roundState;
+  int lastTeamCountSent;
+  int infectedConscript;
+  int lastZombieSurvivor;
+  int zombieScoreTime;
+  int lastInfectionTime;
+  char intermissionMapNames[3][1024];
+  char intermissionMapTitles[3][1024];
+  char intermissionMapConfigs[3][1024];
+  int intermissionMapVotes[3];
+  qboolean matchForfeited;
+  int allReadyTime;
+  qboolean notifyCvarChange;
+  int notifyCvarChangeTime;
+  int lastLeadChangeTime;
+  int lastLeadChangeClient;
 } level_locals_t;
 
 // Some extra stuff that's not in the Q3 source. These are the commands you
