@@ -197,3 +197,25 @@ void RconDispatcher(const char* cmd) {
     PyGILState_Release(gstate);
 }
 
+char* ConsolePrintDispatcher(char* text) {
+    char* ret = text;
+    if (!console_print_handler)
+        return ret; // No registered handler.
+
+    PyGILState_STATE gstate = PyGILState_Ensure();
+
+    PyObject* result = PyObject_CallFunction(console_print_handler, "y", text);
+
+    if (result == NULL)
+        DebugError("PyObject_CallFunction() returned NULL.\n",
+                __FILE__, __LINE__, __func__);
+    else if (PyBool_Check(result) && result == Py_False)
+        ret = NULL;
+    else if (PyUnicode_Check(result))
+        ret = PyUnicode_AsUTF8(result);
+
+    Py_XDECREF(result);
+
+    PyGILState_Release(gstate);
+    return ret;
+}

@@ -137,6 +137,19 @@ void __cdecl My_SV_DropClient(client_t* drop, const char* reason) {
     SV_DropClient(drop, reason);
 }
 
+void __cdecl My_Com_Printf(char* fmt, ...) {
+    char buf[4096];
+    va_list args;
+    va_start(args, fmt);
+    vsnprintf(buf, sizeof(buf), fmt, args);
+    va_end(args);
+
+    char* res = ConsolePrintDispatcher(buf);
+    // NULL means stop the event.
+    if (res)
+        Com_Printf(buf);
+}
+
 void  __cdecl My_G_RunFrame(int time) {
     // Dropping frames is probably not a good idea, so we don't allow cancelling.
     FrameDispatcher();
@@ -203,6 +216,12 @@ void HookStatic(void) {
     res = Hook((void*)SV_DropClient, My_SV_DropClient, (void*)&SV_DropClient);
     if (res) {
         DebugPrint("ERROR: Failed to hook SV_DropClient: %d\n", res);
+        failed = 1;
+    }
+
+    res = Hook((void*)Com_Printf, My_Com_Printf, (void*)&Com_Printf);
+    if (res) {
+        DebugPrint("ERROR: Failed to hook Com_Printf: %d\n", res);
         failed = 1;
     }
 #endif

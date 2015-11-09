@@ -30,7 +30,7 @@ class EventDispatcher:
     to hook into events by registering an event handler.
 
     """
-    no_debug = ("frame", "set_configstring", "stats", "server_command", "death", "kill", "command")
+    no_debug = ("frame", "set_configstring", "stats", "server_command", "death", "kill", "command", "console_print")
 
     def __init__(self):
         self.name = type(self).name
@@ -194,6 +194,23 @@ class EventDispatcherManager:
 # ====================================================================
 #                          EVENT DISPATCHERS
 # ====================================================================
+
+class ConsolePrintDispatcher(EventDispatcher):
+    name = "console_print"
+    
+    def dispatch(self, text):
+        return super().dispatch(text)
+
+    def handle_return(self, handler, value):
+        """If a string was returned, continue execution, but we edit the
+        string that's being printed along the chain of handlers.
+
+        """
+        if isinstance(value, str):
+            self.args = (value,)
+            self.return_value = value
+        else:
+            return super().handle_return(handler, value)
 
 class CommandDispatcher(EventDispatcher):
     """Event that goes off when a command is executed. This can be used
@@ -450,6 +467,7 @@ class DeathDispatcher(EventDispatcher):
         return super().dispatch(victim, killer, data)
 
 EVENT_DISPATCHERS = EventDispatcherManager()
+EVENT_DISPATCHERS.add_dispatcher(ConsolePrintDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(CommandDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(ClientCommandDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(ServerCommandDispatcher)

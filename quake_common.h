@@ -1419,6 +1419,7 @@ void __cdecl My_Sys_SetModuleOffset(char* moduleName, void* offset);
 void __cdecl My_SV_ClientEnterWorld(client_t* client, usercmd_t* cmd);
 void __cdecl My_SV_SetConfigstring(int index, char* value);
 void __cdecl My_SV_DropClient(client_t* drop, const char* reason);
+void __cdecl My_Com_Printf(char* fmt, ...);
 // VM replacement functions for hooks.
 void __cdecl My_G_RunFrame(int time);
 void __cdecl My_G_InitGame(int levelTime, int randomSeed, int restart);
