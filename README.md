@@ -93,6 +93,31 @@ can't tell who the owner is and will refuse to execute admin commands.
 - `qlx_redisPassword`: The password to the Redis server, if any.
   - Default: None
 
+Usage
+=====
+Once you've configured the above cvars and launched the server, you will quickly recognize if for instance
+your database configuration is wrong, as it will start printing a bunch of errors in the server console
+when someone connects. If you only see stuff like the following, then you know it's working like it should:
+
+```
+[minqlx.late_init] INFO: Loading preset plugins...
+[minqlx.load_plugin] INFO: Loading plugin 'plugin_manager'...
+[minqlx.load_plugin] INFO: Loading plugin 'essentials'...
+[minqlx.load_plugin] INFO: Loading plugin 'motd'...
+[minqlx.load_plugin] INFO: Loading plugin 'permission'...
+[minqlx.late_init] INFO: Stats listener started on tcp://127.0.0.1:64550.
+[minqlx.late_init] INFO: We're good to go!
+```
+
+To confirm minqlx recognizes you as the owner, try connecting to the server and type `!myperm` in chat.
+If it tells you that you have permission level 0, the `qlx_owner` cvar has not been set properly. Otherwise
+you should be good to go. As the owner, you are allowed to type commands directly into the console instead
+of having to use chat. You can now go ahead and add other admins too with `!setperm`. To use commands such
+as `!kick` you need to use client IDs. Look them up with `!id` first. You can also use full SteamID64s
+for commands like `!ban` where the target player might not currently be connected.
+
+[See here for a full command list.](https://github.com/MinoMino/minqlx/wiki/Command-List)
+
 Compiling
 =========
 **NOTE**: This is *not* required if you are using binaries.
