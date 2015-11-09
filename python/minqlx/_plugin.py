@@ -494,7 +494,7 @@ class Plugin():
 
     @classmethod
     def play_sound(cls, sound_path, player=None):
-        if not sound_path or sound_path.startswith("music"):
+        if not sound_path or "music/" in sound_path.lower():
             return False
 
         if player:
@@ -505,7 +505,7 @@ class Plugin():
 
     @classmethod
     def play_music(cls, music_path, player=None):
-        if not music_path or music_path.startswith("sound"):
+        if not music_path or "sound/" in music_path.lower():
             return False
 
         if player:
