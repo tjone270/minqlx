@@ -316,7 +316,7 @@ def handle_console_print(text):
 
     """
     try:
-        text = text.decode(errors="ignore").strip()
+        text = text.decode(errors="ignore").rstrip()
         if not text:
             return
         
