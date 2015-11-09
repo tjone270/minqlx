@@ -316,7 +316,10 @@ def handle_console_print(text):
 
     """
     try:
-        text = text.decode(errors="ignore").rstrip()
+        text = text.decode(errors="ignore").strip()
+        if not text:
+            return
+        
         # Log console output. Removes the need to have stdout logs in addition to minqlx.log.
         minqlx.get_logger().debug(text)
 

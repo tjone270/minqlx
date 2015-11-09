@@ -112,7 +112,7 @@ def _configure_logger():
     # Console
     console_fmt = logging.Formatter("[%(name)s.%(funcName)s] %(levelname)s: %(message)s", "%H:%M:%S")
     console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.DEBUG if minqlx.DEBUG else logging.INFO)
+    console_handler.setLevel(logging.INFO)
     console_handler.setFormatter(console_fmt)
     logger.addHandler(console_handler)
 
