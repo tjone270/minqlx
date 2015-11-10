@@ -162,7 +162,7 @@ static PyObject* PyMinqlx_PlayerInfo(PyObject* self, PyObject* args) {
         return NULL;
         
     }
-    else if (!in_clientconnect && svs->clients[i].state == CS_FREE) {
+    else if (allow_free_client != i && svs->clients[i].state == CS_FREE) {
         #ifndef NDEBUG
         DebugPrint("WARNING: PyMinqlx_PlayerInfo called for CS_FREE client %d.\n", i);
         #endif
@@ -207,7 +207,7 @@ static PyObject* PyMinqlx_GetUserinfo(PyObject* self, PyObject* args) {
         return NULL;
 
     }
-    else if (!in_clientconnect && (svs->clients[i].state == CS_FREE || svs->clients[i].state == CS_ZOMBIE))
+    else if (allow_free_client != i && svs->clients[i].state == CS_FREE)
         Py_RETURN_NONE;
 
     return PyUnicode_FromString(svs->clients[i].userinfo);

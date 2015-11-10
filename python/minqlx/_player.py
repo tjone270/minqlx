@@ -210,6 +210,8 @@ class Player():
         """A string describing the connection state of a player.
 
         Possible values:
+        - *free* -- The player has disconnected and the slot is free to be used by someone else.
+        - *zombie* -- The player disconnected and his/her slot will be available to other players shortly.
         - *connected* -- The player connected, but is currently loading the game.
         - *primed* -- The player was sent the necessary information to play, but has yet to send commands.
         - *active* -- The player finished loading and is actively sending commands to the server.

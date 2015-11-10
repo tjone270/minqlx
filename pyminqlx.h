@@ -65,8 +65,8 @@ extern PyObject* custom_command_handler;
 // We need to explicitly tell player_info to not return None in the case where
 // we are inside My_ClientConnect, because we want to call Python code before
 // the real ClientConnect is called, which is where it sets the connection
-// state from CS_FREE to CS_CONNECTED.
-extern int in_clientconnect;
+// state from CS_FREE to CS_CONNECTED. Same thing with My_SV_DropClient.
+extern int allow_free_client;
 
 /* Dispatchers. These are called by hooks or whatever and should dispatch events to Python handlers.
  * The return values will often determine what is passed on to the engine. You could for instance

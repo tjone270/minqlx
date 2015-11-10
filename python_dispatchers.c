@@ -3,7 +3,7 @@
 #include "pyminqlx.h"
 #include "quake_common.h"
 
-int in_clientconnect = 0;
+int allow_free_client = -1;
 
 char* ClientCommandDispatcher(int client_id, char* cmd) {
     char* ret = cmd;
@@ -73,9 +73,9 @@ char* ClientConnectDispatcher(int client_id, int is_bot) {
 	PyGILState_STATE gstate = PyGILState_Ensure();
 
 	// Tell PyMinqlx_PlayerInfo it's OK to get player info for someone with CS_FREE.
-	in_clientconnect = 1;
+	allow_free_client = client_id;
 	PyObject* result = PyObject_CallFunction(client_connect_handler, "iO", client_id, is_bot ? Py_True : Py_False);
-	in_clientconnect = 0;
+	allow_free_client = -1;
 
 	if (result == NULL)
 		DebugError("PyObject_CallFunction() returned NULL.\n",
@@ -97,8 +97,12 @@ void ClientDisconnectDispatcher(int client_id, const char* reason) {
 
 	PyGILState_STATE gstate = PyGILState_Ensure();
 
+    // Tell PyMinqlx_PlayerInfo it's OK to get player info for someone with CS_FREE.
+    allow_free_client = client_id;
 	PyObject* result = PyObject_CallFunction(client_disconnect_handler, "is", client_id, reason);
-	if (result == NULL)
+    allow_free_client = -1;
+	
+    if (result == NULL)
 		DebugError("PyObject_CallFunction() returned NULL.\n",
 				__FILE__, __LINE__, __func__);
 
