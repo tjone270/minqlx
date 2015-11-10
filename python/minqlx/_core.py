@@ -34,6 +34,7 @@ import shutil
 import shlex
 import sys
 import os
+import re
 
 # Team number -> string
 TEAMS = dict(enumerate(("free", "red", "blue", "spectator")))
@@ -44,6 +45,8 @@ GAMETYPES = dict(enumerate(("Free for All", "Duel", "Race", "Team Deathmatch", "
 
 # Game type number -> short string
 GAMETYPES_SHORT = dict(enumerate(("ffa", "duel", "race", "tdm", "ca", "ctf", "ob", "har", "ft", "dom", "ad", "rr")))
+
+_re_varsplit = re.compile(r"\\*")
 
 # ====================================================================
 #                               HELPERS
@@ -67,7 +70,7 @@ def parse_variables(varstr, ordered=False):
     if not varstr.strip():
         return res
     
-    vars = varstr.lstrip("\\").split("\\")
+    vars = _re_varsplit.split(varstr.lstrip("\\"))
     try:
         for i in range(0, len(vars), 2):
             res[vars[i]] = vars[i + 1]
