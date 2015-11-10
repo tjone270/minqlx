@@ -368,10 +368,10 @@ static PyObject* PyMinqlx_Kick(PyObject* self, PyObject* args) {
 		}
 		else if (reason == Py_None || (PyUnicode_Check(reason) && PyUnicode_AsUTF8(reason)[0] == 0)) {
 			// Default kick message for None or empty strings.
-			SV_DropClient(&svs->clients[i], "was kicked.");
+			My_SV_DropClient(&svs->clients[i], "was kicked.");
 		}
 		else if (PyUnicode_Check(reason)) {
-			SV_DropClient(&svs->clients[i], PyUnicode_AsUTF8(reason));
+			My_SV_DropClient(&svs->clients[i], PyUnicode_AsUTF8(reason));
 		}
 	}
 	else {
@@ -395,7 +395,7 @@ static PyObject* PyMinqlx_ConsolePrint(PyObject* self, PyObject* args) {
     if (!PyArg_ParseTuple(args, "s:console_print", &text))
         return NULL;
 
-    Com_Printf("%s\n", text);
+    My_Com_Printf("%s\n", text);
 
     Py_RETURN_NONE;
 }
