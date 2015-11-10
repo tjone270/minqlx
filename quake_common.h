@@ -1418,6 +1418,8 @@ extern ClientDisconnect_ptr ClientDisconnect;
 void __cdecl My_Cmd_AddCommand(char* cmd, void* func);
 void __cdecl My_Sys_SetModuleOffset(char* moduleName, void* offset);
 #ifndef NOPY
+void __cdecl My_SV_ExecuteClientCommand(client_t *cl, char *s, qboolean clientOK);
+void __cdecl My_SV_SendServerCommand(client_t* cl, char* fmt, ...);
 void __cdecl My_SV_ClientEnterWorld(client_t* client, usercmd_t* cmd);
 void __cdecl My_SV_SetConfigstring(int index, char* value);
 void __cdecl My_SV_DropClient(client_t* drop, const char* reason);

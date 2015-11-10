@@ -58,16 +58,20 @@ def handle_client_command(client_id, cmd):
     try:
         # Dispatch the "client_command" event before further processing.
         player = minqlx.Player(client_id)
-        if minqlx.EVENT_DISPATCHERS["client_command"].dispatch(player, cmd) == False:
+        retval = minqlx.EVENT_DISPATCHERS["client_command"].dispatch(player, cmd)
+        if retval == False:
             return False
+        elif isinstance(retval, str):
+            # Allow plugins to modify the command before passing it on.
+            cmd = retval
 
-        # Beyond this point, we deal with events that don't overlap,
-        # meaning we can safely return the result of the dispatch method.
         res = _re_say.match(cmd)
         if res:
             msg = res.group("msg").replace("\"", "")
             channel = minqlx.CHAT_CHANNEL
-            return minqlx.EVENT_DISPATCHERS["chat"].dispatch(player, msg, channel)
+            if minqlx.EVENT_DISPATCHERS["chat"].dispatch(player, msg, channel) == False:
+                return False
+            return cmd
         
         res = _re_say_team.match(cmd)
         if res:
@@ -80,38 +84,53 @@ def handle_client_command(client_id, cmd):
                 channel = minqlx.BLUE_TEAM_CHAT_CHANNEL
             else:
                 channel = minqlx.SPECTATOR_CHAT_CHANNEL
-            return minqlx.EVENT_DISPATCHERS["chat"].dispatch(player, msg, channel)
+            if minqlx.EVENT_DISPATCHERS["chat"].dispatch(player, msg, channel) == False:
+                return False
+            return cmd
 
         res = _re_callvote.match(cmd)
         if res:
             vote = res.group("cmd")
             args = res.group("args") if res.group("args") else ""
-            return minqlx.EVENT_DISPATCHERS["vote_called"].dispatch(player, vote, args)
+            if minqlx.EVENT_DISPATCHERS["vote_called"].dispatch(player, vote, args) == False:
+                return False
+            return cmd
 
         res = _re_vote.match(cmd)
         if res and minqlx.Plugin.is_vote_active():
             arg = res.group("arg").lower()
             if arg == "y" or arg == "1":
-                return minqlx.EVENT_DISPATCHERS["vote"].dispatch(player, True)
+                if minqlx.EVENT_DISPATCHERS["vote"].dispatch(player, True) == False:
+                    return False
             elif arg == "n" or arg == "1":
-                return minqlx.EVENT_DISPATCHERS["vote"].dispatch(player, False)
+                if minqlx.EVENT_DISPATCHERS["vote"].dispatch(player, False) == False:
+                    return False
+            return cmd
 
         res = _re_team.match(cmd)
         if res:
             arg = res.group("arg").lower()
+            target_team = ""
             if arg == player.team[0]:
                 # Don't trigger if player is joining the same team.
-                return
+                return cmd
             elif arg == "f":
-                return minqlx.EVENT_DISPATCHERS["team_switch_attempt"].dispatch(player, player.team, "free")
+                target_team = "free"
             elif arg == "r":
-                return minqlx.EVENT_DISPATCHERS["team_switch_attempt"].dispatch(player, player.team, "red")
+                target_team = "red"
             elif arg == "b":
-                return minqlx.EVENT_DISPATCHERS["team_switch_attempt"].dispatch(player, player.team, "blue")
+                target_team = "blue"
             elif arg == "s":
-                return minqlx.EVENT_DISPATCHERS["team_switch_attempt"].dispatch(player, player.team, "spectator")
+                target_team = "spectator"
             elif arg == "a":
-                return minqlx.EVENT_DISPATCHERS["team_switch_attempt"].dispatch(player, player.team, "any")
+                target_team = "any"
+
+            if target_team:
+                if minqlx.EVENT_DISPATCHERS["team_switch_attempt"].dispatch(player, player.team, target_team) == False:
+                    return False
+            return cmd
+
+        return cmd
     except:
         minqlx.log_exception()
         return True
@@ -124,8 +143,11 @@ def handle_server_command(client_id, cmd):
         except minqlx.NonexistentPlayerError:
             return True
 
-        if minqlx.EVENT_DISPATCHERS["server_command"].dispatch(player, cmd) == False:
+        retval = minqlx.EVENT_DISPATCHERS["server_command"].dispatch(player, cmd)
+        if retval == False:
             return False
+        elif isinstance(retval, str):
+            cmd = retval
 
         res = _re_vote_ended.match(cmd)
         if res:
@@ -133,7 +155,8 @@ def handle_server_command(client_id, cmd):
                 minqlx.EVENT_DISPATCHERS["vote_ended"].dispatch(True)
             else:
                 minqlx.EVENT_DISPATCHERS["vote_ended"].dispatch(False)
-            return
+        
+        return cmd
     except:
         minqlx.log_exception()
         return True

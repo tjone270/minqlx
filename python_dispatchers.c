@@ -5,8 +5,8 @@
 
 int in_clientconnect = 0;
 
-int ClientCommandDispatcher(int client_id, const char* cmd) {
-    int ret = 1;
+char* ClientCommandDispatcher(int client_id, char* cmd) {
+    char* ret = cmd;
     if (!client_command_handler)
         return ret; // No registered handler.
     
@@ -14,16 +14,13 @@ int ClientCommandDispatcher(int client_id, const char* cmd) {
 
     PyObject* result = PyObject_CallFunction(client_command_handler, "is", client_id, cmd);
     
-    // Only change to 0 if we got False returned to us.
-    if (result == NULL) {
+    if (result == NULL)
         DebugError("PyObject_CallFunction() returned NULL.\n",
-        		__FILE__, __LINE__, __func__);
-        PyGILState_Release(gstate);
-        return ret;
-    }
-    else if (PyBool_Check(result) && result == Py_False) {
-        ret = 0;
-    }
+                __FILE__, __LINE__, __func__);
+    else if (PyBool_Check(result) && result == Py_False)
+        ret = NULL;
+    else if (PyUnicode_Check(result))
+        ret = PyUnicode_AsUTF8(result);
     
     Py_XDECREF(result);
 
@@ -31,8 +28,8 @@ int ClientCommandDispatcher(int client_id, const char* cmd) {
     return ret;
 }
 
-int ServerCommandDispatcher(int client_id, const char* cmd) {
-    int ret = 1;
+char* ServerCommandDispatcher(int client_id, char* cmd) {
+    char* ret = cmd;
     if (!server_command_handler)
         return ret; // No registered handler.
 
@@ -40,16 +37,13 @@ int ServerCommandDispatcher(int client_id, const char* cmd) {
 
     PyObject* result = PyObject_CallFunction(server_command_handler, "is", client_id, cmd);
 
-    // Only change to 0 if we got False returned to us.
-    if (result == NULL) {
+    if (result == NULL)
         DebugError("PyObject_CallFunction() returned NULL.\n",
-        		__FILE__, __LINE__, __func__);
-        PyGILState_Release(gstate);
-        return ret;
-    }
-    else if (PyBool_Check(result) && result == Py_False) {
-        ret = 0;
-    }
+                __FILE__, __LINE__, __func__);
+    else if (PyBool_Check(result) && result == Py_False)
+        ret = NULL;
+    else if (PyUnicode_Check(result))
+        ret = PyUnicode_AsUTF8(result);
 
     Py_XDECREF(result);
 

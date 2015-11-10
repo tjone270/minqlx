@@ -231,11 +231,26 @@ class ClientCommandDispatcher(EventDispatcher):
     
     def dispatch(self, player, cmd):
         ret = super().dispatch(player, cmd)
-        if not ret:
+        if ret == False:
             return False
 
-        channel = minqlx.ClientCommandChannel(player)
-        return minqlx.COMMANDS.handle_input(player, cmd, channel)
+        ret = minqlx.COMMANDS.handle_input(player, cmd, minqlx.ClientCommandChannel(player))
+        if ret == False:
+            return False
+
+        return self.return_value
+
+    def handle_return(self, handler, value):
+        """If a string was returned, continue execution, but we edit the
+        command that's being executed along the chain of handlers.
+
+        """
+        if isinstance(value, str):
+            player, cmd = self.args
+            self.args = (player, value)
+            self.return_value = value
+        else:
+            return super().handle_return(handler, value)
 
 class ServerCommandDispatcher(EventDispatcher):
     """Event that triggers with any server command sent by the server.
@@ -247,6 +262,18 @@ class ServerCommandDispatcher(EventDispatcher):
     
     def dispatch(self, player, cmd):
         return super().dispatch(player, cmd)
+
+    def handle_return(self, handler, value):
+        """If a string was returned, continue execution, but we edit the
+        command that's being sent along the chain of handlers.
+
+        """
+        if isinstance(value, str):
+            player, cmd = self.args
+            self.args = (player, value)
+            self.return_value = value
+        else:
+            return super().handle_return(handler, value)
 
 class FrameEventDispatcher(EventDispatcher):
     """Event that triggers every frame if the config has FrameEvent to True.
@@ -277,7 +304,8 @@ class SetConfigstringDispatcher(EventDispatcher):
 
         """
         if isinstance(value, str):
-            self.args = (self.args[0], value)
+            index, old_value = self.args
+            self.args = (index, value)
             self.return_value = value
         else:
             return super().handle_return(handler, value)

@@ -73,8 +73,8 @@ extern int in_clientconnect;
  * implement a chat filter by returning 0 whenever bad words are said through the client_command event.
  * Hell, it could even be used to fix bugs in the server or client (e.g. a broken userinfo command or
  * broken UTF sequences that could crash clients). */
-int ClientCommandDispatcher(int client_id, const char* cmd);
-int ServerCommandDispatcher(int client_id, const char* cmd);
+char* ClientCommandDispatcher(int client_id, char* cmd);
+char* ServerCommandDispatcher(int client_id, char* cmd);
 void FrameDispatcher(void);
 char* ClientConnectDispatcher(int client_id, int is_bot);
 int ClientLoadedDispatcher(int client_id);

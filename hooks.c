@@ -73,18 +73,18 @@ void __cdecl My_G_InitGame(int levelTime, int randomSeed, int restart) {
 // USED FOR PYTHON
 
 #ifndef NOPY
-void __cdecl My_SV_ExecuteClientCommand(client_t *cl, const char *s, qboolean clientOK) {
+void __cdecl My_SV_ExecuteClientCommand(client_t *cl, char *s, qboolean clientOK) {
+    char* res = s;
     if (clientOK && cl->gentity) {
-        int res = ClientCommandDispatcher(cl - svs->clients, s);
+        res = ClientCommandDispatcher(cl - svs->clients, s);
         if (!res)
             return;
     }
 
-    SV_ExecuteClientCommand(cl, s, clientOK);
+    SV_ExecuteClientCommand(cl, res, clientOK);
 }
 
-void __cdecl My_SV_SendServerCommand(client_t* cl, const char* fmt, ...) {
-	int res = 1;
+void __cdecl My_SV_SendServerCommand(client_t* cl, char* fmt, ...) {
 	va_list	argptr;
 	char buffer[MAX_MSGLEN];
 
@@ -92,6 +92,7 @@ void __cdecl My_SV_SendServerCommand(client_t* cl, const char* fmt, ...) {
 	vsnprintf((char *)buffer, sizeof(buffer), fmt, argptr);
 	va_end(argptr);
 
+    char* res = buffer;
 	if (cl && cl->gentity)
 		res = ServerCommandDispatcher(cl - svs->clients, buffer);
 	else if (cl == NULL)
@@ -100,7 +101,7 @@ void __cdecl My_SV_SendServerCommand(client_t* cl, const char* fmt, ...) {
 	if (!res)
 		return;
 
-    SV_SendServerCommand(cl, buffer);
+    SV_SendServerCommand(cl, res);
 }
 
 void __cdecl My_SV_ClientEnterWorld(client_t* client, usercmd_t* cmd) {
