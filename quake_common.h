@@ -482,14 +482,16 @@ typedef struct {
     int     bit;                // for bitwise reads and writes
 } msg_t;
 
-typedef struct usercmd_s {
-    int             serverTime;
-    int             angles[3];
-    int             buttons;
-    byte            weapon;           // weapon 
-    byte 			_unknown1 ,fov;
-	signed char forwardmove, rightmove, upmove;
-	byte 		_unknown2, _unknown3;
+typedef struct __attribute__((aligned(4))) usercmd_s {
+  int serverTime;
+  int angles[3];
+  int buttons;
+  byte weapon;
+  byte weaponPrimary;
+  byte fov;
+  char forwardmove;
+  char rightmove;
+  char upmove;
 } usercmd_t;
 
 typedef enum {
