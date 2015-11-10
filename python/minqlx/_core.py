@@ -46,6 +46,9 @@ GAMETYPES = dict(enumerate(("Free for All", "Duel", "Race", "Team Deathmatch", "
 # Game type number -> short string
 GAMETYPES_SHORT = dict(enumerate(("ffa", "duel", "race", "tdm", "ca", "ctf", "ob", "har", "ft", "dom", "ad", "rr")))
 
+# Connection states.
+STATES = dict(enumerate(("free", "zombie", "connected", "primed", "active")))
+
 _re_varsplit = re.compile(r"\\*")
 
 # ====================================================================

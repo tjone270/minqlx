@@ -77,32 +77,8 @@ static PyObject* makePlayerDict(int client_id) {
         Py_RETURN_NONE;
     }
 
-	// CLIENT ID
-	PyObject* cid = PyLong_FromLong(client_id);
-	if (PyDict_SetItemString(ret, "client_id", cid) == -1) {
-		Py_DECREF(ret);
-		Py_RETURN_NONE;
-	}
-	Py_DECREF(cid);
-
 	// STATE
-	PyObject* state;
-	if (svs->clients[client_id].state == CS_FREE)
-		state = PyUnicode_FromString("free");
-	else if (svs->clients[client_id].state == CS_ZOMBIE)
-		state = PyUnicode_FromString("zombie");
-	else if (svs->clients[client_id].state == CS_CONNECTED)
-		state = PyUnicode_FromString("connected");
-	else if (svs->clients[client_id].state == CS_PRIMED)
-		state = PyUnicode_FromString("primed");
-	else if (svs->clients[client_id].state == CS_ACTIVE)
-		state = PyUnicode_FromString("active");
-	else {
-		state = PyUnicode_FromString("unknown");
-		DebugError("Got an unknown connection state: %d\n",
-				__FILE__, __LINE__, __func__, svs->clients[client_id].state);
-	}
-
+	PyObject* state = PyLong_FromLongLong(svs->clients[client_id].state);
 	if (PyDict_SetItemString(ret, "state", state) == -1) {
 		DebugError("Failed to add 'state' to the dictionary.\n",
 				__FILE__, __LINE__, __func__);
@@ -145,7 +121,7 @@ static PyObject* makePlayerDict(int client_id) {
         // TEAM
         PyObject* team;
         if (g_entities[client_id].client->pers.connected == CON_DISCONNECTED)
-            team = PyLong_FromLongLong(3); // Set team to spectator if not yet connected.
+            team = PyLong_FromLongLong(TEAM_SPECTATOR); // Set team to spectator if not yet connected.
         else
             team = PyLong_FromLongLong(g_entities[client_id].client->sess.sessionTeam);
 
@@ -158,13 +134,7 @@ static PyObject* makePlayerDict(int client_id) {
         Py_DECREF(team);
 
         // PRIVILEGES
-        PyObject* priv = Py_None;
-        if (g_entities[client_id].client->sess.privileges == PRIV_NONE)
-            {}
-        else if (g_entities[client_id].client->sess.privileges == PRIV_MOD)
-            priv = PyUnicode_FromString("mod");
-        else if (g_entities[client_id].client->sess.privileges == PRIV_ADMIN)
-            priv = PyUnicode_FromString("admin");
+        PyObject* priv = PyLong_FromLongLong(g_entities[client_id].client->sess.privileges);
         if (PyDict_SetItemString(ret, "privileges", priv) == -1) {
             DebugError("Failed to add 'privileges' to the dictionary.\n",
                     __FILE__, __LINE__, __func__);
@@ -192,7 +162,7 @@ static PyObject* PyMinqlx_PlayerInfo(PyObject* self, PyObject* args) {
         return NULL;
         
     }
-    else if (!in_clientconnect && (svs->clients[i].state == CS_FREE)) {
+    else if (!in_clientconnect && svs->clients[i].state == CS_FREE) {
         #ifndef NDEBUG
         DebugPrint("WARNING: PyMinqlx_PlayerInfo called for CS_FREE client %d.\n", i);
         #endif
@@ -207,7 +177,9 @@ static PyObject* PyMinqlx_PlayersInfo(PyObject* self, PyObject* args) {
 
 	for (int i = 0; i < sv_maxclients->integer; i++) {
 		if (svs->clients[i].state == CS_FREE) {
-			continue;
+			if (PyList_Append(ret, Py_None) == -1)
+                        return NULL;
+            continue;
 		}
 
 		if (PyList_Append(ret, makePlayerDict(i)) == -1)
@@ -640,6 +612,20 @@ static PyObject* PyMinqlx_InitModule(void) {
     PyModule_AddIntMacro(module, CVAR_TEMP);
     PyModule_AddIntMacro(module, CVAR_CHEAT);
     PyModule_AddIntMacro(module, CVAR_NORESTART);
+
+    // Privileges.
+    PyModule_AddIntMacro(module, PRIV_NONE);
+    PyModule_AddIntMacro(module, PRIV_MOD);
+    PyModule_AddIntMacro(module, PRIV_ADMIN);
+    PyModule_AddIntMacro(module, PRIV_ROOT);
+    PyModule_AddIntMacro(module, PRIV_BANNED);
+
+    // Connection states.
+    PyModule_AddIntMacro(module, CS_FREE);
+    PyModule_AddIntMacro(module, CS_ZOMBIE);
+    PyModule_AddIntMacro(module, CS_CONNECTED);
+    PyModule_AddIntMacro(module, CS_PRIMED);
+    PyModule_AddIntMacro(module, CS_ACTIVE);
     
     return module;
 }

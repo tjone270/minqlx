@@ -25,31 +25,31 @@ _DUMMY_USERINFO = ("ui_singlePlayerActive\\0\\cg_autoAction\\1\\cg_autoHop\\0"
     "\\teamtask\\0\\rate\\25000\\country\\NO")
 
 def _player(client_id):
-    """A wrapper for minqlx.Player to make the output more usable."""
+    """A wrapper for minqlx.player_info() to make the output more usable."""
     info = minqlx.player_info(client_id)
     if info == None:
         return None
     
-    d = {}
+    d = minqlx.parse_variables(info["userinfo"])
     for key in info:
         if key == "userinfo":
-            userinfo = minqlx.parse_variables(info["userinfo"])
-            if "name" in userinfo:
-                del userinfo["name"]
-            d.update(userinfo)
+            pass
         else:
             d[key] = info[key]
 
     return d
 
 def _players():
-    """A wrapper for minqlx.Players to make the output more usable."""
+    """A wrapper for minqlx.players_info() to make the output more usable."""
     ret = []
     for player in minqlx.players_info():
-        d = {}
+        if not player:
+            continue
+        
+        d = minqlx.parse_variables(player["userinfo"])
         for key in player:
             if key == "userinfo":
-                d.update(minqlx.parse_variables(player["userinfo"]))
+                pass
             else:
                 d[key] = player[key]
         ret.append(d)
@@ -80,7 +80,7 @@ class Player():
         self._valid = True
         # player_dict used for more efficient Plugin.players().
         if player_dict:
-            self._id = player_dict["client_id"]
+            self._id = client_id
             self._cvars = player_dict
         else:
             self._id = client_id
@@ -190,7 +190,7 @@ class Player():
     
     @property
     def team(self):
-        return minqlx.TEAMS[int(self["team"])]
+        return minqlx.TEAMS[self["team"]]
     
     @property
     def colors(self):
@@ -217,8 +217,21 @@ class Player():
         In other words, if you need to make sure a player is in-game, check if ``player.state == "active"``.
 
         """
-        return self["state"]
+        return minqlx.STATES[self["state"]]
 
+    @property
+    def privileges(self):
+        if self["privileges"] == minqlx.PRIV_NONE:
+            return None
+        elif self["privileges"] == minqlx.PRIV_MOD:
+            return "mod"
+        elif self["privileges"] == minqlx.PRIV_ADMIN:
+            return "admin"
+        elif self["privileges"] == minqlx.PRIV_ROOT:
+            return "root"
+        elif self["privileges"] == minqlx.PRIV_BANNED:
+            return "banned"
+    
     @property
     def country(self):
         return self["country"]
@@ -275,7 +288,7 @@ class Player():
 
     @classmethod
     def all_players(cls):
-        return [cls(pd["client_id"], player_dict=pd) for pd in _players()]
+        return [cls(i, player_dict=pd) for i, pd in enumerate(_players()) if pd]
 
 class AbstractDummyPlayer(Player):
     def __init__(self):
