@@ -102,7 +102,7 @@ def handle_client_command(client_id, cmd):
             if arg == "y" or arg == "1":
                 if minqlx.EVENT_DISPATCHERS["vote"].dispatch(player, True) == False:
                     return False
-            elif arg == "n" or arg == "1":
+            elif arg == "n" or arg == "2":
                 if minqlx.EVENT_DISPATCHERS["vote"].dispatch(player, False) == False:
                     return False
             return cmd
