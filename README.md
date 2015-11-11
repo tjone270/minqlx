@@ -92,6 +92,10 @@ can't tell who the owner is and will refuse to execute admin commands.
   - Default: `0`
 - `qlx_redisPassword`: The password to the Redis server, if any.
   - Default: None
+- `qlx_logs`: The maximum number of logs the server keeps. 0 means no limit.
+  - Default: `5`
+- `qlx_logsSize`: The maximum size in bytes of a log before it backs it up and starts on a fresh file. 0 means no limit.
+  - Default: `5000000` (5 MB)
 
 Usage
 =====
@@ -135,7 +139,9 @@ Contribute
 ==========
 If you'd like to contribute with code, you can fork this or the plugin repository and create pull requests for changes. If you found a bug, please open an issue here on Github and include the relevant part from either the
 server's console output or from `minqlx.log` which is in your `fs_homepath`, preferably the latter as it is
-more verbose. Note that `minqlx.log` starts with a new file every run, but saves the last run as `minqlx.log.bak`.
+more verbose. Note that `minqlx.log` by default becomes `minqlx.log.1` whenever it goes above 5 MB, and keeps doing
+that until it goes to `minqlx.log.5`, at which point the 5th one gets deleted if the current one goes over
+the limit again. In other words, your logs will keep the last 30 MB of data, but won't exceed that.
 
 Both when compiling and when using binaries, the core module is in a zip file. If you want to modify
 the code, simply unzip the contents of it in the same directory and then delete the zip file. minqlx will
