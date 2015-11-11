@@ -227,7 +227,7 @@ static PyObject* PyMinqlx_SendServerCommand(PyObject* self, PyObject* args) {
         return NULL;
     
     if (client_id == Py_None) {
-        SV_SendServerCommand(NULL, "%s\n", cmd); // Send to all.
+        My_SV_SendServerCommand(NULL, "%s\n", cmd); // Send to all.
         Py_RETURN_TRUE;
     }
     else if (PyLong_Check(client_id)) {
@@ -236,7 +236,7 @@ static PyObject* PyMinqlx_SendServerCommand(PyObject* self, PyObject* args) {
             if (svs->clients[i].state != CS_ACTIVE)
                 Py_RETURN_FALSE;
             else {
-                SV_SendServerCommand(&svs->clients[i], "%s\n", cmd);
+                My_SV_SendServerCommand(&svs->clients[i], "%s\n", cmd);
                 Py_RETURN_TRUE;
             }
         }
@@ -264,7 +264,7 @@ static PyObject* PyMinqlx_ClientCommand(PyObject* self, PyObject* args) {
 		if (svs->clients[i].state == CS_FREE || svs->clients[i].state == CS_ZOMBIE)
 			Py_RETURN_FALSE;
 		else {
-			SV_ExecuteClientCommand(&svs->clients[i], cmd, qtrue);
+			My_SV_ExecuteClientCommand(&svs->clients[i], cmd, qtrue);
 			Py_RETURN_TRUE;
 		}
 	}
