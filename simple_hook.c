@@ -41,7 +41,8 @@ typedef int32_t sint;
 #define IS_RET(hde) (hde.opcode == 0xC3||hde.opcode == 0xCB||hde.opcode == 0xC2||hde.opcode == 0xCA)
 #define IS_RELATIVE8(hde) ((hde.flags & F_DISP8) || ((hde.flags & F_IMM8) && (hde.flags & F_RELATIVE)))
 #define IS_RELATIVE16(hde) ((hde.flags & F_DISP16) || ((hde.flags & F_IMM16) && (hde.flags & F_RELATIVE)))
-#define IS_RELATIVE32(hde) ((hde.flags & F_DISP32) || ((hde.flags & F_IMM32) && (hde.flags & F_RELATIVE)))
+#define IS_RELATIVE32(hde) (((hde.flags & F_DISP32) && !hde.modrm_mod && (hde.modrm_mod == 5 || hde.modrm_mod == 13)) || \
+    ((hde.flags & F_IMM32) && (hde.flags & F_RELATIVE)))
 #define IS_RELATIVE64(hde) ((hde.flags & F_IMM64) && (hde.flags & F_RELATIVE))
 #define IS_CALL_OR_JUMP(hde) (hde.opcode == 0xE9 || hde.opcode == 0xE8 || hde.opcode == 0xFF)
 

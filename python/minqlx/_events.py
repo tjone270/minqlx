@@ -30,7 +30,7 @@ class EventDispatcher:
     to hook into events by registering an event handler.
 
     """
-    no_debug = ("frame", "set_configstring", "stats", "server_command", "death", "kill", "command")
+    no_debug = ("frame", "set_configstring", "stats", "server_command", "death", "kill", "command", "console_print")
 
     def __init__(self):
         self.name = type(self).name
@@ -195,6 +195,27 @@ class EventDispatcherManager:
 #                          EVENT DISPATCHERS
 # ====================================================================
 
+class ConsolePrintDispatcher(EventDispatcher):
+    """Event that goes off whenever the console prints something, including
+    those with :func:`minqlx.console_print`.
+
+    """
+    name = "console_print"
+    
+    def dispatch(self, text):
+        return super().dispatch(text)
+
+    def handle_return(self, handler, value):
+        """If a string was returned, continue execution, but we edit the
+        string that's being printed along the chain of handlers.
+
+        """
+        if isinstance(value, str):
+            self.args = (value,)
+            self.return_value = value
+        else:
+            return super().handle_return(handler, value)
+
 class CommandDispatcher(EventDispatcher):
     """Event that goes off when a command is executed. This can be used
     to for instance keep a log of all the commands admins have used.
@@ -214,16 +235,30 @@ class ClientCommandDispatcher(EventDispatcher):
     
     def dispatch(self, player, cmd):
         ret = super().dispatch(player, cmd)
-        if not ret:
+        if ret == False:
             return False
 
-        channel = minqlx.ClientCommandChannel(player)
-        return minqlx.COMMANDS.handle_input(player, cmd, channel)
+        ret = minqlx.COMMANDS.handle_input(player, cmd, minqlx.ClientCommandChannel(player))
+        if ret == False:
+            return False
+
+        return self.return_value
+
+    def handle_return(self, handler, value):
+        """If a string was returned, continue execution, but we edit the
+        command that's being executed along the chain of handlers.
+
+        """
+        if isinstance(value, str):
+            player, cmd = self.args
+            self.args = (player, value)
+            self.return_value = value
+        else:
+            return super().handle_return(handler, value)
 
 class ServerCommandDispatcher(EventDispatcher):
-    """Event that triggers with any server command sent by the server.
-    Does not go off when sending a server command with
-    :func:`minqlx.send_server_command`.
+    """Event that triggers with any server command sent by the server,
+    including :func:`minqlx.send_server_command`. Can be cancelled.
 
     """
     name = "server_command"
@@ -231,9 +266,20 @@ class ServerCommandDispatcher(EventDispatcher):
     def dispatch(self, player, cmd):
         return super().dispatch(player, cmd)
 
+    def handle_return(self, handler, value):
+        """If a string was returned, continue execution, but we edit the
+        command that's being sent along the chain of handlers.
+
+        """
+        if isinstance(value, str):
+            player, cmd = self.args
+            self.args = (player, value)
+            self.return_value = value
+        else:
+            return super().handle_return(handler, value)
+
 class FrameEventDispatcher(EventDispatcher):
-    """Event that triggers every frame if the config has FrameEvent to True.
-    Cannot be cancelled.
+    """Event that triggers every frame. Cannot be cancelled.
 
     """
     name = "frame"
@@ -243,8 +289,9 @@ class FrameEventDispatcher(EventDispatcher):
 
 class SetConfigstringDispatcher(EventDispatcher):
     """Event that triggers when the server tries to set a configstring. You can
-    stop this event and use :func:`minqlx.set_configstring` to tamper with a
-    configstring as it's being set.
+    stop this event and use :func:`minqlx.set_configstring` to modify it, but a
+    more elegant way to do it is simply returning the new configstring in
+    the handler, and the modified one will go down the plugin chain instead.
 
     """
     name = "set_configstring"
@@ -260,14 +307,15 @@ class SetConfigstringDispatcher(EventDispatcher):
 
         """
         if isinstance(value, str):
-            self.args = (self.args[0], value)
+            index, old_value = self.args
+            self.args = (index, value)
             self.return_value = value
         else:
             return super().handle_return(handler, value)
 
 class ChatEventDispatcher(EventDispatcher):
     """Event that triggers with the "say" command. If the handler cancels it,
-    the message will will also be cancelled.
+    the message will also be cancelled.
 
     """
     name = "chat"
@@ -289,8 +337,8 @@ class UnloadDispatcher(EventDispatcher):
 class PlayerConnectDispatcher(EventDispatcher):
     """Event that triggers whenever a player tries to connect. If the event
     is not stopped, it will let the player connect as usual. If it is stopped
-    it will either display a generic ban message, or the message set with
-    :func:`minqlx.set_ban_message`.
+    it will either display a generic ban message, or whatever string is returned
+    by the handler.
 
     """
     name = "player_connect"
@@ -310,9 +358,9 @@ class PlayerConnectDispatcher(EventDispatcher):
             return super().handle_return(handler, value)
 
 class PlayerLoadedDispatcher(EventDispatcher):
-    """Event that triggers whenever a player connects AND finishes loading.
-    This means it'll trigger later than the "X connected" messages in-game.
-    If the handler cancels it, the player will be kicked.
+    """Event that triggers whenever a player connects *and* finishes loading.
+    This means it'll trigger later than the "X connected" messages in-game,
+    and it will also trigger when a map changes and players finish loading it.
 
     """
     name = "player_loaded"
@@ -335,12 +383,14 @@ class StatsDispatcher(EventDispatcher):
         return super().dispatch(stats)
 
 class VoteCalledDispatcher(EventDispatcher):
+    """Event that goes off whenever a vote is called."""
     name = "vote_called"
 
     def dispatch(self, player, vote, args):
         return super().dispatch(player, vote, args)
 
 class VoteEndedDispatcher(EventDispatcher):
+    """Event that goes off whenever a vote either passes or fails."""
     name = "vote_ended"
 
     def dispatch(self, passed):
@@ -360,42 +410,49 @@ class VoteEndedDispatcher(EventDispatcher):
         super().trigger(votes, vote, args, None)
 
 class VoteDispatcher(EventDispatcher):
+    """Event that goes off whenever someone tries to vote either yes or no."""
     name = "vote"
 
     def dispatch(self, player, yes):
-        return super().dispatch(yes)
+        return super().dispatch(player, yes)
 
 class GameCountdownDispatcher(EventDispatcher):
+    """Event that goes off when the countdown before a game starts."""
     name = "game_countdown"
     
     def dispatch(self):
         return super().dispatch()
 
 class GameStartDispatcher(EventDispatcher):
+    """Event that goes off when a game starts."""
     name = "game_start"
     
     def dispatch(self, data):
         return super().dispatch(data)
 
 class GameEndDispatcher(EventDispatcher):
+    """Event that goes off when a game ends."""
     name = "game_end"
     
     def dispatch(self, data):
         return super().dispatch(data)
 
 class RoundCountdownDispatcher(EventDispatcher):
+    """Event that goes off when the countdown before a round starts."""
     name = "round_countdown"
     
     def dispatch(self, round_number):
         return super().dispatch(round_number)
 
 class RoundStartDispatcher(EventDispatcher):
+    """Event that goes off when a round starts."""
     name = "round_start"
     
     def dispatch(self, round_number):
         return super().dispatch(round_number)
 
 class RoundEndDispatcher(EventDispatcher):
+    """Event that goes off when a round ends."""
     name = "round_end"
     
     def dispatch(self, data):
@@ -426,30 +483,38 @@ class TeamSwitchAttemptDispatcher(EventDispatcher):
         return super().dispatch(player, old_team, new_team)
 
 class MapDispatcher(EventDispatcher):
+    """Event that goes off when a map is loaded, even if the same map is loaded again."""
     name = "map"
     
     def dispatch(self, mapname, factory):
         return super().dispatch(mapname, factory)
 
 class NewGameDispatcher(EventDispatcher):
+    """Event that goes off when the game module is initialized. This happens when new maps are loaded,
+    a game is aborted, a game ends but stays on the same map, or when the game itself starts.
+
+    """
     name = "new_game"
     
     def dispatch(self):
         return super().dispatch()
 
 class KillDispatcher(EventDispatcher):
+    """Event that goes off when someone is killed."""
     name = "kill"
     
     def dispatch(self, victim, killer, data):
         return super().dispatch(victim, killer, data)
 
 class DeathDispatcher(EventDispatcher):
+    """Event that goes off when someone dies."""
     name = "death"
     
     def dispatch(self, victim, killer, data):
         return super().dispatch(victim, killer, data)
 
 EVENT_DISPATCHERS = EventDispatcherManager()
+EVENT_DISPATCHERS.add_dispatcher(ConsolePrintDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(CommandDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(ClientCommandDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(ServerCommandDispatcher)

@@ -73,18 +73,18 @@ void __cdecl My_G_InitGame(int levelTime, int randomSeed, int restart) {
 // USED FOR PYTHON
 
 #ifndef NOPY
-void __cdecl My_SV_ExecuteClientCommand(client_t *cl, const char *s, qboolean clientOK) {
+void __cdecl My_SV_ExecuteClientCommand(client_t *cl, char *s, qboolean clientOK) {
+    char* res = s;
     if (clientOK && cl->gentity) {
-        int res = ClientCommandDispatcher(cl - svs->clients, s);
+        res = ClientCommandDispatcher(cl - svs->clients, s);
         if (!res)
             return;
     }
 
-    SV_ExecuteClientCommand(cl, s, clientOK);
+    SV_ExecuteClientCommand(cl, res, clientOK);
 }
 
-void __cdecl My_SV_SendServerCommand(client_t* cl, const char* fmt, ...) {
-	int res = 1;
+void __cdecl My_SV_SendServerCommand(client_t* cl, char* fmt, ...) {
 	va_list	argptr;
 	char buffer[MAX_MSGLEN];
 
@@ -92,6 +92,7 @@ void __cdecl My_SV_SendServerCommand(client_t* cl, const char* fmt, ...) {
 	vsnprintf((char *)buffer, sizeof(buffer), fmt, argptr);
 	va_end(argptr);
 
+    char* res = buffer;
 	if (cl && cl->gentity)
 		res = ServerCommandDispatcher(cl - svs->clients, buffer);
 	else if (cl == NULL)
@@ -100,7 +101,7 @@ void __cdecl My_SV_SendServerCommand(client_t* cl, const char* fmt, ...) {
 	if (!res)
 		return;
 
-    SV_SendServerCommand(cl, buffer);
+    SV_SendServerCommand(cl, res);
 }
 
 void __cdecl My_SV_ClientEnterWorld(client_t* client, usercmd_t* cmd) {
@@ -135,6 +136,19 @@ void __cdecl My_SV_DropClient(client_t* drop, const char* reason) {
     ClientDisconnectDispatcher(drop - svs->clients, reason);
 
     SV_DropClient(drop, reason);
+}
+
+void __cdecl My_Com_Printf(char* fmt, ...) {
+    char buf[4096];
+    va_list args;
+    va_start(args, fmt);
+    vsnprintf(buf, sizeof(buf), fmt, args);
+    va_end(args);
+
+    char* res = ConsolePrintDispatcher(buf);
+    // NULL means stop the event.
+    if (res)
+        Com_Printf(buf);
 }
 
 void  __cdecl My_G_RunFrame(int time) {
@@ -203,6 +217,12 @@ void HookStatic(void) {
     res = Hook((void*)SV_DropClient, My_SV_DropClient, (void*)&SV_DropClient);
     if (res) {
         DebugPrint("ERROR: Failed to hook SV_DropClient: %d\n", res);
+        failed = 1;
+    }
+
+    res = Hook((void*)Com_Printf, My_Com_Printf, (void*)&Com_Printf);
+    if (res) {
+        DebugPrint("ERROR: Failed to hook Com_Printf: %d\n", res);
         failed = 1;
     }
 #endif

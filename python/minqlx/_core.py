@@ -34,6 +34,9 @@ import shutil
 import shlex
 import sys
 import os
+import re
+
+from logging.handlers import RotatingFileHandler
 
 # Team number -> string
 TEAMS = dict(enumerate(("free", "red", "blue", "spectator")))
@@ -44,6 +47,11 @@ GAMETYPES = dict(enumerate(("Free for All", "Duel", "Race", "Team Deathmatch", "
 
 # Game type number -> short string
 GAMETYPES_SHORT = dict(enumerate(("ffa", "duel", "race", "tdm", "ca", "ctf", "ob", "har", "ft", "dom", "ad", "rr")))
+
+# Connection states.
+STATES = dict(enumerate(("free", "zombie", "connected", "primed", "active")))
+
+_re_varsplit = re.compile(r"\\*")
 
 # ====================================================================
 #                               HELPERS
@@ -67,7 +75,7 @@ def parse_variables(varstr, ordered=False):
     if not varstr.strip():
         return res
     
-    vars = varstr.lstrip("\\").split("\\")
+    vars = _re_varsplit.split(varstr.lstrip("\\"))
     try:
         for i in range(0, len(vars), 2):
             res[vars[i]] = vars[i + 1]
@@ -99,20 +107,20 @@ def _configure_logger():
     
     # File
     file_path = os.path.join(minqlx.get_cvar("fs_homepath"), "minqlx.log")
-    if os.path.isfile(file_path):
-        # If the file already exists, we back it up before we start logging.
-        shutil.move(file_path, file_path + ".bak")
+    maxlogs = minqlx.Plugin.get_cvar("qlx_logs", int)
+    maxlogsize = minqlx.Plugin.get_cvar("qlx_logsSize", int)
     file_fmt = logging.Formatter("(%(asctime)s) [%(levelname)s @ %(name)s.%(funcName)s] %(message)s", "%H:%M:%S")
-    file_handler = logging.FileHandler(file_path, mode="w", encoding="utf-8")
+    file_handler = RotatingFileHandler(file_path, encoding="utf-8", maxBytes=maxlogsize, backupCount=maxlogs)
     file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(file_fmt)
     logger.addHandler(file_handler)
-    logger.info("File logger initialized!")
+    logger.info("============================= minqlx run @ {} ============================="
+        .format(datetime.datetime.now()))
 
     # Console
     console_fmt = logging.Formatter("[%(name)s.%(funcName)s] %(levelname)s: %(message)s", "%H:%M:%S")
     console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.DEBUG if minqlx.DEBUG else logging.INFO)
+    console_handler.setLevel(logging.INFO)
     console_handler.setFormatter(console_fmt)
     logger.addHandler(console_handler)
 
@@ -357,6 +365,8 @@ def initialize_cvars():
     minqlx.set_cvar_once("qlx_pluginsPath", "minqlx-plugins")
     minqlx.set_cvar_once("qlx_database", "Redis")
     minqlx.set_cvar_once("qlx_commandPrefix", "!")
+    minqlx.set_cvar_once("qlx_logs", "5")
+    minqlx.set_cvar_once("qlx_logsSize", str(5*10**6)) # 5 MB
     # Redis
     minqlx.set_cvar_once("qlx_redisAddress", "127.0.0.1")
     minqlx.set_cvar_once("qlx_redisDatabase", "0")

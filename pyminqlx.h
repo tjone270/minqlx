@@ -56,6 +56,7 @@ extern PyObject* frame_handler;
 extern PyObject* new_game_handler;
 extern PyObject* set_configstring_handler;
 extern PyObject* rcon_handler;
+extern PyObject* console_print_handler;
 
 // Custom console command handler. These are commands added through Python that can be used
 // from the console or using RCON.
@@ -64,16 +65,16 @@ extern PyObject* custom_command_handler;
 // We need to explicitly tell player_info to not return None in the case where
 // we are inside My_ClientConnect, because we want to call Python code before
 // the real ClientConnect is called, which is where it sets the connection
-// state from CS_FREE to CS_CONNECTED.
-extern int in_clientconnect;
+// state from CS_FREE to CS_CONNECTED. Same thing with My_SV_DropClient.
+extern int allow_free_client;
 
 /* Dispatchers. These are called by hooks or whatever and should dispatch events to Python handlers.
  * The return values will often determine what is passed on to the engine. You could for instance
  * implement a chat filter by returning 0 whenever bad words are said through the client_command event.
  * Hell, it could even be used to fix bugs in the server or client (e.g. a broken userinfo command or
  * broken UTF sequences that could crash clients). */
-int ClientCommandDispatcher(int client_id, const char* cmd);
-int ServerCommandDispatcher(int client_id, const char* cmd);
+char* ClientCommandDispatcher(int client_id, char* cmd);
+char* ServerCommandDispatcher(int client_id, char* cmd);
 void FrameDispatcher(void);
 char* ClientConnectDispatcher(int client_id, int is_bot);
 int ClientLoadedDispatcher(int client_id);
@@ -81,5 +82,6 @@ void ClientDisconnectDispatcher(int client_id, const char* reason);
 void NewGameDispatcher(int restart);
 char* SetConfigstringDispatcher(int index, char* value);
 void RconDispatcher(const char* cmd);
+char* ConsolePrintDispatcher(char* cmd);
 
 #endif /* PYMINQLX_H */

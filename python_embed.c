@@ -19,6 +19,7 @@ PyObject* custom_command_handler = NULL;
 PyObject* new_game_handler = NULL;
 PyObject* set_configstring_handler = NULL;
 PyObject* rcon_handler = NULL;
+PyObject* console_print_handler = NULL;
 
 static PyThreadState* mainstate;
 static int initialized = 0;
@@ -58,6 +59,7 @@ static handler_t handlers[] = {
 		{"new_game",			&new_game_handler},
 		{"set_configstring", 	&set_configstring_handler},
         {"rcon",                &rcon_handler},
+        {"console_print",       &console_print_handler},
 		{NULL, NULL}
 };
 
@@ -75,32 +77,8 @@ static PyObject* makePlayerDict(int client_id) {
         Py_RETURN_NONE;
     }
 
-	// CLIENT ID
-	PyObject* cid = PyLong_FromLong(client_id);
-	if (PyDict_SetItemString(ret, "client_id", cid) == -1) {
-		Py_DECREF(ret);
-		Py_RETURN_NONE;
-	}
-	Py_DECREF(cid);
-
 	// STATE
-	PyObject* state;
-	if (svs->clients[client_id].state == CS_FREE)
-		state = PyUnicode_FromString("free");
-	else if (svs->clients[client_id].state == CS_ZOMBIE)
-		state = PyUnicode_FromString("zombie");
-	else if (svs->clients[client_id].state == CS_CONNECTED)
-		state = PyUnicode_FromString("connected");
-	else if (svs->clients[client_id].state == CS_PRIMED)
-		state = PyUnicode_FromString("primed");
-	else if (svs->clients[client_id].state == CS_ACTIVE)
-		state = PyUnicode_FromString("active");
-	else {
-		state = PyUnicode_FromString("unknown");
-		DebugError("Got an unknown connection state: %d\n",
-				__FILE__, __LINE__, __func__, svs->clients[client_id].state);
-	}
-
+	PyObject* state = PyLong_FromLongLong(svs->clients[client_id].state);
 	if (PyDict_SetItemString(ret, "state", state) == -1) {
 		DebugError("Failed to add 'state' to the dictionary.\n",
 				__FILE__, __LINE__, __func__);
@@ -119,16 +97,6 @@ static PyObject* makePlayerDict(int client_id) {
 	}
 	Py_DECREF(userinfo);
 
-    // NAME
-    PyObject* name = PyUnicode_FromString(svs->clients[client_id].name);
-    if (PyDict_SetItemString(ret, "name", name) == -1) {
-        DebugError("Failed to add 'name' to the dictionary.\n",
-                __FILE__, __LINE__, __func__);
-        Py_DECREF(ret);
-        Py_RETURN_NONE;
-    }
-    Py_DECREF(name);
-
 	// STEAM ID
 	PyObject* steam_id = PyLong_FromLongLong(svs->clients[client_id].steam_id);
 	if (PyDict_SetItemString(ret, "steam_id", steam_id) == -1) {
@@ -139,36 +107,45 @@ static PyObject* makePlayerDict(int client_id) {
 	}
 	Py_DECREF(steam_id);
 
+    if (g_entities[client_id].client) {
+        // NAME
+        PyObject* name = PyUnicode_FromString(g_entities[client_id].client->pers.netname);
+        if (PyDict_SetItemString(ret, "name", name) == -1) {
+            DebugError("Failed to add 'name' to the dictionary.\n",
+                    __FILE__, __LINE__, __func__);
+            Py_DECREF(ret);
+            Py_RETURN_NONE;
+        }
+        Py_DECREF(name);
 
-	// Some info might not always be available, like if someone is trying to
-	// connect, but has not yet been allowed to join. No need to return
-	// None if that is the case. Instead return incomplete dict.
-	if (svs->clients[client_id].state != CS_FREE) {
-		// CONFIGSTRING
-		PyObject* configstring = PyUnicode_FromString(sv->configstrings[529 + client_id]);
-		if (PyDict_SetItemString(ret, "configstring", configstring) == -1) {
-			DebugError("Failed to add 'configstring' to the dictionary.\n",
-					__FILE__, __LINE__, __func__);
-			Py_DECREF(ret);
-			Py_RETURN_NONE;
-		}
-		Py_DECREF(configstring);
+        // TEAM
+        PyObject* team;
+        if (g_entities[client_id].client->pers.connected == CON_DISCONNECTED)
+            team = PyLong_FromLongLong(TEAM_SPECTATOR); // Set team to spectator if not yet connected.
+        else
+            team = PyLong_FromLongLong(g_entities[client_id].client->sess.sessionTeam);
 
-		// PRIVILEGES
-		PyObject* priv = Py_None;
-		if (g_entities[client_id].client->privileges == 0)
-			{}
-		else if (g_entities[client_id].client->privileges == 1)
-			priv = PyUnicode_FromString("mod");
-		else if (g_entities[client_id].client->privileges == 2)
-			priv = PyUnicode_FromString("admin");
-		if (PyDict_SetItemString(ret, "privileges", priv) == -1) {
-			DebugError("Failed to add 'privileges' to the dictionary.\n",
-					__FILE__, __LINE__, __func__);
-			Py_DECREF(ret);
-			Py_RETURN_NONE;
-		}
-	}
+        if (PyDict_SetItemString(ret, "team", team) == -1) {
+            DebugError("Failed to add 'team' to the dictionary.\n",
+                    __FILE__, __LINE__, __func__);
+            Py_DECREF(ret);
+            Py_RETURN_NONE;
+        }
+        Py_DECREF(team);
+
+        // PRIVILEGES
+        PyObject* priv = PyLong_FromLongLong(g_entities[client_id].client->sess.privileges);
+        if (PyDict_SetItemString(ret, "privileges", priv) == -1) {
+            DebugError("Failed to add 'privileges' to the dictionary.\n",
+                    __FILE__, __LINE__, __func__);
+            Py_DECREF(ret);
+            Py_RETURN_NONE;
+        }
+    }
+    else {
+        DebugError("gclient %d was NULL.\n",
+                __FILE__, __LINE__, __func__, client_id);
+    }
 
 	return ret;
 }
@@ -185,7 +162,7 @@ static PyObject* PyMinqlx_PlayerInfo(PyObject* self, PyObject* args) {
         return NULL;
         
     }
-    else if (!in_clientconnect && (svs->clients[i].state == CS_FREE)) {
+    else if (allow_free_client != i && svs->clients[i].state == CS_FREE) {
         #ifndef NDEBUG
         DebugPrint("WARNING: PyMinqlx_PlayerInfo called for CS_FREE client %d.\n", i);
         #endif
@@ -200,7 +177,9 @@ static PyObject* PyMinqlx_PlayersInfo(PyObject* self, PyObject* args) {
 
 	for (int i = 0; i < sv_maxclients->integer; i++) {
 		if (svs->clients[i].state == CS_FREE) {
-			continue;
+			if (PyList_Append(ret, Py_None) == -1)
+                        return NULL;
+            continue;
 		}
 
 		if (PyList_Append(ret, makePlayerDict(i)) == -1)
@@ -228,7 +207,7 @@ static PyObject* PyMinqlx_GetUserinfo(PyObject* self, PyObject* args) {
         return NULL;
 
     }
-    else if (!in_clientconnect && (svs->clients[i].state == CS_FREE || svs->clients[i].state == CS_ZOMBIE))
+    else if (allow_free_client != i && svs->clients[i].state == CS_FREE)
         Py_RETURN_NONE;
 
     return PyUnicode_FromString(svs->clients[i].userinfo);
@@ -248,7 +227,7 @@ static PyObject* PyMinqlx_SendServerCommand(PyObject* self, PyObject* args) {
         return NULL;
     
     if (client_id == Py_None) {
-        SV_SendServerCommand(NULL, "%s\n", cmd); // Send to all.
+        My_SV_SendServerCommand(NULL, "%s\n", cmd); // Send to all.
         Py_RETURN_TRUE;
     }
     else if (PyLong_Check(client_id)) {
@@ -257,7 +236,7 @@ static PyObject* PyMinqlx_SendServerCommand(PyObject* self, PyObject* args) {
             if (svs->clients[i].state != CS_ACTIVE)
                 Py_RETURN_FALSE;
             else {
-                SV_SendServerCommand(&svs->clients[i], "%s\n", cmd);
+                My_SV_SendServerCommand(&svs->clients[i], "%s\n", cmd);
                 Py_RETURN_TRUE;
             }
         }
@@ -285,7 +264,7 @@ static PyObject* PyMinqlx_ClientCommand(PyObject* self, PyObject* args) {
 		if (svs->clients[i].state == CS_FREE || svs->clients[i].state == CS_ZOMBIE)
 			Py_RETURN_FALSE;
 		else {
-			SV_ExecuteClientCommand(&svs->clients[i], cmd, qtrue);
+			My_SV_ExecuteClientCommand(&svs->clients[i], cmd, qtrue);
 			Py_RETURN_TRUE;
 		}
 	}
@@ -389,10 +368,10 @@ static PyObject* PyMinqlx_Kick(PyObject* self, PyObject* args) {
 		}
 		else if (reason == Py_None || (PyUnicode_Check(reason) && PyUnicode_AsUTF8(reason)[0] == 0)) {
 			// Default kick message for None or empty strings.
-			SV_DropClient(&svs->clients[i], "was kicked.");
+			My_SV_DropClient(&svs->clients[i], "was kicked.");
 		}
 		else if (PyUnicode_Check(reason)) {
-			SV_DropClient(&svs->clients[i], PyUnicode_AsUTF8(reason));
+			My_SV_DropClient(&svs->clients[i], PyUnicode_AsUTF8(reason));
 		}
 	}
 	else {
@@ -416,7 +395,7 @@ static PyObject* PyMinqlx_ConsolePrint(PyObject* self, PyObject* args) {
     if (!PyArg_ParseTuple(args, "s:console_print", &text))
         return NULL;
 
-    Com_Printf("%s\n", text);
+    My_Com_Printf("%s\n", text);
 
     Py_RETURN_NONE;
 }
@@ -485,7 +464,7 @@ static PyObject* PyMinqlx_ForceVote(PyObject* self, PyObject* args) {
     	// We tell the server every single client voted yes, making it pass in the next G_RunFrame.
 		for (int i = 0; i < sv_maxclients->integer; i++) {
 			if (svs->clients[i].state == CS_ACTIVE)
-				g_entities[i].client->pers.voteType = VOTE_YES;
+				g_entities[i].client->pers.voteState = VOTE_YES;
 		}
     }
     else if (!pass && level->voteTime) {
@@ -633,6 +612,20 @@ static PyObject* PyMinqlx_InitModule(void) {
     PyModule_AddIntMacro(module, CVAR_TEMP);
     PyModule_AddIntMacro(module, CVAR_CHEAT);
     PyModule_AddIntMacro(module, CVAR_NORESTART);
+
+    // Privileges.
+    PyModule_AddIntMacro(module, PRIV_NONE);
+    PyModule_AddIntMacro(module, PRIV_MOD);
+    PyModule_AddIntMacro(module, PRIV_ADMIN);
+    PyModule_AddIntMacro(module, PRIV_ROOT);
+    PyModule_AddIntMacro(module, PRIV_BANNED);
+
+    // Connection states.
+    PyModule_AddIntMacro(module, CS_FREE);
+    PyModule_AddIntMacro(module, CS_ZOMBIE);
+    PyModule_AddIntMacro(module, CS_CONNECTED);
+    PyModule_AddIntMacro(module, CS_PRIMED);
+    PyModule_AddIntMacro(module, CS_ACTIVE);
     
     return module;
 }
