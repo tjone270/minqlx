@@ -414,7 +414,7 @@ class VoteDispatcher(EventDispatcher):
     name = "vote"
 
     def dispatch(self, player, yes):
-        return super().dispatch(yes)
+        return super().dispatch(player, yes)
 
 class GameCountdownDispatcher(EventDispatcher):
     """Event that goes off when the countdown before a game starts."""
