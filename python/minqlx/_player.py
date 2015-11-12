@@ -41,8 +41,8 @@ def _player(client_id):
 
 def _players():
     """A wrapper for minqlx.players_info() to make the output more usable."""
-    ret = []
-    for player in minqlx.players_info():
+    ret = {}
+    for i, player in enumerate(minqlx.players_info()):
         if not player:
             continue
         
@@ -52,7 +52,7 @@ def _players():
                 pass
             else:
                 d[key] = player[key]
-        ret.append(d)
+        ret[i] = d
     return ret
 
 class NonexistentPlayerError(Exception):
@@ -290,7 +290,8 @@ class Player():
 
     @classmethod
     def all_players(cls):
-        return [cls(i, player_dict=pd) for i, pd in enumerate(_players()) if pd]
+        players = _players()
+        return [cls(cid, player_dict=players[cid]) for cid in players]
 
 class AbstractDummyPlayer(Player):
     def __init__(self):
