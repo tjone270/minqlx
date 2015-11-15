@@ -89,7 +89,7 @@ def handle_client_command(client_id, cmd):
             return cmd
 
         res = _re_callvote.match(cmd)
-        if res:
+        if res and not minqlx.Plugin.is_vote_active():
             vote = res.group("cmd")
             args = res.group("args") if res.group("args") else ""
             if minqlx.EVENT_DISPATCHERS["vote_called"].dispatch(player, vote, args) == False:
@@ -248,12 +248,11 @@ def handle_set_configstring(index, value):
             new_state = new_cs["g_gameState"]
             if old_state != new_state:
                 if old_state == "PRE_GAME" and new_state == "IN_PROGRESS":
-                    minqlx.EVENT_DISPATCHERS["vote_ended"].cancel() # Cancel current vote if any.
-                    #minqlx.EVENT_DISPATCHERS["game_start"].dispatch()
+                    pass
                 elif old_state == "PRE_GAME" and new_state == "COUNT_DOWN":
                     minqlx.EVENT_DISPATCHERS["game_countdown"].dispatch()
                 elif old_state == "COUNT_DOWN" and new_state == "IN_PROGRESS":
-                    minqlx.EVENT_DISPATCHERS["vote_ended"].cancel() # Cancel current vote if any.
+                    pass
                     #minqlx.EVENT_DISPATCHERS["game_start"].dispatch()
                 elif old_state == "IN_PROGRESS" and new_state == "PRE_GAME":
                     pass
