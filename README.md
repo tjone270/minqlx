@@ -77,7 +77,7 @@ see the [plugins repository](https://github.com/MinoMino/minqlx-plugins).
 - `qlx_owner`: The SteamID64 of the server owner. This is should be set, otherwise minqlx
 can't tell who the owner is and will refuse to execute admin commands.
 - `qlx_plugins`: A comma-separated list of plugins that should be loaded at launch.
-  - Default: `plugin_manager, essentials, motd, permission, ban, clan`.
+  - Default: `plugin_manager, essentials, motd, permission, ban, clan, names`.
 - `qlx_pluginsPath`: The path (either relative or absolute) to the directory with the plugins.
   - Default: `minqlx-plugins`
 - `qlx_database`: The default database to use. You should not change this unless you know what you're doing.
