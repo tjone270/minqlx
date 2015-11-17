@@ -88,7 +88,7 @@ static PyObject* makePlayerDict(int client_id) {
 	Py_DECREF(state);
 
 	// USERINFO
-	PyObject* userinfo = PyUnicode_FromString(svs->clients[client_id].userinfo);
+	PyObject* userinfo = PyUnicode_DecodeUTF8(svs->clients[client_id].userinfo, strlen(svs->clients[client_id].userinfo), "ignore");
 	if (PyDict_SetItemString(ret, "userinfo", userinfo) == -1) {
 		DebugError("Failed to add 'userinfo' to the dictionary.\n",
 				__FILE__, __LINE__, __func__);
@@ -109,7 +109,8 @@ static PyObject* makePlayerDict(int client_id) {
 
     if (g_entities[client_id].client) {
         // NAME
-        PyObject* name = PyUnicode_FromString(g_entities[client_id].client->pers.netname);
+        PyObject* name = PyUnicode_DecodeUTF8(g_entities[client_id].client->pers.netname,
+            strlen(g_entities[client_id].client->pers.netname), "ignore");
         if (PyDict_SetItemString(ret, "name", name) == -1) {
             DebugError("Failed to add 'name' to the dictionary.\n",
                     __FILE__, __LINE__, __func__);
@@ -210,7 +211,7 @@ static PyObject* PyMinqlx_GetUserinfo(PyObject* self, PyObject* args) {
     else if (allow_free_client != i && svs->clients[i].state == CS_FREE)
         Py_RETURN_NONE;
 
-    return PyUnicode_FromString(svs->clients[i].userinfo);
+    return PyUnicode_DecodeUTF8(svs->clients[i].userinfo, strlen(svs->clients[i].userinfo), "ignore");
 }
 
 /*
@@ -419,7 +420,7 @@ static PyObject* PyMinqlx_GetConfigstring(PyObject* self, PyObject* args) {
 	}
 
     SV_GetConfigstring(i, csbuffer, sizeof(csbuffer));
-    return PyUnicode_FromString(csbuffer);
+    return PyUnicode_DecodeUTF8(csbuffer, strlen(csbuffer), "ignore");
 }
 
 /*
