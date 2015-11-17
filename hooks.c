@@ -126,6 +126,7 @@ void __cdecl My_SV_SetConfigstring(int index, char* value) {
         return;
     }
 
+    if (!value) value = "";
     char* res = SetConfigstringDispatcher(index, value);
     // NULL means stop the event.
     if (res)

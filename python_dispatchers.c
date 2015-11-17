@@ -12,7 +12,8 @@ char* ClientCommandDispatcher(int client_id, char* cmd) {
     
     PyGILState_STATE gstate = PyGILState_Ensure();
 
-    PyObject* result = PyObject_CallFunction(client_command_handler, "is", client_id, cmd);
+    PyObject* cmd_string = PyUnicode_DecodeUTF8(cmd, strlen(cmd), "ignore");
+    PyObject* result = PyObject_CallFunction(client_command_handler, "iO", client_id, cmd_string);
     
     if (result == NULL)
         DebugError("PyObject_CallFunction() returned NULL.\n",
@@ -22,6 +23,7 @@ char* ClientCommandDispatcher(int client_id, char* cmd) {
     else if (PyUnicode_Check(result))
         ret = PyUnicode_AsUTF8(result);
     
+    Py_XDECREF(cmd_string);
     Py_XDECREF(result);
 
     PyGILState_Release(gstate);
@@ -35,7 +37,8 @@ char* ServerCommandDispatcher(int client_id, char* cmd) {
 
     PyGILState_STATE gstate = PyGILState_Ensure();
 
-    PyObject* result = PyObject_CallFunction(server_command_handler, "is", client_id, cmd);
+    PyObject* cmd_string = PyUnicode_DecodeUTF8(cmd, strlen(cmd), "ignore");
+    PyObject* result = PyObject_CallFunction(server_command_handler, "iO", client_id, cmd_string);
 
     if (result == NULL)
         DebugError("PyObject_CallFunction() returned NULL.\n",
@@ -45,6 +48,7 @@ char* ServerCommandDispatcher(int client_id, char* cmd) {
     else if (PyUnicode_Check(result))
         ret = PyUnicode_AsUTF8(result);
 
+    Py_XDECREF(cmd_string);
     Py_XDECREF(result);
 
     PyGILState_Release(gstate);
@@ -163,7 +167,8 @@ char* SetConfigstringDispatcher(int index, char* value) {
 
 	PyGILState_STATE gstate = PyGILState_Ensure();
 
-	PyObject* result = PyObject_CallFunction(set_configstring_handler, "is", index, value);
+    PyObject* value_string = PyUnicode_DecodeUTF8(value, strlen(value), "ignore");
+	PyObject* result = PyObject_CallFunction(set_configstring_handler, "iO", index, value_string);
 
 	if (result == NULL)
 		DebugError("PyObject_CallFunction() returned NULL.\n",
@@ -173,6 +178,7 @@ char* SetConfigstringDispatcher(int index, char* value) {
 	else if (PyUnicode_Check(result))
 		ret = PyUnicode_AsUTF8(result);
 
+    Py_XDECREF(value_string);
 	Py_XDECREF(result);
 
 	PyGILState_Release(gstate);
@@ -202,7 +208,8 @@ char* ConsolePrintDispatcher(char* text) {
 
     PyGILState_STATE gstate = PyGILState_Ensure();
 
-    PyObject* result = PyObject_CallFunction(console_print_handler, "y", text);
+    PyObject* text_string = PyUnicode_DecodeUTF8(text, strlen(text), "ignore");
+    PyObject* result = PyObject_CallFunction(console_print_handler, "O", text_string);
 
     if (result == NULL)
         DebugError("PyObject_CallFunction() returned NULL.\n",
@@ -212,6 +219,7 @@ char* ConsolePrintDispatcher(char* text) {
     else if (PyUnicode_Check(result))
         ret = PyUnicode_AsUTF8(result);
 
+    Py_XDECREF(text_string);
     Py_XDECREF(result);
 
     PyGILState_Release(gstate);
