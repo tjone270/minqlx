@@ -206,6 +206,22 @@ class Player():
         return self["headmodel"]
 
     @property
+    def handicap(self):
+        return self["handicap"]
+
+    @property
+    def autohop(self):
+        return bool(int(self["cg_autoHop"]))
+
+    @property
+    def autoaction(self):
+        return bool(int(self["cg_autoAction"]))
+
+    @property
+    def predictitems(self):
+        return bool(int(self["cg_predictItems"]))
+
+    @property
     def state(self):
         """A string describing the connection state of a player.
 
