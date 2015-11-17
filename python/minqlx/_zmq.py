@@ -20,6 +20,7 @@
 we get stats from it. It polls the ZMQ socket approx. every 0.25 seconds."""
 
 import minqlx
+import json
 import zmq
 
 class StatsListener():
@@ -59,7 +60,7 @@ class StatsListener():
             if self.done:
                 return
             while True: # Will throw an expcetion if no more data to get.
-                stats = self.socket.recv_json(zmq.NOBLOCK)
+                stats = json.loads(self.socket.recv(zmq.NOBLOCK).decode(errors="ignore"))
                 minqlx.EVENT_DISPATCHERS["stats"].dispatch(stats)
 
                 if stats["TYPE"] == "MATCH_STARTED":
