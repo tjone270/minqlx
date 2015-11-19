@@ -1,4 +1,6 @@
 #include <Python.h>
+#include <structmember.h>
+#include <structseq.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
@@ -61,6 +63,32 @@ static handler_t handlers[] = {
         {"rcon",                &rcon_handler},
         {"console_print",       &console_print_handler},
 		{NULL, NULL}
+};
+
+/*
+ * ================================================================
+ *                      Struct Sequences
+ * ================================================================
+*/
+
+// Scores
+static PyTypeObject* player_stats_type;
+
+static PyStructSequence_Field player_stats_fields[] = {
+    {"score", "The player's primary score."},
+    {"is_alive", "Whether the player's alive or not."},
+    {"kills", "The player's number of kills."},
+    {"deaths", "The player's number of deaths."},
+    {"damage_dealt", "The player's total damage dealt."},
+    {"damage_taken", "The player's total damage taken."},
+    {NULL}
+};
+
+static PyStructSequence_Desc player_stats_desc = {
+    "PlayerStats",
+    "A player's score and some basic stats.",
+    player_stats_fields,
+    6
 };
 
 /*
@@ -531,6 +559,37 @@ static PyObject* PyMinqlx_RegisterHandler(PyObject* self, PyObject* args) {
 
 /*
  * ================================================================
+ *                         scores
+ * ================================================================
+*/
+
+static PyObject* PyMinqlx_PlayerStats(PyObject* self, PyObject* args) {
+    int client_id;
+
+    if (!PyArg_ParseTuple(args, "i:stats", &client_id))
+        return NULL;
+    else if (client_id < 0 || client_id >= sv_maxclients->integer) {
+        PyErr_Format(PyExc_ValueError,
+                     "client_id needs to be a number from 0 to %d.",
+                     sv_maxclients->integer);
+        return NULL;
+    }
+    else if (!g_entities[client_id].client)
+        Py_RETURN_NONE;
+
+    PyObject* stats = PyStructSequence_New(player_stats_type);
+    PyStructSequence_SetItem(stats, 0, PyLong_FromLongLong(g_entities[client_id].client->ps.persistant[0]));
+    PyStructSequence_SetItem(stats, 1, PyBool_FromLong(g_entities[client_id].client->ps.pm_type == 0));
+    PyStructSequence_SetItem(stats, 2, PyLong_FromLongLong(g_entities[client_id].client->expandedStats.numKills));
+    PyStructSequence_SetItem(stats, 3, PyLong_FromLongLong(g_entities[client_id].client->expandedStats.numDeaths));
+    PyStructSequence_SetItem(stats, 4, PyLong_FromLongLong(g_entities[client_id].client->expandedStats.totalDamageDealt));
+    PyStructSequence_SetItem(stats, 5, PyLong_FromLongLong(g_entities[client_id].client->expandedStats.totalDamageTaken));
+
+    return stats;
+}
+
+/*
+ * ================================================================
  *             Module definition and initialization
  * ================================================================
 */
@@ -568,6 +627,8 @@ static PyMethodDef minqlxMethods[] = {
 	 "Adds a console command that will be handled by Python code."},
     {"register_handler", PyMinqlx_RegisterHandler, METH_VARARGS,
      "Register an event handler. Can be called more than once per event, but only the last one will work."},
+    {"player_stats", PyMinqlx_PlayerStats, METH_VARARGS,
+     "Get some player stats."},
     {NULL, NULL, 0, NULL}
 };
 
@@ -628,6 +689,11 @@ static PyObject* PyMinqlx_InitModule(void) {
     PyModule_AddIntMacro(module, CS_CONNECTED);
     PyModule_AddIntMacro(module, CS_PRIMED);
     PyModule_AddIntMacro(module, CS_ACTIVE);
+
+    // Initialize struct sequence types.
+    player_stats_type = PyStructSequence_NewType(&player_stats_desc);
+    // Gotta set a type flag manually: https://bugs.python.org/issue20066
+    player_stats_type->tp_flags |= Py_TPFLAGS_HEAPTYPE;
     
     return module;
 }

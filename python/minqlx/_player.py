@@ -262,6 +262,10 @@ class Player():
         except NonexistentPlayerError:
             return False
 
+    @property
+    def stats(self):
+        return minqlx.player_stats(self.id)
+
     def tell(self, msg, **kwargs):
         return minqlx.Plugin.tell(msg, self, **kwargs)
 
