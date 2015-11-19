@@ -174,17 +174,18 @@ static PyObject* PyMinqlx_PlayerInfo(PyObject* self, PyObject* args) {
 }
 
 static PyObject* PyMinqlx_PlayersInfo(PyObject* self, PyObject* args) {
-	PyObject* ret = PyList_New(0);
+	PyObject* ret = PyList_New(sv_maxclients->integer);
 
 	for (int i = 0; i < sv_maxclients->integer; i++) {
 		if (svs->clients[i].state == CS_FREE) {
-			if (PyList_Append(ret, Py_None) == -1)
+			if (PyList_SetItem(ret, i, Py_None) == -1)
                         return NULL;
+            Py_INCREF(Py_None);
             continue;
 		}
 
-		if (PyList_Append(ret, makePlayerDict(i)) == -1)
-			return NULL; // PyList_Append sets an error for us.
+		if (PyList_SetItem(ret, i, makePlayerDict(i)) == -1)
+			return NULL;
 	}
 
     return ret;
