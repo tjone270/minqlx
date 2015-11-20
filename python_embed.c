@@ -71,6 +71,27 @@ static handler_t handlers[] = {
  * ================================================================
 */
 
+ // Players
+ static PyTypeObject* player_info_type;
+
+ static PyStructSequence_Field player_info_fields[] = {
+    {"client_id", "The player's client ID."},
+    {"name", "The player's name."},
+    {"state", "The player's connection state."},
+    {"userinfo", "The player's userinfo."},
+    {"steam_id", "The player's 64-bit representation of the Steam ID."},
+    {"team", "The player's team."},
+    {"privileges", "The player's privileges."},
+    {NULL}
+ };
+
+ static PyStructSequence_Desc player_info_desc = {
+    "PlayerInfo",
+    "Information about a player, such as Steam ID, name, client ID, and whatnot.",
+    player_info_fields,
+    7
+ };
+
 // Scores
 static PyTypeObject* player_stats_type;
 
@@ -97,86 +118,41 @@ static PyStructSequence_Desc player_stats_desc = {
  * ================================================================
 */
 
-static PyObject* makePlayerDict(int client_id) {
-	PyObject* ret = PyDict_New();
-	if (!ret) {
-        DebugError("Failed to create a new dictionary.\n",
-                __FILE__, __LINE__, __func__);
-        Py_RETURN_NONE;
-    }
+static PyObject* makePlayerTuple(int client_id) {
+    PyObject *name, *team, *priv;
+    PyObject* cid = PyLong_FromLongLong(client_id);
 
-	// STATE
-	PyObject* state = PyLong_FromLongLong(svs->clients[client_id].state);
-	if (PyDict_SetItemString(ret, "state", state) == -1) {
-		DebugError("Failed to add 'state' to the dictionary.\n",
-				__FILE__, __LINE__, __func__);
-		Py_DECREF(ret);
-		Py_RETURN_NONE;
-	}
-	Py_DECREF(state);
-
-	// USERINFO
-	PyObject* userinfo = PyUnicode_DecodeUTF8(svs->clients[client_id].userinfo, strlen(svs->clients[client_id].userinfo), "ignore");
-	if (PyDict_SetItemString(ret, "userinfo", userinfo) == -1) {
-		DebugError("Failed to add 'userinfo' to the dictionary.\n",
-				__FILE__, __LINE__, __func__);
-		Py_DECREF(ret);
-		Py_RETURN_NONE;
-	}
-	Py_DECREF(userinfo);
-
-	// STEAM ID
-	PyObject* steam_id = PyLong_FromLongLong(svs->clients[client_id].steam_id);
-	if (PyDict_SetItemString(ret, "steam_id", steam_id) == -1) {
-		DebugError("Failed to add 'steam_id' to the dictionary.\n",
-				__FILE__, __LINE__, __func__);
-		Py_DECREF(ret);
-		Py_RETURN_NONE;
-	}
-	Py_DECREF(steam_id);
-
-    if (g_entities[client_id].client) {
-        // NAME
-        PyObject* name = PyUnicode_DecodeUTF8(g_entities[client_id].client->pers.netname,
+    if (g_entities[client_id].client != NULL) {
+        name = PyUnicode_DecodeUTF8(g_entities[client_id].client->pers.netname,
             strlen(g_entities[client_id].client->pers.netname), "ignore");
-        if (PyDict_SetItemString(ret, "name", name) == -1) {
-            DebugError("Failed to add 'name' to the dictionary.\n",
-                    __FILE__, __LINE__, __func__);
-            Py_DECREF(ret);
-            Py_RETURN_NONE;
-        }
-        Py_DECREF(name);
 
-        // TEAM
-        PyObject* team;
         if (g_entities[client_id].client->pers.connected == CON_DISCONNECTED)
             team = PyLong_FromLongLong(TEAM_SPECTATOR); // Set team to spectator if not yet connected.
         else
             team = PyLong_FromLongLong(g_entities[client_id].client->sess.sessionTeam);
 
-        if (PyDict_SetItemString(ret, "team", team) == -1) {
-            DebugError("Failed to add 'team' to the dictionary.\n",
-                    __FILE__, __LINE__, __func__);
-            Py_DECREF(ret);
-            Py_RETURN_NONE;
-        }
-        Py_DECREF(team);
-
-        // PRIVILEGES
-        PyObject* priv = PyLong_FromLongLong(g_entities[client_id].client->sess.privileges);
-        if (PyDict_SetItemString(ret, "privileges", priv) == -1) {
-            DebugError("Failed to add 'privileges' to the dictionary.\n",
-                    __FILE__, __LINE__, __func__);
-            Py_DECREF(ret);
-            Py_RETURN_NONE;
-        }
+        priv = PyLong_FromLongLong(g_entities[client_id].client->sess.privileges);
     }
     else {
-        DebugError("gclient %d was NULL.\n",
-                __FILE__, __LINE__, __func__, client_id);
+        name = PyUnicode_FromString("");
+        team = PyLong_FromLongLong(TEAM_SPECTATOR);
+        priv = PyLong_FromLongLong(-1);
     }
 
-	return ret;
+    PyObject* state = PyLong_FromLongLong(svs->clients[client_id].state);
+    PyObject* userinfo = PyUnicode_DecodeUTF8(svs->clients[client_id].userinfo, strlen(svs->clients[client_id].userinfo), "ignore");
+    PyObject* steam_id = PyLong_FromLongLong(svs->clients[client_id].steam_id);
+    
+    PyObject* info = PyStructSequence_New(player_info_type);
+    PyStructSequence_SetItem(info, 0, cid);
+    PyStructSequence_SetItem(info, 1, name);
+    PyStructSequence_SetItem(info, 2, state);
+    PyStructSequence_SetItem(info, 3, userinfo);
+    PyStructSequence_SetItem(info, 4, steam_id);
+    PyStructSequence_SetItem(info, 5, team);
+    PyStructSequence_SetItem(info, 6, priv);
+
+    return info;
 }
 
 static PyObject* PyMinqlx_PlayerInfo(PyObject* self, PyObject* args) {
@@ -198,7 +174,7 @@ static PyObject* PyMinqlx_PlayerInfo(PyObject* self, PyObject* args) {
         Py_RETURN_NONE;
     }
 
-    return makePlayerDict(i);
+    return makePlayerTuple(i);
 }
 
 static PyObject* PyMinqlx_PlayersInfo(PyObject* self, PyObject* args) {
@@ -212,7 +188,7 @@ static PyObject* PyMinqlx_PlayersInfo(PyObject* self, PyObject* args) {
             continue;
 		}
 
-		if (PyList_SetItem(ret, i, makePlayerDict(i)) == -1)
+		if (PyList_SetItem(ret, i, makePlayerTuple(i)) == -1)
 			return NULL;
 	}
 
@@ -690,10 +666,21 @@ static PyObject* PyMinqlx_InitModule(void) {
     PyModule_AddIntMacro(module, CS_PRIMED);
     PyModule_AddIntMacro(module, CS_ACTIVE);
 
+    // Teams.
+    PyModule_AddIntMacro(module, TEAM_FREE);
+    PyModule_AddIntMacro(module, TEAM_RED);
+    PyModule_AddIntMacro(module, TEAM_BLUE);
+    PyModule_AddIntMacro(module, TEAM_SPECTATOR);
+
     // Initialize struct sequence types.
     player_stats_type = PyStructSequence_NewType(&player_stats_desc);
+    player_info_type = PyStructSequence_NewType(&player_info_desc);
     // Gotta set a type flag manually: https://bugs.python.org/issue20066
     player_stats_type->tp_flags |= Py_TPFLAGS_HEAPTYPE;
+    player_info_type->tp_flags |= Py_TPFLAGS_HEAPTYPE;
+    // Add new types.
+    PyModule_AddObject(module, "PlayerStats", (PyObject*)player_stats_type);
+    PyModule_AddObject(module, "PlayerInfo", (PyObject*)player_info_type);
     
     return module;
 }
