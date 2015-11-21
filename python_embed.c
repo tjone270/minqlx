@@ -71,10 +71,10 @@ static handler_t handlers[] = {
  * ================================================================
 */
 
- // Players
- static PyTypeObject player_info_type = {0};
+// Players
+static PyTypeObject player_info_type = {0};
 
- static PyStructSequence_Field player_info_fields[] = {
+static PyStructSequence_Field player_info_fields[] = {
     {"client_id", "The player's client ID."},
     {"name", "The player's name."},
     {"connection_state", "The player's connection state."},
@@ -83,21 +83,40 @@ static handler_t handlers[] = {
     {"team", "The player's team."},
     {"privileges", "The player's privileges."},
     {NULL}
- };
+};
 
- static PyStructSequence_Desc player_info_desc = {
+static PyStructSequence_Desc player_info_desc = {
     "PlayerInfo",
     "Information about a player, such as Steam ID, name, client ID, and whatnot.",
     player_info_fields,
     7
- };
+};
 
-// Scores
+// Player state
+static PyTypeObject player_state_type = {0};
+
+static PyStructSequence_Field player_state_fields[] = {
+    {"is_alive", "Whether the player's alive or not."},
+    {"position", "The player's position."},
+    {"velocity", "The player's velocity."},
+    {"health", "The player's health."},
+    {"armor", "The player's armor."},
+    {"noclip", "Whether the player has noclip or not."},
+    {NULL}
+};
+
+static PyStructSequence_Desc player_state_desc = {
+    "PlayerState",
+    "Information about a player's state in the game.",
+    player_state_fields,
+    6
+};
+
+// Stats
 static PyTypeObject player_stats_type = {0};
 
 static PyStructSequence_Field player_stats_fields[] = {
     {"score", "The player's primary score."},
-    {"is_alive", "Whether the player's alive or not."},
     {"kills", "The player's number of kills."},
     {"deaths", "The player's number of deaths."},
     {"damage_dealt", "The player's total damage dealt."},
@@ -109,7 +128,7 @@ static PyStructSequence_Desc player_stats_desc = {
     "PlayerStats",
     "A player's score and some basic stats.",
     player_stats_fields,
-    6
+    5
 };
 
 // Vectors
@@ -552,14 +571,62 @@ static PyObject* PyMinqlx_RegisterHandler(PyObject* self, PyObject* args) {
 
 /*
  * ================================================================
- *                            scores
+ *                          player_state
+ * ================================================================
+*/
+
+static PyObject* PyMinqlx_PlayerState(PyObject* self, PyObject* args) {
+    int client_id;
+
+    if (!PyArg_ParseTuple(args, "i:player_state", &client_id))
+        return NULL;
+    else if (client_id < 0 || client_id >= sv_maxclients->integer) {
+        PyErr_Format(PyExc_ValueError,
+                     "client_id needs to be a number from 0 to %d.",
+                     sv_maxclients->integer);
+        return NULL;
+    }
+    else if (!g_entities[client_id].client)
+        Py_RETURN_NONE;
+
+    PyObject* state = PyStructSequence_New(&player_state_type);
+    PyStructSequence_SetItem(state, 0, PyBool_FromLong(g_entities[client_id].client->ps.pm_type == 0));
+
+    PyObject* pos = PyStructSequence_New(&vector3_type);
+    PyStructSequence_SetItem(pos, 0,
+        PyFloat_FromDouble(g_entities[client_id].client->ps.origin[0]));
+    PyStructSequence_SetItem(pos, 1,
+        PyFloat_FromDouble(g_entities[client_id].client->ps.origin[1]));
+    PyStructSequence_SetItem(pos, 2,
+        PyFloat_FromDouble(g_entities[client_id].client->ps.origin[2]));
+    PyStructSequence_SetItem(state, 1, pos);
+
+    PyObject* vel = PyStructSequence_New(&vector3_type);
+    PyStructSequence_SetItem(vel, 0,
+        PyFloat_FromDouble(g_entities[client_id].client->ps.velocity[0]));
+    PyStructSequence_SetItem(vel, 1,
+        PyFloat_FromDouble(g_entities[client_id].client->ps.velocity[1]));
+    PyStructSequence_SetItem(vel, 2,
+        PyFloat_FromDouble(g_entities[client_id].client->ps.velocity[2]));
+    PyStructSequence_SetItem(state, 2, vel);
+
+    PyStructSequence_SetItem(state, 3, PyLong_FromLongLong(g_entities[client_id].health));
+    PyStructSequence_SetItem(state, 4, PyLong_FromLongLong(g_entities[client_id].client->ps.stats[STAT_ARMOR]));
+    PyStructSequence_SetItem(state, 5, PyBool_FromLong(g_entities[client_id].client->noclip));
+
+    return state;
+}
+
+/*
+ * ================================================================
+ *                          player_stats
  * ================================================================
 */
 
 static PyObject* PyMinqlx_PlayerStats(PyObject* self, PyObject* args) {
     int client_id;
 
-    if (!PyArg_ParseTuple(args, "i:scores", &client_id))
+    if (!PyArg_ParseTuple(args, "i:player_stats", &client_id))
         return NULL;
     else if (client_id < 0 || client_id >= sv_maxclients->integer) {
         PyErr_Format(PyExc_ValueError,
@@ -572,44 +639,12 @@ static PyObject* PyMinqlx_PlayerStats(PyObject* self, PyObject* args) {
 
     PyObject* stats = PyStructSequence_New(&player_stats_type);
     PyStructSequence_SetItem(stats, 0, PyLong_FromLongLong(g_entities[client_id].client->ps.persistant[0]));
-    PyStructSequence_SetItem(stats, 1, PyBool_FromLong(g_entities[client_id].client->ps.pm_type == 0));
-    PyStructSequence_SetItem(stats, 2, PyLong_FromLongLong(g_entities[client_id].client->expandedStats.numKills));
-    PyStructSequence_SetItem(stats, 3, PyLong_FromLongLong(g_entities[client_id].client->expandedStats.numDeaths));
-    PyStructSequence_SetItem(stats, 4, PyLong_FromLongLong(g_entities[client_id].client->expandedStats.totalDamageDealt));
-    PyStructSequence_SetItem(stats, 5, PyLong_FromLongLong(g_entities[client_id].client->expandedStats.totalDamageTaken));
+    PyStructSequence_SetItem(stats, 1, PyLong_FromLongLong(g_entities[client_id].client->expandedStats.numKills));
+    PyStructSequence_SetItem(stats, 2, PyLong_FromLongLong(g_entities[client_id].client->expandedStats.numDeaths));
+    PyStructSequence_SetItem(stats, 3, PyLong_FromLongLong(g_entities[client_id].client->expandedStats.totalDamageDealt));
+    PyStructSequence_SetItem(stats, 4, PyLong_FromLongLong(g_entities[client_id].client->expandedStats.totalDamageTaken));
 
     return stats;
-}
-
-/*
- * ================================================================
- *                          get_position
- * ================================================================
-*/
-
-static PyObject* PyMinqlx_GetPosition(PyObject* self, PyObject* args) {
-    int client_id;
-
-    if (!PyArg_ParseTuple(args, "i:get_position", &client_id))
-        return NULL;
-    else if (client_id < 0 || client_id >= sv_maxclients->integer) {
-        PyErr_Format(PyExc_ValueError,
-                     "client_id needs to be a number from 0 to %d.",
-                     sv_maxclients->integer);
-        return NULL;
-    }
-    else if (!g_entities[client_id].client)
-        Py_RETURN_NONE;
-
-    PyObject* vec3 = PyStructSequence_New(&vector3_type);
-    PyStructSequence_SetItem(vec3, 0,
-        PyFloat_FromDouble(g_entities[client_id].client->ps.origin[0]));
-    PyStructSequence_SetItem(vec3, 1,
-        PyFloat_FromDouble(g_entities[client_id].client->ps.origin[1]));
-    PyStructSequence_SetItem(vec3, 2,
-        PyFloat_FromDouble(g_entities[client_id].client->ps.origin[2]));
-
-    return vec3;
 }
 
 /*
@@ -645,37 +680,6 @@ static PyObject* PyMinqlx_SetPosition(PyObject* self, PyObject* args) {
         (float)PyFloat_AsDouble(PyStructSequence_GetItem(new_position, 2));
 
     Py_RETURN_TRUE;
-}
-
-/*
- * ================================================================
- *                          get_velocity
- * ================================================================
-*/
-
-static PyObject* PyMinqlx_GetVelocity(PyObject* self, PyObject* args) {
-    int client_id;
-
-    if (!PyArg_ParseTuple(args, "i:get_velocity", &client_id))
-        return NULL;
-    else if (client_id < 0 || client_id >= sv_maxclients->integer) {
-        PyErr_Format(PyExc_ValueError,
-                     "client_id needs to be a number from 0 to %d.",
-                     sv_maxclients->integer);
-        return NULL;
-    }
-    else if (!g_entities[client_id].client)
-        Py_RETURN_NONE;
-
-    PyObject* vec3 = PyStructSequence_New(&vector3_type);
-    PyStructSequence_SetItem(vec3, 0,
-        PyFloat_FromDouble(g_entities[client_id].client->ps.velocity[0]));
-    PyStructSequence_SetItem(vec3, 1,
-        PyFloat_FromDouble(g_entities[client_id].client->ps.velocity[1]));
-    PyStructSequence_SetItem(vec3, 2,
-        PyFloat_FromDouble(g_entities[client_id].client->ps.velocity[2]));
-
-    return vec3;
 }
 
 /*
@@ -826,14 +830,12 @@ static PyMethodDef minqlxMethods[] = {
 	 "Adds a console command that will be handled by Python code."},
     {"register_handler", PyMinqlx_RegisterHandler, METH_VARARGS,
      "Register an event handler. Can be called more than once per event, but only the last one will work."},
+    {"player_state", PyMinqlx_PlayerState, METH_VARARGS,
+     "Get information about the player's state in the game."},
     {"player_stats", PyMinqlx_PlayerStats, METH_VARARGS,
      "Get some player stats."},
-    {"get_position", PyMinqlx_GetPosition, METH_VARARGS,
-     "Gets a player's position vector."},
     {"set_position", PyMinqlx_SetPosition, METH_VARARGS,
      "Sets a player's position vector."},
-    {"get_velocity", PyMinqlx_GetVelocity, METH_VARARGS,
-     "Gets a player's velocity vector."},
     {"set_velocity", PyMinqlx_SetVelocity, METH_VARARGS,
      "Sets a player's velocity vector."},
     {"noclip", PyMinqlx_NoClip, METH_VARARGS,
@@ -910,15 +912,18 @@ static PyObject* PyMinqlx_InitModule(void) {
     PyModule_AddIntMacro(module, TEAM_SPECTATOR);
 
     // Initialize struct sequence types.
-    PyStructSequence_InitType(&player_stats_type, &player_stats_desc);
     PyStructSequence_InitType(&player_info_type, &player_info_desc);
+    PyStructSequence_InitType(&player_state_type, &player_state_desc);
+    PyStructSequence_InitType(&player_stats_type, &player_stats_desc);
     PyStructSequence_InitType(&vector3_type, &vector3_desc);
-    Py_INCREF((PyObject*)&player_stats_type);
     Py_INCREF((PyObject*)&player_info_type);
+    Py_INCREF((PyObject*)&player_state_type);
+    Py_INCREF((PyObject*)&player_stats_type);
     Py_INCREF((PyObject*)&vector3_type);
     // Add new types.
-    PyModule_AddObject(module, "PlayerStats", (PyObject*)&player_stats_type);
     PyModule_AddObject(module, "PlayerInfo", (PyObject*)&player_info_type);
+    PyModule_AddObject(module, "PlayerState", (PyObject*)&player_state_type);
+    PyModule_AddObject(module, "PlayerStats", (PyObject*)&player_stats_type);
     PyModule_AddObject(module, "Vector3", (PyObject*)&vector3_type);
     
     return module;
