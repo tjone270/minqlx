@@ -24,37 +24,6 @@ _DUMMY_USERINFO = ("ui_singlePlayerActive\\0\\cg_autoAction\\1\\cg_autoHop\\0"
     "\\handicap\\100\\cl_anonymous\\0\\color1\\4\\color2\\23\\sex\\male"
     "\\teamtask\\0\\rate\\25000\\country\\NO")
 
-def _player(client_id):
-    """A wrapper for minqlx.player_info() to make the output more usable."""
-    info = minqlx.player_info(client_id)
-    if info == None:
-        return None
-    
-    d = minqlx.parse_variables(info["userinfo"])
-    for key in info:
-        if key == "userinfo":
-            pass
-        else:
-            d[key] = info[key]
-
-    return d
-
-def _players():
-    """A wrapper for minqlx.players_info() to make the output more usable."""
-    ret = {}
-    for i, player in enumerate(minqlx.players_info()):
-        if not player:
-            continue
-        
-        d = minqlx.parse_variables(player["userinfo"])
-        for key in player:
-            if key == "userinfo":
-                pass
-            else:
-                d[key] = player[key]
-        ret[i] = d
-    return ret
-
 class NonexistentPlayerError(Exception):
     """An exception that is raised when a player that disconnected is being used
     as if the player were still present.
@@ -71,26 +40,34 @@ class Player():
     and the player has disconnected, it will raise a
     :exc:`minqlx.NonexistentPlayerError` exception.
 
-    At the same time, that also means that if you access an attribute a lot, you should
-    probably assign it to a temporary variable first.
-
     """
-    def __init__(self, client_id, cvars_func=_player, player_dict=None):
-        self._cvars_func = cvars_func
+    def __init__(self, client_id, info=None):
         self._valid = True
-        # player_dict used for more efficient Plugin.players().
-        if player_dict:
+
+        # Can pass own info for efficiency when getting all players and to allow dummy players.
+        if info:
             self._id = client_id
-            self._cvars = player_dict
+            self._info = info
         else:
             self._id = client_id
-            self._cvars = cvars_func(client_id)
-            if not self._cvars:
+            self._info = minqlx.player_info(client_id)
+            if not self._info:
                 self._invalidate("Tried to initialize a Player instance of nonexistant player {}."
                     .format(client_id))
 
-        self._steam_id = self._cvars["steam_id"]
-        self._name = self._cvars["name"]
+        self._userinfo = None
+        self._steam_id = self._info.steam_id
+
+        # When a player connects, a the name field in the client struct has yet to be initialized,
+        # so we fall back to the userinfo and try parse it ourselves to get the name if needed.
+        if self._info.name:
+            self._name = self._info.name
+        else:
+            self._userinfo = minqlx.parse_variables(self._info.userinfo, ordered=True)
+            if "name" in self._userinfo:
+                self._name = self._userinfo["name"]
+            else: # No name at all. Weird userinfo during connection perhaps?
+                self._name = ""
 
     def __repr__(self):
         if not self._valid:
@@ -127,12 +104,19 @@ class Player():
         :raises: minqlx.NonexistentPlayerError
 
         """
-        self._cvars = self._cvars_func(self._id)
+        self._info = minqlx.player_info(self._id)
 
-        if not self._cvars or self.steam_id != self._steam_id:
+        if not self._info or self._steam_id != self._info._steam_id:
             self._invalidate()
 
-        self._name = self._cvars["name"]
+        if self._info.name:
+            self._name = self._info.name
+        else:
+            self._userinfo = minqlx.parse_variables(self._info.userinfo, ordered=True)
+            if "name" in self._userinfo:
+                self._name = self._userinfo["name"]
+            else:
+                self._name = ""
 
     def _invalidate(self, e="The player does not exist anymore. Did the player disconnect?"):
         self._valid = False
@@ -143,7 +127,10 @@ class Player():
         if not self._valid:
             self._invalidate()
 
-        return self._cvars.copy()
+        if not self._userinfo:
+            self._userinfo = minqlx.parse_variables(self._info.userinfo)
+        
+        return self._userinfo.copy()
 
     @property
     def steam_id(self):
@@ -173,9 +160,8 @@ class Player():
 
     @name.setter
     def name(self, value):
-        info = minqlx.parse_variables(minqlx.get_userinfo(self.id), ordered=True)
-        info["name"] = value
-        new_info = "\\".join(["{}\\{}".format(key, info[key]) for key in info])
+        self._userinfo["name"] = value
+        new_info = "\\".join(["{}\\{}".format(key, self._userinfo[key]) for key in self._userinfo])
         minqlx.client_command(self.id, "userinfo \"{}\"".format(new_info))
         self._name = value
 
@@ -190,7 +176,7 @@ class Player():
     
     @property
     def team(self):
-        return minqlx.TEAMS[self["team"]]
+        return minqlx.TEAMS[self._info.team]
     
     @property
     def colors(self):
@@ -235,19 +221,19 @@ class Player():
         In other words, if you need to make sure a player is in-game, check if ``player.state == "active"``.
 
         """
-        return minqlx.STATES[self["state"]]
+        return minqlx.STATES[self._info.state]
 
     @property
     def privileges(self):
-        if self["privileges"] == minqlx.PRIV_NONE:
+        if self._info.privileges == minqlx.PRIV_NONE:
             return None
-        elif self["privileges"] == minqlx.PRIV_MOD:
+        elif self._info.privileges == minqlx.PRIV_MOD:
             return "mod"
-        elif self["privileges"] == minqlx.PRIV_ADMIN:
+        elif self._info.privileges == minqlx.PRIV_ADMIN:
             return "admin"
-        elif self["privileges"] == minqlx.PRIV_ROOT:
+        elif self._info.privileges == minqlx.PRIV_ROOT:
             return "root"
-        elif self["privileges"] == minqlx.PRIV_BANNED:
+        elif self._info.privileges == minqlx.PRIV_BANNED:
             return "banned"
     
     @property
@@ -256,11 +242,7 @@ class Player():
 
     @property
     def valid(self):
-        try:
-            self["name"]
-            return True
-        except NonexistentPlayerError:
-            return False
+        return self._valid
 
     @property
     def stats(self):
@@ -310,12 +292,13 @@ class Player():
 
     @classmethod
     def all_players(cls):
-        players = _players()
-        return [cls(cid, player_dict=players[cid]) for cid in players]
+        return [cls(i, info=info) for i, info in enumerate(minqlx.players_info()) if info]
 
 class AbstractDummyPlayer(Player):
     def __init__(self):
-        self._cvars = minqlx.parse_variables(_DUMMY_USERINFO)
+        info = minqlx.PlayerInfo((-1, "DummyPlayer", minqlx.CS_CONNECTED,
+            _DUMMY_USERINFO, -1, minqlx.TEAM_SPECTATOR, minqlx.PRIV_NONE))
+        super().__init__(-1, info=info)
 
     @property
     def id(self):
@@ -324,6 +307,9 @@ class AbstractDummyPlayer(Player):
     @property
     def steam_id(self):
         raise NotImplementedError("steam_id property needs to be implemented.")
+
+    def update(self):
+        pass
 
     def tell(self, msg):
         raise NotImplementedError("tell() needs to be implemented.")
