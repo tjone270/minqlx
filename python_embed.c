@@ -714,6 +714,80 @@ static PyObject* PyMinqlx_SetVelocity(PyObject* self, PyObject* args) {
 }
 
 /*
+* ================================================================
+*                             noclip
+* ================================================================
+*/
+
+static PyObject* PyMinqlx_NoClip(PyObject* self, PyObject* args) {
+    int client_id, activate;
+    if (!PyArg_ParseTuple(args, "ip:noclip", &client_id, &activate))
+        return NULL;
+    else if (client_id < 0 || client_id >= sv_maxclients->integer) {
+        PyErr_Format(PyExc_ValueError,
+                     "client_id needs to be a number from 0 to %d.",
+                     sv_maxclients->integer);
+        return NULL;
+    }
+    else if (!g_entities[client_id].client)
+        Py_RETURN_FALSE;
+
+    if ((activate && g_entities[client_id].client->noclip) || (!activate && !g_entities[client_id].client->noclip)) {
+        // Change was made.
+        Py_RETURN_FALSE;
+    }
+
+    g_entities[client_id].client->noclip = activate ? qtrue : qfalse;
+    Py_RETURN_TRUE;
+}
+
+/*
+* ================================================================
+*                           set_health
+* ================================================================
+*/
+
+static PyObject* PyMinqlx_SetHealth(PyObject* self, PyObject* args) {
+    int client_id, health;
+    if (!PyArg_ParseTuple(args, "ii:set_health", &client_id, &health))
+        return NULL;
+    else if (client_id < 0 || client_id >= sv_maxclients->integer) {
+        PyErr_Format(PyExc_ValueError,
+                     "client_id needs to be a number from 0 to %d.",
+                     sv_maxclients->integer);
+        return NULL;
+    }
+    else if (!g_entities[client_id].client)
+        Py_RETURN_FALSE;
+
+    g_entities[client_id].health = health;
+    Py_RETURN_TRUE;
+}
+
+/*
+* ================================================================
+*                           set_armor
+* ================================================================
+*/
+
+static PyObject* PyMinqlx_SetArmor(PyObject* self, PyObject* args) {
+    int client_id, armor;
+    if (!PyArg_ParseTuple(args, "ii:set_armor", &client_id, &armor))
+        return NULL;
+    else if (client_id < 0 || client_id >= sv_maxclients->integer) {
+        PyErr_Format(PyExc_ValueError,
+                     "client_id needs to be a number from 0 to %d.",
+                     sv_maxclients->integer);
+        return NULL;
+    }
+    else if (!g_entities[client_id].client)
+        Py_RETURN_FALSE;
+
+    g_entities[client_id].client->ps.stats[STAT_ARMOR] = armor;
+    Py_RETURN_TRUE;
+}
+
+/*
  * ================================================================
  *             Module definition and initialization
  * ================================================================
@@ -762,6 +836,12 @@ static PyMethodDef minqlxMethods[] = {
      "Gets a player's velocity vector."},
     {"set_velocity", PyMinqlx_SetVelocity, METH_VARARGS,
      "Sets a player's velocity vector."},
+    {"noclip", PyMinqlx_NoClip, METH_VARARGS,
+     "Sets noclip for a player."},
+    {"set_health", PyMinqlx_SetHealth, METH_VARARGS,
+     "Sets a player's health."},
+    {"set_armor", PyMinqlx_SetArmor, METH_VARARGS,
+     "Sets a player's armor."},
     {NULL, NULL, 0, NULL}
 };
 
