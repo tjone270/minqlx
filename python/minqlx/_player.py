@@ -208,7 +208,7 @@ class Player():
         return bool(int(self["cg_predictItems"]))
 
     @property
-    def state(self):
+    def connection_state(self):
         """A string describing the connection state of a player.
 
         Possible values:
@@ -218,10 +218,10 @@ class Player():
         - *primed* -- The player was sent the necessary information to play, but has yet to send commands.
         - *active* -- The player finished loading and is actively sending commands to the server.
 
-        In other words, if you need to make sure a player is in-game, check if ``player.state == "active"``.
+        In other words, if you need to make sure a player is in-game, check if ``player.connection_state == "active"``.
 
         """
-        return minqlx.STATES[self._info.state]
+        return minqlx.CONNECTION_STATES[self._info.connection_state]
 
     @property
     def privileges(self):

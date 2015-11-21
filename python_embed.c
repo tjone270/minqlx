@@ -77,7 +77,7 @@ static handler_t handlers[] = {
  static PyStructSequence_Field player_info_fields[] = {
     {"client_id", "The player's client ID."},
     {"name", "The player's name."},
-    {"state", "The player's connection state."},
+    {"connection_state", "The player's connection state."},
     {"userinfo", "The player's userinfo."},
     {"steam_id", "The player's 64-bit representation of the Steam ID."},
     {"team", "The player's team."},
