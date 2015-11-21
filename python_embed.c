@@ -583,6 +583,138 @@ static PyObject* PyMinqlx_PlayerStats(PyObject* self, PyObject* args) {
 
 /*
  * ================================================================
+ *                          get_position
+ * ================================================================
+*/
+
+static PyObject* PyMinqlx_GetPosition(PyObject* self, PyObject* args) {
+    int client_id;
+
+    if (!PyArg_ParseTuple(args, "i:get_position", &client_id))
+        return NULL;
+    else if (client_id < 0 || client_id >= sv_maxclients->integer) {
+        PyErr_Format(PyExc_ValueError,
+                     "client_id needs to be a number from 0 to %d.",
+                     sv_maxclients->integer);
+        return NULL;
+    }
+    else if (!g_entities[client_id].client)
+        Py_RETURN_NONE;
+
+    PyObject* vec3 = PyStructSequence_New(&vector3_type);
+    PyStructSequence_SetItem(vec3, 0,
+        PyFloat_FromDouble(g_entities[client_id].client->ps.origin[0]));
+    PyStructSequence_SetItem(vec3, 1,
+        PyFloat_FromDouble(g_entities[client_id].client->ps.origin[1]));
+    PyStructSequence_SetItem(vec3, 2,
+        PyFloat_FromDouble(g_entities[client_id].client->ps.origin[2]));
+
+    return vec3;
+}
+
+/*
+ * ================================================================
+ *                          set_position
+ * ================================================================
+*/
+
+static PyObject* PyMinqlx_SetPosition(PyObject* self, PyObject* args) {
+    int client_id;
+    PyObject* new_position;
+
+    if (!PyArg_ParseTuple(args, "iO:set_position", &client_id, &new_position))
+        return NULL;
+    else if (client_id < 0 || client_id >= sv_maxclients->integer) {
+        PyErr_Format(PyExc_ValueError,
+                     "client_id needs to be a number from 0 to %d.",
+                     sv_maxclients->integer);
+        return NULL;
+    }
+    else if (!g_entities[client_id].client)
+        Py_RETURN_FALSE;
+    else if (!PyObject_TypeCheck(new_position, &vector3_type)) {
+        PyErr_Format(PyExc_ValueError, "Argument must be of type minqlx.Vector3.");
+        return NULL;
+    }
+
+    g_entities[client_id].client->ps.origin[0] =
+        (float)PyFloat_AsDouble(PyStructSequence_GetItem(new_position, 0));
+    g_entities[client_id].client->ps.origin[1] =
+        (float)PyFloat_AsDouble(PyStructSequence_GetItem(new_position, 1));
+    g_entities[client_id].client->ps.origin[2] =
+        (float)PyFloat_AsDouble(PyStructSequence_GetItem(new_position, 2));
+
+    Py_RETURN_TRUE;
+}
+
+/*
+ * ================================================================
+ *                          get_velocity
+ * ================================================================
+*/
+
+static PyObject* PyMinqlx_GetVelocity(PyObject* self, PyObject* args) {
+    int client_id;
+
+    if (!PyArg_ParseTuple(args, "i:get_velocity", &client_id))
+        return NULL;
+    else if (client_id < 0 || client_id >= sv_maxclients->integer) {
+        PyErr_Format(PyExc_ValueError,
+                     "client_id needs to be a number from 0 to %d.",
+                     sv_maxclients->integer);
+        return NULL;
+    }
+    else if (!g_entities[client_id].client)
+        Py_RETURN_NONE;
+
+    PyObject* vec3 = PyStructSequence_New(&vector3_type);
+    PyStructSequence_SetItem(vec3, 0,
+        PyFloat_FromDouble(g_entities[client_id].client->ps.velocity[0]));
+    PyStructSequence_SetItem(vec3, 1,
+        PyFloat_FromDouble(g_entities[client_id].client->ps.velocity[1]));
+    PyStructSequence_SetItem(vec3, 2,
+        PyFloat_FromDouble(g_entities[client_id].client->ps.velocity[2]));
+
+    return vec3;
+}
+
+/*
+ * ================================================================
+ *                          set_velocity
+ * ================================================================
+*/
+
+ static PyObject* PyMinqlx_SetVelocity(PyObject* self, PyObject* args) {
+     int client_id;
+     PyObject* new_velocity;
+
+     if (!PyArg_ParseTuple(args, "iO:set_velocity", &client_id, &new_velocity))
+         return NULL;
+     else if (client_id < 0 || client_id >= sv_maxclients->integer) {
+         PyErr_Format(PyExc_ValueError,
+                      "client_id needs to be a number from 0 to %d.",
+                      sv_maxclients->integer);
+         return NULL;
+     }
+     else if (!g_entities[client_id].client)
+         Py_RETURN_FALSE;
+     else if (!PyObject_TypeCheck(new_velocity, &vector3_type)) {
+         PyErr_Format(PyExc_ValueError, "Argument must be of type minqlx.Vector3.");
+         return NULL;
+     }
+
+     g_entities[client_id].client->ps.velocity[0] =
+         (float)PyFloat_AsDouble(PyStructSequence_GetItem(new_velocity, 0));
+     g_entities[client_id].client->ps.velocity[1] =
+         (float)PyFloat_AsDouble(PyStructSequence_GetItem(new_velocity, 1));
+     g_entities[client_id].client->ps.velocity[2] =
+         (float)PyFloat_AsDouble(PyStructSequence_GetItem(new_velocity, 2));
+
+     Py_RETURN_TRUE;
+ }
+
+/*
+ * ================================================================
  *             Module definition and initialization
  * ================================================================
 */
@@ -622,6 +754,14 @@ static PyMethodDef minqlxMethods[] = {
      "Register an event handler. Can be called more than once per event, but only the last one will work."},
     {"player_stats", PyMinqlx_PlayerStats, METH_VARARGS,
      "Get some player stats."},
+    {"get_position", PyMinqlx_GetPosition, METH_VARARGS,
+     "Gets a player's position vector."},
+    {"set_position", PyMinqlx_SetPosition, METH_VARARGS,
+     "Sets a player's position vector."},
+    {"get_velocity", PyMinqlx_GetVelocity, METH_VARARGS,
+     "Gets a player's velocity vector."},
+    {"set_velocity", PyMinqlx_SetVelocity, METH_VARARGS,
+     "Sets a player's velocity vector."},
     {NULL, NULL, 0, NULL}
 };
 
