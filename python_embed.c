@@ -112,6 +112,23 @@ static PyStructSequence_Desc player_stats_desc = {
     6
 };
 
+// Vectors
+static PyTypeObject vector3_type = {0};
+
+static PyStructSequence_Field vector3_fields[] = {
+    {"x", NULL},
+    {"y", NULL},
+    {"z", NULL},
+    {NULL}
+};
+
+static PyStructSequence_Desc vector3_desc = {
+    "Vector3",
+    "A three-dimensional vector.",
+    vector3_fields,
+    3
+};
+
 /*
  * ================================================================
  *                    player_info/players_info
@@ -675,11 +692,14 @@ static PyObject* PyMinqlx_InitModule(void) {
     // Initialize struct sequence types.
     PyStructSequence_InitType(&player_stats_type, &player_stats_desc);
     PyStructSequence_InitType(&player_info_type, &player_info_desc);
+    PyStructSequence_InitType(&vector3_type, &vector3_desc);
     Py_INCREF((PyObject*)&player_stats_type);
     Py_INCREF((PyObject*)&player_info_type);
+    Py_INCREF((PyObject*)&vector3_type);
     // Add new types.
     PyModule_AddObject(module, "PlayerStats", (PyObject*)&player_stats_type);
     PyModule_AddObject(module, "PlayerInfo", (PyObject*)&player_info_type);
+    PyModule_AddObject(module, "Vector3", (PyObject*)&vector3_type);
     
     return module;
 }
