@@ -144,8 +144,12 @@ class Redis(AbstractDatabase):
         """
         if isinstance(player, minqlx.Player):
             steam_id = player.steam_id
+        elif isinstance(player, int):
+            steam_id = player
+        elif isinstance(player, str):
+            steam_id = int(player)
         else:
-            steam_id = steam_id
+            raise ValueError("Invalid player. Use either a minqlx.Player instance or a SteamID64.")
 
         # If it's the owner, treat it like a 5.
         if steam_id == minqlx.owner():
