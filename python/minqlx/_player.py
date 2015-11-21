@@ -17,10 +17,7 @@
 # along with minqlx. If not, see <http://www.gnu.org/licenses/>.
 
 import minqlx
-import collections
 import re
-
-_DummyInfo = collections.namedtuple("DummyPlayerInfo", "client_id name state userinfo steam_id team privileges")
 
 _DUMMY_USERINFO = ("ui_singlePlayerActive\\0\\cg_autoAction\\1\\cg_autoHop\\0"
     "\\cg_predictItems\\1\\model\\bitterman/sport_blue\\headmodel\\crash/red"
@@ -299,8 +296,8 @@ class Player():
 
 class AbstractDummyPlayer(Player):
     def __init__(self):
-        info = _DummyInfo(client_id=-1, name="DummyPlayer", state=minqlx.CS_CONNECTED, userinfo=_DUMMY_USERINFO,
-            steam_id=-1, team=minqlx.TEAM_SPECTATOR, privileges=minqlx.PRIV_NONE)
+        info = minqlx.PlayerInfo((-1, "DummyPlayer", minqlx.CS_CONNECTED,
+            _DUMMY_USERINFO, -1, minqlx.TEAM_SPECTATOR, minqlx.PRIV_NONE))
         super().__init__(-1, info=info)
 
     @property
