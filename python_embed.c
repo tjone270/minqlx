@@ -535,14 +535,14 @@ static PyObject* PyMinqlx_RegisterHandler(PyObject* self, PyObject* args) {
 
 /*
  * ================================================================
- *                         scores
+ *                            scores
  * ================================================================
 */
 
 static PyObject* PyMinqlx_PlayerStats(PyObject* self, PyObject* args) {
     int client_id;
 
-    if (!PyArg_ParseTuple(args, "i:stats", &client_id))
+    if (!PyArg_ParseTuple(args, "i:scores", &client_id))
         return NULL;
     else if (client_id < 0 || client_id >= sv_maxclients->integer) {
         PyErr_Format(PyExc_ValueError,
