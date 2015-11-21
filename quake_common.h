@@ -164,6 +164,27 @@ typedef enum {
 } roundStateState_t;
 
 typedef enum {
+  STAT_HEALTH,
+  STAT_HOLDABLE_ITEM,
+  STAT_RUNE,
+  STAT_WEAPONS,
+  STAT_ARMOR,
+  STAT_BSKILL,
+  STAT_CLIENTS_READY,
+  STAT_MAX_HEALTH,
+  STAT_SPINUP,
+  STAT_FLIGHT_THRUST,
+  STAT_MAX_FLIGHT_FUEL,
+  STAT_CUR_FLIGHT_FUEL,
+  STAT_FLIGHT_REFUEL,
+  STAT_QUADKILLS,
+  STAT_ARMORTYPE,
+  STAT_KEY,
+  STAT_OTHER_HEALTH,
+  STAT_OTHER_ARMOR,
+} statIndex_t;
+
+typedef enum {
 	GAME_INIT,	// ( int levelTime, int randomSeed, int restart );
 	// init and shutdown will be called every single level
 	// The game should call G_GET_ENTITY_TOKEN to parse through all the
