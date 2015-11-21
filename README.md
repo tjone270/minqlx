@@ -122,6 +122,17 @@ for commands like `!ban` where the target player might not currently be connecte
 
 [See here for a full command list.](https://github.com/MinoMino/minqlx/wiki/Command-List)
 
+Updating
+========
+Since this and plugins use different repositories, they will also be updated separately. However, the latest master
+branch of both repositories should always be compatible. If you want to try out the develop branch, make sure you use
+the develop branch of both repositories too, otherwise you might run into issues.
+
+To update the core, just use `wget` to get the latest binary tarball and put it in your QLDS directory, then simply
+extract it with `tar -xvf <tarball>`. To update the plugins, use `cd` to change the working directory to `qlds/minqlx-plugins`
+and do `git pull origin` and you should be good to go. Git should not remove any untracked files, so you can have your
+own custom plugins there and still keep your local copy of the repo up to date.
+
 Compiling
 =========
 **NOTE**: This is *not* required if you are using binaries.
