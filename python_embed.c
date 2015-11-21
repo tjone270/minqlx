@@ -72,7 +72,7 @@ static handler_t handlers[] = {
 */
 
  // Players
- static PyTypeObject* player_info_type;
+ static PyTypeObject player_info_type = {0};
 
  static PyStructSequence_Field player_info_fields[] = {
     {"client_id", "The player's client ID."},
@@ -93,7 +93,7 @@ static handler_t handlers[] = {
  };
 
 // Scores
-static PyTypeObject* player_stats_type;
+static PyTypeObject player_stats_type = {0};
 
 static PyStructSequence_Field player_stats_fields[] = {
     {"score", "The player's primary score."},
@@ -143,7 +143,7 @@ static PyObject* makePlayerTuple(int client_id) {
     PyObject* userinfo = PyUnicode_DecodeUTF8(svs->clients[client_id].userinfo, strlen(svs->clients[client_id].userinfo), "ignore");
     PyObject* steam_id = PyLong_FromLongLong(svs->clients[client_id].steam_id);
     
-    PyObject* info = PyStructSequence_New(player_info_type);
+    PyObject* info = PyStructSequence_New(&player_info_type);
     PyStructSequence_SetItem(info, 0, cid);
     PyStructSequence_SetItem(info, 1, name);
     PyStructSequence_SetItem(info, 2, state);
@@ -553,7 +553,7 @@ static PyObject* PyMinqlx_PlayerStats(PyObject* self, PyObject* args) {
     else if (!g_entities[client_id].client)
         Py_RETURN_NONE;
 
-    PyObject* stats = PyStructSequence_New(player_stats_type);
+    PyObject* stats = PyStructSequence_New(&player_stats_type);
     PyStructSequence_SetItem(stats, 0, PyLong_FromLongLong(g_entities[client_id].client->ps.persistant[0]));
     PyStructSequence_SetItem(stats, 1, PyBool_FromLong(g_entities[client_id].client->ps.pm_type == 0));
     PyStructSequence_SetItem(stats, 2, PyLong_FromLongLong(g_entities[client_id].client->expandedStats.numKills));
@@ -673,14 +673,13 @@ static PyObject* PyMinqlx_InitModule(void) {
     PyModule_AddIntMacro(module, TEAM_SPECTATOR);
 
     // Initialize struct sequence types.
-    player_stats_type = PyStructSequence_NewType(&player_stats_desc);
-    player_info_type = PyStructSequence_NewType(&player_info_desc);
-    // Gotta set a type flag manually: https://bugs.python.org/issue20066
-    player_stats_type->tp_flags |= Py_TPFLAGS_HEAPTYPE;
-    player_info_type->tp_flags |= Py_TPFLAGS_HEAPTYPE;
+    PyStructSequence_InitType(&player_stats_type, &player_stats_desc);
+    PyStructSequence_InitType(&player_info_type, &player_info_desc);
+    Py_INCREF((PyObject*)&player_stats_type);
+    Py_INCREF((PyObject*)&player_info_type);
     // Add new types.
-    PyModule_AddObject(module, "PlayerStats", (PyObject*)player_stats_type);
-    PyModule_AddObject(module, "PlayerInfo", (PyObject*)player_info_type);
+    PyModule_AddObject(module, "PlayerStats", (PyObject*)&player_stats_type);
+    PyModule_AddObject(module, "PlayerInfo", (PyObject*)&player_info_type);
     
     return module;
 }
