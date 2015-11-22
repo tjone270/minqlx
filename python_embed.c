@@ -831,8 +831,9 @@ static PyObject* PyMinqlx_SetArmor(PyObject* self, PyObject* args) {
 */
 
 static PyObject* PyMinqlx_SetWeapons(PyObject* self, PyObject* args) {
-    int client_id, weapons;
-    if (!PyArg_ParseTuple(args, "ii:set_weapons", &client_id, &weapons))
+    int client_id, weapon_flags = 0;
+    PyObject* weapons;
+    if (!PyArg_ParseTuple(args, "iO:set_weapons", &client_id, &weapons))
         return NULL;
     else if (client_id < 0 || client_id >= sv_maxclients->integer) {
         PyErr_Format(PyExc_ValueError,
@@ -842,8 +843,23 @@ static PyObject* PyMinqlx_SetWeapons(PyObject* self, PyObject* args) {
     }
     else if (!g_entities[client_id].client)
         Py_RETURN_FALSE;
+    else if (!PyObject_TypeCheck(weapons, &weapons_type)) {
+        PyErr_Format(PyExc_ValueError, "Argument must be of type minqlx.Weapons.");
+        return NULL;
+    }
 
-    g_entities[client_id].client->ps.stats[STAT_WEAPONS] = weapons;
+    PyObject* w;
+    for (int i = 0; i < 15; i++) {
+        w = PyStructSequence_GetItem(weapons, i);
+        if (!PyBool_Check(w)) {
+            PyErr_Format(PyExc_ValueError, "Tuple argument %d is not a boolean.", i);
+            return NULL;
+        }
+
+        weapon_flags |= w == Py_True ? (1 << (i+1)) : 0;
+    }
+    
+    g_entities[client_id].client->ps.stats[STAT_WEAPONS] = weapon_flags;
     Py_RETURN_TRUE;
 }
 
@@ -854,8 +870,9 @@ static PyObject* PyMinqlx_SetWeapons(PyObject* self, PyObject* args) {
 */
 
 static PyObject* PyMinqlx_SetAmmo(PyObject* self, PyObject* args) {
-    int client_id, weapon, ammo;
-    if (!PyArg_ParseTuple(args, "iii:set_ammo", &client_id, &weapon, &ammo))
+    int client_id;
+    PyObject* ammos;
+    if (!PyArg_ParseTuple(args, "iO:set_ammo", &client_id, &ammos))
         return NULL;
     else if (client_id < 0 || client_id >= sv_maxclients->integer) {
         PyErr_Format(PyExc_ValueError,
@@ -863,14 +880,24 @@ static PyObject* PyMinqlx_SetAmmo(PyObject* self, PyObject* args) {
                      sv_maxclients->integer);
         return NULL;
     }
-    else if (weapon < 0 || weapon > 15) {
-        PyErr_Format(PyExc_ValueError, "weapon number needs to be a number from 0 to 15.");
-        return NULL;
-    }
     else if (!g_entities[client_id].client)
         Py_RETURN_FALSE;
+    else if (!PyObject_TypeCheck(ammos, &weapons_type)) {
+        PyErr_Format(PyExc_ValueError, "Argument must be of type minqlx.Weapons.");
+        return NULL;
+    }
 
-    g_entities[client_id].client->ps.ammo[weapon] = ammo;
+    PyObject* a;
+    for (int i = 0; i < 15; i++) {
+        a = PyStructSequence_GetItem(ammos, i);
+        if (!PyLong_Check(a)) {
+            PyErr_Format(PyExc_ValueError, "Tuple argument %d is not an integer.", i);
+            return NULL;
+        }
+
+        g_entities[client_id].client->ps.ammo[i+1] = PyLong_AsLong(PyStructSequence_GetItem(ammos, i));
+    }
+
     Py_RETURN_TRUE;
 }
 
