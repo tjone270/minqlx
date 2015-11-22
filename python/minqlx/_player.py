@@ -224,6 +224,10 @@ class Player():
         return minqlx.CONNECTION_STATES[self._info.connection_state]
 
     @property
+    def state(self):
+        return minqlx.player_state(self.id)
+
+    @property
     def privileges(self):
         if self._info.privileges == minqlx.PRIV_NONE:
             return None
