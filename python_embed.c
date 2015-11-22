@@ -102,6 +102,9 @@ static PyStructSequence_Field player_state_fields[] = {
     {"health", "The player's health."},
     {"armor", "The player's armor."},
     {"noclip", "Whether the player has noclip or not."},
+    {"weapon", "The weapon the player is currently using."},
+    {"weapons", "The player's weapons."},
+    {"ammo", "The player's weapon ammo."},
     {NULL}
 };
 
@@ -109,7 +112,7 @@ static PyStructSequence_Desc player_state_desc = {
     "PlayerState",
     "Information about a player's state in the game.",
     player_state_fields,
-    6
+    9
 };
 
 // Stats
@@ -146,6 +149,25 @@ static PyStructSequence_Desc vector3_desc = {
     "A three-dimensional vector.",
     vector3_fields,
     3
+};
+
+// Weapons
+static PyTypeObject weapons_type = {0};
+
+static PyStructSequence_Field weapons_fields[] = {
+    {"g", NULL}, {"mg", NULL}, {"sg", NULL},
+    {"gl", NULL}, {"rl", NULL}, {"lg", NULL},
+    {"rg", NULL}, {"pg", NULL}, {"bfg", NULL},
+    {"gh", NULL}, {"ng", NULL}, {"pl", NULL},
+    {"cg", NULL}, {"hmg", NULL}, {"hands", NULL},
+    {NULL}
+};
+
+static PyStructSequence_Desc weapons_desc = {
+    "Weapons",
+    "A struct sequence containing all the weapons in the game.",
+    weapons_fields,
+    15
 };
 
 /*
@@ -613,6 +635,17 @@ static PyObject* PyMinqlx_PlayerState(PyObject* self, PyObject* args) {
     PyStructSequence_SetItem(state, 3, PyLong_FromLongLong(g_entities[client_id].health));
     PyStructSequence_SetItem(state, 4, PyLong_FromLongLong(g_entities[client_id].client->ps.stats[STAT_ARMOR]));
     PyStructSequence_SetItem(state, 5, PyBool_FromLong(g_entities[client_id].client->noclip));
+    PyStructSequence_SetItem(state, 6, PyLong_FromLongLong(g_entities[client_id].client->ps.weapon));
+
+    // Get weapons and ammo count.
+    PyObject* weapons = PyStructSequence_New(&weapons_type);
+    PyObject* ammo = PyStructSequence_New(&weapons_type);
+    for (int i = 0; i < 15; i++) {
+        PyStructSequence_SetItem(weapons, i, PyBool_FromLong(g_entities[client_id].client->ps.stats[STAT_WEAPONS] & (1 << (i+1))));
+        PyStructSequence_SetItem(ammo, i, PyLong_FromLongLong(g_entities[client_id].client->ps.ammo[i+1]));
+    }
+    PyStructSequence_SetItem(state, 7, weapons);  
+    PyStructSequence_SetItem(state, 8, ammo);
 
     return state;
 }
@@ -988,15 +1021,18 @@ static PyObject* PyMinqlx_InitModule(void) {
     PyStructSequence_InitType(&player_state_type, &player_state_desc);
     PyStructSequence_InitType(&player_stats_type, &player_stats_desc);
     PyStructSequence_InitType(&vector3_type, &vector3_desc);
+    PyStructSequence_InitType(&weapons_type, &weapons_desc);
     Py_INCREF((PyObject*)&player_info_type);
     Py_INCREF((PyObject*)&player_state_type);
     Py_INCREF((PyObject*)&player_stats_type);
     Py_INCREF((PyObject*)&vector3_type);
+    Py_INCREF((PyObject*)&weapons_type);
     // Add new types.
     PyModule_AddObject(module, "PlayerInfo", (PyObject*)&player_info_type);
     PyModule_AddObject(module, "PlayerState", (PyObject*)&player_state_type);
     PyModule_AddObject(module, "PlayerStats", (PyObject*)&player_stats_type);
     PyModule_AddObject(module, "Vector3", (PyObject*)&vector3_type);
+    PyModule_AddObject(module, "Weapons", (PyObject*)&weapons_type);
     
     return module;
 }
