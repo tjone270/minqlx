@@ -89,7 +89,7 @@ static PyStructSequence_Desc player_info_desc = {
     "PlayerInfo",
     "Information about a player, such as Steam ID, name, client ID, and whatnot.",
     player_info_fields,
-    7
+    (sizeof(player_info_fields)/sizeof(PyStructSequence_Field)) - 1
 };
 
 // Player state
@@ -112,7 +112,7 @@ static PyStructSequence_Desc player_state_desc = {
     "PlayerState",
     "Information about a player's state in the game.",
     player_state_fields,
-    9
+    (sizeof(player_state_fields)/sizeof(PyStructSequence_Field)) - 1
 };
 
 // Stats
@@ -131,7 +131,7 @@ static PyStructSequence_Desc player_stats_desc = {
     "PlayerStats",
     "A player's score and some basic stats.",
     player_stats_fields,
-    5
+    (sizeof(player_stats_fields)/sizeof(PyStructSequence_Field)) - 1
 };
 
 // Vectors
@@ -148,7 +148,7 @@ static PyStructSequence_Desc vector3_desc = {
     "Vector3",
     "A three-dimensional vector.",
     vector3_fields,
-    3
+    (sizeof(vector3_fields)/sizeof(PyStructSequence_Field)) - 1
 };
 
 // Weapons
@@ -167,7 +167,7 @@ static PyStructSequence_Desc weapons_desc = {
     "Weapons",
     "A struct sequence containing all the weapons in the game.",
     weapons_fields,
-    15
+    (sizeof(weapons_fields)/sizeof(PyStructSequence_Field)) - 1
 };
 
 /*
