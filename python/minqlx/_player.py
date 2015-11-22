@@ -106,7 +106,7 @@ class Player():
         """
         self._info = minqlx.player_info(self._id)
 
-        if not self._info or self._steam_id != self._info._steam_id:
+        if not self._info or self._steam_id != self._info.steam_id:
             self._invalidate()
 
         if self._info.name:
