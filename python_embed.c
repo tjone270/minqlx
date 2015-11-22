@@ -792,6 +792,56 @@ static PyObject* PyMinqlx_SetArmor(PyObject* self, PyObject* args) {
 }
 
 /*
+* ================================================================
+*                           set_weapons
+* ================================================================
+*/
+
+static PyObject* PyMinqlx_SetWeapons(PyObject* self, PyObject* args) {
+    int client_id, weapons;
+    if (!PyArg_ParseTuple(args, "ii:set_weapons", &client_id, &weapons))
+        return NULL;
+    else if (client_id < 0 || client_id >= sv_maxclients->integer) {
+        PyErr_Format(PyExc_ValueError,
+                     "client_id needs to be a number from 0 to %d.",
+                     sv_maxclients->integer);
+        return NULL;
+    }
+    else if (!g_entities[client_id].client)
+        Py_RETURN_FALSE;
+
+    g_entities[client_id].client->ps.stats[STAT_WEAPONS] = weapons;
+    Py_RETURN_TRUE;
+}
+
+/*
+* ================================================================
+*                           set_ammo
+* ================================================================
+*/
+
+static PyObject* PyMinqlx_SetAmmo(PyObject* self, PyObject* args) {
+    int client_id, weapon, ammo;
+    if (!PyArg_ParseTuple(args, "iii:set_ammo", &client_id, &weapon, &ammo))
+        return NULL;
+    else if (client_id < 0 || client_id >= sv_maxclients->integer) {
+        PyErr_Format(PyExc_ValueError,
+                     "client_id needs to be a number from 0 to %d.",
+                     sv_maxclients->integer);
+        return NULL;
+    }
+    else if (weapon < 0 || weapon > 15) {
+        PyErr_Format(PyExc_ValueError, "weapon number needs to be a number from 0 to 15.");
+        return NULL;
+    }
+    else if (!g_entities[client_id].client)
+        Py_RETURN_FALSE;
+
+    g_entities[client_id].client->ps.ammo[weapon] = ammo;
+    Py_RETURN_TRUE;
+}
+
+/*
  * ================================================================
  *             Module definition and initialization
  * ================================================================
@@ -844,6 +894,10 @@ static PyMethodDef minqlxMethods[] = {
      "Sets a player's health."},
     {"set_armor", PyMinqlx_SetArmor, METH_VARARGS,
      "Sets a player's armor."},
+    {"set_weapons", PyMinqlx_SetWeapons, METH_VARARGS,
+     "Sets a player's weapons."},
+    {"set_ammo", PyMinqlx_SetAmmo, METH_VARARGS,
+     "Sets a player's ammo."},
     {NULL, NULL, 0, NULL}
 };
 
@@ -910,6 +964,24 @@ static PyObject* PyMinqlx_InitModule(void) {
     PyModule_AddIntMacro(module, TEAM_RED);
     PyModule_AddIntMacro(module, TEAM_BLUE);
     PyModule_AddIntMacro(module, TEAM_SPECTATOR);
+
+    // Weapons.
+    PyModule_AddIntMacro(module, WP_NONE);
+    PyModule_AddIntMacro(module, WP_GAUNTLET);
+    PyModule_AddIntMacro(module, WP_MACHINEGUN);
+    PyModule_AddIntMacro(module, WP_SHOTGUN);
+    PyModule_AddIntMacro(module, WP_GRENADE_LAUNCHER);
+    PyModule_AddIntMacro(module, WP_ROCKET_LAUNCHER);
+    PyModule_AddIntMacro(module, WP_LIGHTNING);
+    PyModule_AddIntMacro(module, WP_RAILGUN);
+    PyModule_AddIntMacro(module, WP_PLASMAGUN);
+    PyModule_AddIntMacro(module, WP_BFG);
+    PyModule_AddIntMacro(module, WP_GRAPPLING_HOOK);
+    PyModule_AddIntMacro(module, WP_NAILGUN);
+    PyModule_AddIntMacro(module, WP_PROX_LAUNCHER);
+    PyModule_AddIntMacro(module, WP_CHAINGUN);
+    PyModule_AddIntMacro(module, WP_HMG);
+    PyModule_AddIntMacro(module, WP_HANDS);
 
     // Initialize struct sequence types.
     PyStructSequence_InitType(&player_info_type, &player_info_desc);
