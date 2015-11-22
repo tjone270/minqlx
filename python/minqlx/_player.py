@@ -295,8 +295,8 @@ class Player():
         return [cls(i, info=info) for i, info in enumerate(minqlx.players_info()) if info]
 
 class AbstractDummyPlayer(Player):
-    def __init__(self):
-        info = minqlx.PlayerInfo((-1, "DummyPlayer", minqlx.CS_CONNECTED,
+    def __init__(self, name="DummyPlayer"):
+        info = minqlx.PlayerInfo((-1, name, minqlx.CS_CONNECTED,
             _DUMMY_USERINFO, -1, minqlx.TEAM_SPECTATOR, minqlx.PRIV_NONE))
         super().__init__(-1, info=info)
 
