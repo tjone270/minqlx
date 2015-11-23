@@ -17,6 +17,7 @@
 # along with minqlx. If not, see <http://www.gnu.org/licenses/>.
 
 import minqlx
+import collections
 import sched
 import re
 
@@ -165,6 +166,7 @@ def handle_server_command(client_id, cmd):
 # weird behavior if you were to use threading. This list will act as a task queue.
 # Tasks can be added by simply adding the @minqlx.next_frame decorator to functions.
 frame_tasks = sched.scheduler()
+next_frame_tasks = collections.deque()
 
 def handle_frame():
     """This will be called every frame. To allow threads to call stuff from the
@@ -188,6 +190,14 @@ def handle_frame():
     except:
         minqlx.log_exception()
         return True
+
+    try:
+        while True:
+            func, args, kwargs = next_frame_tasks.popleft()
+            frame_tasks.enter(0, 0, func, args, kwargs)
+    except IndexError:
+        pass
+
 
 _zmq_warning_issued = False
 _first_game = True

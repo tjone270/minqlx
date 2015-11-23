@@ -210,7 +210,7 @@ def set_map_subtitles():
 
 def next_frame(func):
     def f(*args, **kwargs):
-        minqlx.frame_tasks.enter(0, 0, func, args, kwargs)
+        minqlx.next_frame_tasks.append((func, args, kwargs))
     
     return f
 
