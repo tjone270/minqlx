@@ -865,6 +865,33 @@ static PyObject* PyMinqlx_SetWeapons(PyObject* self, PyObject* args) {
 
 /*
 * ================================================================
+*                           set_weapon
+* ================================================================
+*/
+
+static PyObject* PyMinqlx_SetWeapon(PyObject* self, PyObject* args) {
+    int client_id, weapon;
+    if (!PyArg_ParseTuple(args, "ii:set_weapon", &client_id, &weapon))
+        return NULL;
+    else if (client_id < 0 || client_id >= sv_maxclients->integer) {
+        PyErr_Format(PyExc_ValueError,
+                     "client_id needs to be a number from 0 to %d.",
+                     sv_maxclients->integer);
+        return NULL;
+    }
+    else if (!g_entities[client_id].client)
+        Py_RETURN_FALSE;
+    else if (weapon < 0 || weapon > 16) {
+        PyErr_Format(PyExc_ValueError, "Weapon must be a number from 0 to 15.");
+        return NULL;
+    }
+    
+    g_entities[client_id].client->ps.weapon = weapon;
+    Py_RETURN_TRUE;
+}
+
+/*
+* ================================================================
 *                           set_ammo
 * ================================================================
 */
@@ -956,6 +983,8 @@ static PyMethodDef minqlxMethods[] = {
      "Sets a player's armor."},
     {"set_weapons", PyMinqlx_SetWeapons, METH_VARARGS,
      "Sets a player's weapons."},
+    {"set_weapon", PyMinqlx_SetWeapon, METH_VARARGS,
+     "Sets a player's current weapon."},
     {"set_ammo", PyMinqlx_SetAmmo, METH_VARARGS,
      "Sets a player's ammo."},
     {NULL, NULL, 0, NULL}
