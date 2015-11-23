@@ -33,7 +33,6 @@ import logging
 import shlex
 import sys
 import os
-import re
 
 from logging.handlers import RotatingFileHandler
 
@@ -52,8 +51,6 @@ CONNECTION_STATES = collections.OrderedDict(enumerate(("free", "zombie", "connec
 
 WEAPONS = collections.OrderedDict(enumerate(("_none", "g", "mg", "sg", "gl", "rl", "lg", "rg",
     "pg", "bfg", "gh", "ng", "pl", "cg", "hmg", "hands")))
-
-_re_varsplit = re.compile(r"\\*")
 
 # ====================================================================
 #                               HELPERS
@@ -77,7 +74,7 @@ def parse_variables(varstr, ordered=False):
     if not varstr.strip():
         return res
     
-    vars = _re_varsplit.split(varstr.lstrip("\\"))
+    vars = varstr.lstrip("\\").split("\\")
     try:
         for i in range(0, len(vars), 2):
             res[vars[i]] = vars[i + 1]
