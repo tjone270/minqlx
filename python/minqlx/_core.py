@@ -38,17 +38,20 @@ import re
 from logging.handlers import RotatingFileHandler
 
 # Team number -> string
-TEAMS = dict(enumerate(("free", "red", "blue", "spectator")))
+TEAMS = collections.OrderedDict(enumerate(("free", "red", "blue", "spectator")))
 
 # Game type number -> string
-GAMETYPES = dict(enumerate(("Free for All", "Duel", "Race", "Team Deathmatch", "Clan Arena",
+GAMETYPES = collections.OrderedDict(enumerate(("Free for All", "Duel", "Race", "Team Deathmatch", "Clan Arena",
     "Capture the Flag", "Overload", "Harvester", "Freeze Tag", "Domination", "Attack and Defend", "Red Rover")))
 
 # Game type number -> short string
-GAMETYPES_SHORT = dict(enumerate(("ffa", "duel", "race", "tdm", "ca", "ctf", "ob", "har", "ft", "dom", "ad", "rr")))
+GAMETYPES_SHORT = collections.OrderedDict(enumerate(("ffa", "duel", "race", "tdm", "ca", "ctf", "ob", "har", "ft", "dom", "ad", "rr")))
 
 # Connection states.
-CONNECTION_STATES = dict(enumerate(("free", "zombie", "connected", "primed", "active")))
+CONNECTION_STATES = collections.OrderedDict(enumerate(("free", "zombie", "connected", "primed", "active")))
+
+WEAPONS = collections.OrderedDict(enumerate(("_none", "g", "mg", "sg", "gl", "rl", "lg", "rg",
+    "pg", "bfg", "gh", "ng", "pl", "cg", "hmg", "hands")))
 
 _re_varsplit = re.compile(r"\\*")
 
