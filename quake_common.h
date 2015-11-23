@@ -397,6 +397,13 @@ typedef enum {
 } weapon_t;
 
 typedef enum {
+  WEAPON_READY = 0x0,
+  WEAPON_RAISING = 0x1,
+  WEAPON_DROPPING = 0x2,
+  WEAPON_FIRING = 0x3,
+} weaponstate_t;
+
+typedef enum {
     RUNE_NONE = 0x0,
     RUNE_SCOUT = 0x1,
     RUNE_GUARD = 0x2,
