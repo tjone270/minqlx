@@ -348,6 +348,30 @@ class Player():
         return minqlx.set_ammo(self.id,
             minqlx.Weapons((g, mg, sg, gl, rl, lg, rg, pg, bfg, gh, ng, pl, cg, hmg, hands)))
 
+    @property
+    def noclip(self):
+        return self.state.noclip
+
+    @noclip.setter
+    def noclip(self, value):
+        minqlx.noclip(self.id, bool(value))
+
+    @property
+    def health(self):
+        return self.state.health
+
+    @health.setter
+    def health(self, value):
+        minqlx.set_health(self.id, value)
+
+    @property
+    def armor(self):
+        return self.state.armor
+
+    @armor.setter
+    def armor(self, value):
+        minqlx.set_armor(self.id, value)
+
     def tell(self, msg, **kwargs):
         return minqlx.Plugin.tell(msg, self, **kwargs)
 
