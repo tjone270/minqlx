@@ -78,8 +78,10 @@ def parse_variables(varstr, ordered=False):
     try:
         for i in range(0, len(vars), 2):
             res[vars[i]] = vars[i + 1]
-    except:
-        raise ValueError("Uneven number of keys and values: {}".format(varstr))
+    except IndexError:
+        # Log and return incomplete dict.
+        logger = minqlx.get_logger()
+        logger.warning("Uneven number of keys and values: {}".format(varstr))
     
     return res
 
