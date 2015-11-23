@@ -181,8 +181,11 @@ static PyObject* makePlayerTuple(int client_id) {
     PyObject* cid = PyLong_FromLongLong(client_id);
 
     if (g_entities[client_id].client != NULL) {
-        name = PyUnicode_DecodeUTF8(g_entities[client_id].client->pers.netname,
-            strlen(g_entities[client_id].client->pers.netname), "ignore");
+        if (g_entities[client_id].client->pers.connected == CON_DISCONNECTED)
+            name = PyUnicode_FromString("");
+        else 
+            name = PyUnicode_DecodeUTF8(g_entities[client_id].client->pers.netname,
+                strlen(g_entities[client_id].client->pers.netname), "ignore");
 
         if (g_entities[client_id].client->pers.connected == CON_DISCONNECTED)
             team = PyLong_FromLongLong(TEAM_SPECTATOR); // Set team to spectator if not yet connected.
