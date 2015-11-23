@@ -252,6 +252,102 @@ class Player():
     def stats(self):
         return minqlx.player_stats(self.id)
 
+    def position(self, reset=False, **kwargs):
+        if reset:
+            pos = minqlx.Vector3((0, 0, 0))
+        else:
+            pos = self.state.position
+        
+        if not kwargs:
+            return pos
+        
+        x = pos.x if "x" not in kwargs else kwargs["x"]
+        y = pos.y if "y" not in kwargs else kwargs["y"]
+        z = pos.z if "z" not in kwargs else kwargs["z"]
+
+        return minqlx.set_position(self.id, minqlx.Vector3((x, y, z)))
+
+    def velocity(self, reset=False, **kwargs):
+        if reset:
+            vel = minqlx.Vector3((0, 0, 0))
+        else:
+            vel = self.state.velocity
+        
+        if not kwargs:
+            return vel
+        
+        x = vel.x if "x" not in kwargs else kwargs["x"]
+        y = vel.y if "y" not in kwargs else kwargs["y"]
+        z = vel.z if "z" not in kwargs else kwargs["z"]
+
+        return minqlx.set_velocity(self.id, minqlx.Vector3((x, y, z)))
+
+    def weapons(self, reset=False, **kwargs):
+        if reset:
+            weaps = minqlx.Weapons(((False,)*15))
+        else:
+            weaps = self.state.weapons
+        
+        if not kwargs:
+            return weaps
+        
+        g = weaps.g if "g" not in kwargs else kwargs["g"]
+        mg = weaps.mg if "mg" not in kwargs else kwargs["mg"]
+        sg = weaps.sg if "sg" not in kwargs else kwargs["sg"]
+        gl = weaps.gl if "gl" not in kwargs else kwargs["gl"]
+        rl = weaps.rl if "rl" not in kwargs else kwargs["rl"]
+        lg = weaps.lg if "lg" not in kwargs else kwargs["lg"]
+        rg = weaps.rg if "rg" not in kwargs else kwargs["rg"]
+        pg = weaps.pg if "pg" not in kwargs else kwargs["pg"]
+        bfg = weaps.bfg if "bfg" not in kwargs else kwargs["bfg"]
+        gh = weaps.gh if "gh" not in kwargs else kwargs["gh"]
+        ng = weaps.ng if "ng" not in kwargs else kwargs["ng"]
+        pl = weaps.pl if "pl" not in kwargs else kwargs["pl"]
+        cg = weaps.cg if "cg" not in kwargs else kwargs["cg"]
+        hmg = weaps.hmg if "hmg" not in kwargs else kwargs["hmg"]
+        hands = weaps.hands if "hands" not in kwargs else kwargs["hands"]
+
+        return minqlx.set_weapons(self.id,
+            minqlx.Weapons((g, mg, sg, gl, rl, lg, rg, pg, bfg, gh, ng, pl, cg, hmg, hands)))
+
+    def weapon(self, new_weapon=None):
+        if new_weapon is None:
+            return self.state.weapon
+        elif new_weapon in minqlx.WEAPONS:
+            pass
+        elif new_weapon in minqlx.WEAPONS.values():
+            new_weapon = tuple(minqlx.WEAPONS.values()).index(new_weapon)
+
+        return minqlx.set_weapon(self.id, new_weapon)
+
+    def ammo(self, reset=False, **kwargs):
+        if reset:
+            a = minqlx.Weapons(((0,)*15))
+        else:
+            a = self.state.ammo
+        
+        if not kwargs:
+            return a
+        
+        g = a.g if "g" not in kwargs else kwargs["g"]
+        mg = a.mg if "mg" not in kwargs else kwargs["mg"]
+        sg = a.sg if "sg" not in kwargs else kwargs["sg"]
+        gl = a.gl if "gl" not in kwargs else kwargs["gl"]
+        rl = a.rl if "rl" not in kwargs else kwargs["rl"]
+        lg = a.lg if "lg" not in kwargs else kwargs["lg"]
+        rg = a.rg if "rg" not in kwargs else kwargs["rg"]
+        pg = a.pg if "pg" not in kwargs else kwargs["pg"]
+        bfg = a.bfg if "bfg" not in kwargs else kwargs["bfg"]
+        gh = a.gh if "gh" not in kwargs else kwargs["gh"]
+        ng = a.ng if "ng" not in kwargs else kwargs["ng"]
+        pl = a.pl if "pl" not in kwargs else kwargs["pl"]
+        cg = a.cg if "cg" not in kwargs else kwargs["cg"]
+        hmg = a.hmg if "hmg" not in kwargs else kwargs["hmg"]
+        hands = a.hands if "hands" not in kwargs else kwargs["hands"]
+
+        return minqlx.set_ammo(self.id,
+            minqlx.Weapons((g, mg, sg, gl, rl, lg, rg, pg, bfg, gh, ng, pl, cg, hmg, hands)))
+
     def tell(self, msg, **kwargs):
         return minqlx.Plugin.tell(msg, self, **kwargs)
 
