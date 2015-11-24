@@ -927,7 +927,7 @@ static PyObject* PyMinqlx_SetAmmo(PyObject* self, PyObject* args) {
             return NULL;
         }
 
-        g_entities[client_id].client->ps.ammo[i+1] = PyLong_AsLong(PyStructSequence_GetItem(ammos, i));
+        g_entities[client_id].client->ps.ammo[i+1] = PyLong_AsLong(a);
     }
 
     Py_RETURN_TRUE;
