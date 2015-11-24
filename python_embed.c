@@ -952,6 +952,46 @@ static PyObject* PyMinqlx_SetAmmo(PyObject* self, PyObject* args) {
 
 /*
 * ================================================================
+*                           set_powerups
+* ================================================================
+*/
+
+static PyObject* PyMinqlx_SetPowerups(PyObject* self, PyObject* args) {
+    int client_id;
+    PyObject* powerups;
+    if (!PyArg_ParseTuple(args, "iO:set_powerups", &client_id, &powerups))
+        return NULL;
+    else if (client_id < 0 || client_id >= sv_maxclients->integer) {
+        PyErr_Format(PyExc_ValueError,
+                     "client_id needs to be a number from 0 to %d.",
+                     sv_maxclients->integer);
+        return NULL;
+    }
+    else if (!g_entities[client_id].client)
+        Py_RETURN_FALSE;
+    else if (!PyObject_TypeCheck(powerups, &powerups_type)) {
+        PyErr_Format(PyExc_ValueError, "Argument must be of type minqlx.Powerups.");
+        return NULL;
+    }
+
+    PyObject* powerup;
+    for (int i = 0; i < 5; i++) {
+        powerup = PyStructSequence_GetItem(powerups, i);
+        if (!PyLong_Check(powerup)) {
+            PyErr_Format(PyExc_ValueError, "Tuple argument %d is not an integer.", i);
+            return NULL;
+        }
+
+        if (!g_entities[client_id].client->ps.powerups[i+PW_QUAD])
+            g_entities[client_id].client->ps.powerups[i+PW_QUAD] = level->time - (level->time % 1000);
+        g_entities[client_id].client->ps.powerups[i+PW_QUAD] += PyLong_AsLong(powerup);
+    }
+
+    Py_RETURN_TRUE;
+}
+
+/*
+* ================================================================
 *                           set_score
 * ================================================================
 */
@@ -1064,6 +1104,8 @@ static PyMethodDef minqlxMethods[] = {
      "Sets a player's current weapon."},
     {"set_ammo", PyMinqlx_SetAmmo, METH_VARARGS,
      "Sets a player's ammo."},
+    {"set_powerups", PyMinqlx_SetPowerups, METH_VARARGS,
+     "Sets a player's powerups."},
     {"set_score", PyMinqlx_SetScore, METH_VARARGS,
      "Sets a player's score."},
     {"callvote", PyMinqlx_Callvote, METH_VARARGS,
