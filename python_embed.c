@@ -180,7 +180,7 @@ static PyTypeObject powerups_type = {0};
 static PyStructSequence_Field powerups_fields[] = {
     {"quad", NULL}, {"battlesuit", NULL},
     {"haste", NULL}, {"invisibility", NULL},
-    {"regen", NULL}, {"invulnerability", NULL},
+    {"regeneration", NULL}, {"invulnerability", NULL},
     {NULL}
 };
 
