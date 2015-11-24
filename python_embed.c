@@ -676,7 +676,7 @@ static PyObject* PyMinqlx_PlayerStats(PyObject* self, PyObject* args) {
         Py_RETURN_NONE;
 
     PyObject* stats = PyStructSequence_New(&player_stats_type);
-    PyStructSequence_SetItem(stats, 0, PyLong_FromLongLong(g_entities[client_id].client->ps.persistant[0]));
+    PyStructSequence_SetItem(stats, 0, PyLong_FromLongLong(g_entities[client_id].client->ps.persistant[PERS_ROUND_SCORE]));
     PyStructSequence_SetItem(stats, 1, PyLong_FromLongLong(g_entities[client_id].client->expandedStats.numKills));
     PyStructSequence_SetItem(stats, 2, PyLong_FromLongLong(g_entities[client_id].client->expandedStats.numDeaths));
     PyStructSequence_SetItem(stats, 3, PyLong_FromLongLong(g_entities[client_id].client->expandedStats.totalDamageDealt));
