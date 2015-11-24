@@ -342,6 +342,19 @@ def handle_player_disconnect(client_id, reason):
         minqlx.log_exception()
         return True
 
+def handle_player_spawn(client_id):
+    """Called when a player spawns. Note that a spectator going in free spectate mode
+    makes the client spawn, so you'll want to check for that if you only want "actual"
+    spawns.
+
+    """
+    try:
+        player = minqlx.Player(client_id)
+        return minqlx.EVENT_DISPATCHERS["player_spawn"].dispatch(player)
+    except:
+        minqlx.log_exception()
+        return True
+
 def handle_console_print(text):
     """Called whenever the server tries to set a configstring. Can return
     False to stop the event and can be modified along the handler chain.
@@ -364,7 +377,6 @@ def handle_console_print(text):
         minqlx.log_exception()
         return True
 
-
 def register_handlers():
     minqlx.register_handler("rcon", handle_rcon)
     minqlx.register_handler("client_command", handle_client_command)
@@ -375,4 +387,5 @@ def register_handlers():
     minqlx.register_handler("player_connect", handle_player_connect)
     minqlx.register_handler("player_loaded", handle_player_loaded)
     minqlx.register_handler("player_disconnect", handle_player_disconnect)
+    minqlx.register_handler("player_spawn", handle_player_spawn)
     minqlx.register_handler("console_print", handle_console_print)

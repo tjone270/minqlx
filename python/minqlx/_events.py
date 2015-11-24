@@ -375,6 +375,13 @@ class PlayerDisonnectDispatcher(EventDispatcher):
     def dispatch(self, player, reason):
         return super().dispatch(player, reason)
 
+class PlayerSpawnDispatcher(EventDispatcher):
+    """Event that triggers when a player spawns. Cannot be cancelled."""
+    name = "player_spawn"
+    
+    def dispatch(self, player):
+        return super().dispatch(player)
+
 class StatsDispatcher(EventDispatcher):
     """Event that triggers whenever the server sends stats over ZMQ."""
     name = "stats"
@@ -522,6 +529,7 @@ EVENT_DISPATCHERS.add_dispatcher(UnloadDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(PlayerConnectDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(PlayerLoadedDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(PlayerDisonnectDispatcher)
+EVENT_DISPATCHERS.add_dispatcher(PlayerSpawnDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(StatsDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(VoteCalledDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(VoteEndedDispatcher)

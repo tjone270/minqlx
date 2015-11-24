@@ -22,6 +22,7 @@ PyObject* new_game_handler = NULL;
 PyObject* set_configstring_handler = NULL;
 PyObject* rcon_handler = NULL;
 PyObject* console_print_handler = NULL;
+PyObject* client_spawn_handler = NULL;
 
 static PyThreadState* mainstate;
 static int initialized = 0;
@@ -62,6 +63,7 @@ static handler_t handlers[] = {
 		{"set_configstring", 	&set_configstring_handler},
         {"rcon",                &rcon_handler},
         {"console_print",       &console_print_handler},
+        {"player_spawn",        &client_spawn_handler},
 		{NULL, NULL}
 };
 

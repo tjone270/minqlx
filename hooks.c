@@ -169,6 +169,15 @@ char* __cdecl My_ClientConnect(int clientNum, qboolean firstTime, qboolean isBot
 
 	return ClientConnect(clientNum, firstTime, isBot);
 }
+
+void __cdecl My_ClientSpawn(gentity_t* ent) {
+    ClientSpawn(ent);
+    
+    // Since we won't ever stop the real function from being called,
+    // we trigger the event after calling the real one. This will allow
+    // us to set weapons and such without it getting overriden later.
+    ClientSpawnDispatcher(ent - g_entities);
+}
 #endif
 
 // Hook static functions. Can be done before program even runs.
@@ -267,6 +276,12 @@ void HookVm(void) {
 		DebugPrint("ERROR: Failed to hook ClientConnect: %d\n", res);
 		failed = 1;
 	}
+
+    res = Hook((void*)ClientSpawn, My_ClientSpawn, (void*)&ClientSpawn);
+    if (res) {
+        DebugPrint("ERROR: Failed to hook ClientSpawn: %d\n", res);
+        failed = 1;
+    }
 
 	if (failed) {
 		DebugPrint("Exiting.\n");

@@ -1411,6 +1411,7 @@ typedef void (__cdecl *G_InitGame_ptr)(int levelTime, int randomSeed, int restar
 typedef int (__cdecl *CheckPrivileges_ptr)(gentity_t* ent, char* cmd);
 typedef char* (__cdecl *ClientConnect_ptr)(int clientNum, qboolean firstTime, qboolean isBot);
 typedef void (__cdecl *ClientDisconnect_ptr)(int clientNum);
+typedef void (__cdecl *ClientSpawn_ptr)(gentity_t* ent);
 
 // Some of them are initialized by Initialize(), but not all of them necessarily.
 extern Com_Printf_ptr Com_Printf;
@@ -1441,6 +1442,7 @@ extern G_InitGame_ptr G_InitGame;
 extern CheckPrivileges_ptr CheckPrivileges;
 extern ClientConnect_ptr ClientConnect;
 extern ClientDisconnect_ptr ClientDisconnect;
+extern ClientSpawn_ptr ClientSpawn;
 
 // Server replacement functions for hooks.
 void __cdecl My_Cmd_AddCommand(char* cmd, void* func);
@@ -1456,6 +1458,7 @@ void __cdecl My_Com_Printf(char* fmt, ...);
 void __cdecl My_G_RunFrame(int time);
 void __cdecl My_G_InitGame(int levelTime, int randomSeed, int restart);
 char* __cdecl My_ClientConnect(int clientNum, qboolean firstTime, qboolean isBot);
+void __cdecl My_ClientSpawn(gentity_t* ent);
 #endif
 
 // Custom commands added using Cmd_AddCommand during initialization.
