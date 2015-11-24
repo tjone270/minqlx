@@ -1003,6 +1003,29 @@ static PyObject* PyMinqlx_SetPowerups(PyObject* self, PyObject* args) {
 
 /*
 * ================================================================
+*                           set_holdable
+* ================================================================
+*/
+
+static PyObject* PyMinqlx_SetHoldable(PyObject* self, PyObject* args) {
+    int client_id, i;
+    if (!PyArg_ParseTuple(args, "ii:set_holdable", &client_id, &i))
+        return NULL;
+    else if (client_id < 0 || client_id >= sv_maxclients->integer) {
+        PyErr_Format(PyExc_ValueError,
+                     "client_id needs to be a number from 0 to %d.",
+                     sv_maxclients->integer);
+        return NULL;
+    }
+    else if (!g_entities[client_id].client)
+        Py_RETURN_FALSE;
+
+    g_entities[client_id].client->ps.stats[STAT_HOLDABLE_ITEM] = i;
+    Py_RETURN_TRUE;
+}
+
+/*
+* ================================================================
 *                           set_score
 * ================================================================
 */
@@ -1117,6 +1140,8 @@ static PyMethodDef minqlxMethods[] = {
      "Sets a player's ammo."},
     {"set_powerups", PyMinqlx_SetPowerups, METH_VARARGS,
      "Sets a player's powerups."},
+    {"set_holdable", PyMinqlx_SetHoldable, METH_VARARGS,
+     "Sets a player's holdable item."},
     {"set_score", PyMinqlx_SetScore, METH_VARARGS,
      "Sets a player's score."},
     {"callvote", PyMinqlx_Callvote, METH_VARARGS,
