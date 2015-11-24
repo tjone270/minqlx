@@ -372,6 +372,14 @@ class Player():
     def armor(self, value):
         minqlx.set_armor(self.id, value)
 
+    @property
+    def score(self):
+        return self.stats.score
+
+    @score.setter
+    def score(self, value):
+        return minqlx.set_score(self.id, value)
+
     def tell(self, msg, **kwargs):
         return minqlx.Plugin.tell(msg, self, **kwargs)
 

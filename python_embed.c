@@ -935,6 +935,29 @@ static PyObject* PyMinqlx_SetAmmo(PyObject* self, PyObject* args) {
 
 /*
 * ================================================================
+*                           set_score
+* ================================================================
+*/
+
+static PyObject* PyMinqlx_SetScore(PyObject* self, PyObject* args) {
+    int client_id, score;
+    if (!PyArg_ParseTuple(args, "ii:set_score", &client_id, &score))
+        return NULL;
+    else if (client_id < 0 || client_id >= sv_maxclients->integer) {
+        PyErr_Format(PyExc_ValueError,
+                     "client_id needs to be a number from 0 to %d.",
+                     sv_maxclients->integer);
+        return NULL;
+    }
+    else if (!g_entities[client_id].client)
+        Py_RETURN_FALSE;
+
+    g_entities[client_id].client->ps.persistant[PERS_ROUND_SCORE] = score;
+    Py_RETURN_TRUE;
+}
+
+/*
+* ================================================================
 *                           callvote
 * ================================================================
 */
@@ -1024,6 +1047,8 @@ static PyMethodDef minqlxMethods[] = {
      "Sets a player's current weapon."},
     {"set_ammo", PyMinqlx_SetAmmo, METH_VARARGS,
      "Sets a player's ammo."},
+    {"set_score", PyMinqlx_SetScore, METH_VARARGS,
+     "Sets a player's score."},
     {"callvote", PyMinqlx_Callvote, METH_VARARGS,
      "Calls a vote as if started by the server and not a player."},
     {NULL, NULL, 0, NULL}
