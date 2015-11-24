@@ -993,7 +993,7 @@ static PyObject* PyMinqlx_SetPowerups(PyObject* self, PyObject* args) {
         else if (!g_entities[client_id].client->ps.powerups[i+PW_QUAD])
             g_entities[client_id].client->ps.powerups[i+PW_QUAD] = level->time - (level->time % 1000);
         
-        g_entities[client_id].client->ps.powerups[i+PW_QUAD] += PyLong_AsLong(powerup);
+        g_entities[client_id].client->ps.powerups[i+PW_QUAD] += t;
     }
 
     Py_RETURN_TRUE;
