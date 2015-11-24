@@ -934,6 +934,38 @@ static PyObject* PyMinqlx_SetAmmo(PyObject* self, PyObject* args) {
 }
 
 /*
+* ================================================================
+*                           callvote
+* ================================================================
+*/
+
+static PyObject* PyMinqlx_Callvote(PyObject* self, PyObject* args) {
+    char *vote, *vote_disp;
+    int vote_time = 30;
+    char buf[64];
+    if (!PyArg_ParseTuple(args, "ss|i:callvote", &vote, &vote_disp, &vote_time))
+        return NULL;
+    
+    strncpy(level->voteString, vote, sizeof(level->voteString));
+    strncpy(level->voteDisplayString, vote_disp, sizeof(level->voteDisplayString));
+    level->voteTime = (level->time - 30000) + vote_time * 1000;
+    level->voteYes = 0;
+    level->voteNo = 0;
+
+    for (int i = 0; i < sv_maxclients->integer; i++)
+        if (g_entities[i].client)
+            g_entities[i].client->pers.voteState = VOTE_PENDING;
+
+    SV_SetConfigstring(CS_VOTE_STRING, level->voteDisplayString);
+    snprintf(buf, sizeof(buf), "%d", level->voteTime);
+    SV_SetConfigstring(CS_VOTE_TIME, buf);    
+    SV_SetConfigstring(CS_VOTE_YES, "0");
+    SV_SetConfigstring(CS_VOTE_NO, "0");
+
+    Py_RETURN_NONE;
+}
+
+/*
  * ================================================================
  *             Module definition and initialization
  * ================================================================
@@ -992,6 +1024,8 @@ static PyMethodDef minqlxMethods[] = {
      "Sets a player's current weapon."},
     {"set_ammo", PyMinqlx_SetAmmo, METH_VARARGS,
      "Sets a player's ammo."},
+    {"callvote", PyMinqlx_Callvote, METH_VARARGS,
+     "Calls a vote as if started by the server and not a player."},
     {NULL, NULL, 0, NULL}
 };
 
