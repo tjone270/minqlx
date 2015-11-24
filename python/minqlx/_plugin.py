@@ -431,9 +431,8 @@ class Plugin():
             return None
 
     @classmethod
-    def callvote(cls, vote):
-        # TODO: Implement callvote.
-        pass
+    def callvote(cls, vote, display, time=30):
+        minqlx.callvote(vote, display, time)
     
     @classmethod
     def force_vote(cls, pass_it):
