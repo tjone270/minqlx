@@ -178,8 +178,7 @@ static PyTypeObject powerups_type = {0};
 static PyStructSequence_Field powerups_fields[] = {
     {"quad", NULL}, {"battlesuit", NULL},
     {"haste", NULL}, {"invisibility", NULL},
-    {"regen", NULL}, {"flight", NULL},
-    {"invulnerability", NULL},
+    {"regen", NULL}, {"invulnerability", NULL},
     {NULL}
 };
 
@@ -977,23 +976,26 @@ static PyObject* PyMinqlx_SetPowerups(PyObject* self, PyObject* args) {
 
     PyObject* powerup;
 
-    // Quad -> Invulnerability.
-    for (int i = 0; i < 7; i++) {
+    // Quad -> Invulnerability, but skip flight.
+    for (int i = 0; i < 6; i++) {
         powerup = PyStructSequence_GetItem(powerups, i);
         if (!PyLong_Check(powerup)) {
             PyErr_Format(PyExc_ValueError, "Tuple argument %d is not an integer.", i);
             return NULL;
         }
 
+        // If i == 5, it'll modify flight, which isn't a real powerup.
+        // We bump it up and modify invulnerability instead.
+        if (i+PW_QUAD == PW_FLIGHT)
+            i = PW_INVULNERABILITY - PW_QUAD;
+
         t = PyLong_AsLong(powerup);
         if (!t) {
             g_entities[client_id].client->ps.powerups[i+PW_QUAD] = 0;
             continue;
         }
-        else if (!g_entities[client_id].client->ps.powerups[i+PW_QUAD])
-            g_entities[client_id].client->ps.powerups[i+PW_QUAD] = level->time - (level->time % 1000);
         
-        g_entities[client_id].client->ps.powerups[i+PW_QUAD] += t;
+        g_entities[client_id].client->ps.powerups[i+PW_QUAD] = level->time - (level->time % 1000) + t;
     }
 
     Py_RETURN_TRUE;
