@@ -107,6 +107,8 @@ static PyStructSequence_Field player_state_fields[] = {
     {"weapon", "The weapon the player is currently using."},
     {"weapons", "The player's weapons."},
     {"ammo", "The player's weapon ammo."},
+    {"powerups", "The player's powerups."},
+    {"holdable", "The player's holdable item."},
     {NULL}
 };
 
@@ -668,6 +670,48 @@ static PyObject* PyMinqlx_PlayerState(PyObject* self, PyObject* args) {
     }
     PyStructSequence_SetItem(state, 7, weapons);  
     PyStructSequence_SetItem(state, 8, ammo);
+
+    PyObject* powerups = PyStructSequence_New(&powerups_type);
+    int index;
+    for (int i = 0; i < (sizeof(powerups_fields)/sizeof(PyStructSequence_Field)) - 1; i++) {
+        index = i+PW_QUAD;
+        if (index == PW_FLIGHT) // Skip flight.
+            index = PW_INVULNERABILITY;
+        int remaining = g_entities[client_id].client->ps.powerups[index];
+        if (remaining) // We don't want the time, but the remaining time.
+            remaining -= level->time;
+        PyStructSequence_SetItem(powerups, i, PyLong_FromLongLong(remaining));
+    }
+    PyStructSequence_SetItem(state, 9, powerups);
+
+    PyObject* holdable;
+    switch (g_entities[client_id].client->ps.stats[STAT_HOLDABLE_ITEM]) {
+        case 0:
+            holdable = Py_None;
+            Py_INCREF(Py_None);
+            break;
+        case 27:
+            holdable = PyUnicode_FromString("teleporter");
+            break;
+        case 28:
+            holdable = PyUnicode_FromString("medkit");
+            break;
+        case 34:
+            holdable = PyUnicode_FromString("flight");
+            break;
+        case 37:
+            holdable = PyUnicode_FromString("kamikaze");
+            break;
+        case 38:
+            holdable = PyUnicode_FromString("portal");
+            break;
+        case 39:
+            holdable = PyUnicode_FromString("invulnerability");
+            break;
+        default:
+            holdable = PyUnicode_FromString("unknown");
+    }
+    PyStructSequence_SetItem(state, 10, holdable);
 
     return state;
 }
