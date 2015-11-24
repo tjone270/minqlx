@@ -172,6 +172,23 @@ static PyStructSequence_Desc weapons_desc = {
     (sizeof(weapons_fields)/sizeof(PyStructSequence_Field)) - 1
 };
 
+// Powerups
+static PyTypeObject powerups_type = {0};
+
+static PyStructSequence_Field powerups_fields[] = {
+    {"quad", NULL}, {"battlesuit", NULL},
+    {"haste", NULL}, {"invisibility", NULL},
+    {"regen", NULL},
+    {NULL}
+};
+
+static PyStructSequence_Desc powerups_desc = {
+    "Powerups",
+    "A struct sequence containing all the powerups in the game.",
+    powerups_fields,
+    (sizeof(powerups_fields)/sizeof(PyStructSequence_Field)) - 1
+};
+
 /*
  * ================================================================
  *                    player_info/players_info
@@ -1124,17 +1141,20 @@ static PyObject* PyMinqlx_InitModule(void) {
     PyStructSequence_InitType(&player_stats_type, &player_stats_desc);
     PyStructSequence_InitType(&vector3_type, &vector3_desc);
     PyStructSequence_InitType(&weapons_type, &weapons_desc);
+    PyStructSequence_InitType(&powerups_type, &powerups_desc);
     Py_INCREF((PyObject*)&player_info_type);
     Py_INCREF((PyObject*)&player_state_type);
     Py_INCREF((PyObject*)&player_stats_type);
     Py_INCREF((PyObject*)&vector3_type);
     Py_INCREF((PyObject*)&weapons_type);
+    Py_INCREF((PyObject*)&powerups_type);
     // Add new types.
     PyModule_AddObject(module, "PlayerInfo", (PyObject*)&player_info_type);
     PyModule_AddObject(module, "PlayerState", (PyObject*)&player_state_type);
     PyModule_AddObject(module, "PlayerStats", (PyObject*)&player_stats_type);
     PyModule_AddObject(module, "Vector3", (PyObject*)&vector3_type);
     PyModule_AddObject(module, "Weapons", (PyObject*)&weapons_type);
+    PyModule_AddObject(module, "Powerups", (PyObject*)&powerups_type);
     
     return module;
 }
