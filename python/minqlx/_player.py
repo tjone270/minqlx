@@ -348,6 +348,48 @@ class Player():
         return minqlx.set_ammo(self.id,
             minqlx.Weapons((g, mg, sg, gl, rl, lg, rg, pg, bfg, gh, ng, pl, cg, hmg, hands)))
 
+    def powerups(self, reset=False, **kwargs):
+        if reset:
+            pu = minqlx.Powerups(((0,)*6))
+        else:
+            pu = self.state.powerups
+        
+        if not kwargs:
+            return pu
+        
+        quad = pu.quad if "quad" not in kwargs else kwargs["quad"]
+        bs = pu.battlesuit if "battlesuit" not in kwargs else kwargs["battlesuit"]
+        haste = pu.haste if "haste" not in kwargs else kwargs["haste"]
+        invis = pu.invisibility if "invisibility" not in kwargs else kwargs["invisibility"]
+        regen = pu.regeneration if "regeneration" not in kwargs else kwargs["regeneration"]
+        invul = pu.invulnerability if "invulnerability" not in kwargs else kwargs["invulnerability"]
+
+        return minqlx.set_powerups(self.id,
+            minqlx.Powerups((quad, bs, haste, invis, regen, invul)))
+
+    @property
+    def holdable(self):
+        return self.state.holdable
+
+    @holdable.setter
+    def holdable(self, value):
+        if not value:
+            minqlx.set_holdable(self.id, 0)
+        elif value == "teleporter":
+            minqlx.set_holdable(self.id, 27)
+        elif value == "medkit":
+            minqlx.set_holdable(self.id, 28)
+        elif value == "flight":
+            minqlx.set_holdable(self.id, 34)
+        elif value == "kamikaze":
+            minqlx.set_holdable(self.id, 37)
+        elif value == "portal":
+            minqlx.set_holdable(self.id, 38)
+        elif value == "invulnerability":
+            minqlx.set_holdable(self.id, 39)
+        else:
+            raise ValueError("Invalid holdable item.")
+
     @property
     def noclip(self):
         return self.state.noclip
