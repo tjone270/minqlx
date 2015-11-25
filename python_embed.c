@@ -683,7 +683,7 @@ static PyObject* PyMinqlx_PlayerState(PyObject* self, PyObject* args) {
     // Get weapons and ammo count.
     PyObject* weapons = PyStructSequence_New(&weapons_type);
     PyObject* ammo = PyStructSequence_New(&weapons_type);
-    for (int i = 0; i < 15; i++) {
+    for (int i = 0; i < weapons_desc.n_in_sequence; i++) {
         PyStructSequence_SetItem(weapons, i, PyBool_FromLong(g_entities[client_id].client->ps.stats[STAT_WEAPONS] & (1 << (i+1))));
         PyStructSequence_SetItem(ammo, i, PyLong_FromLongLong(g_entities[client_id].client->ps.ammo[i+1]));
     }
@@ -692,7 +692,7 @@ static PyObject* PyMinqlx_PlayerState(PyObject* self, PyObject* args) {
 
     PyObject* powerups = PyStructSequence_New(&powerups_type);
     int index;
-    for (int i = 0; i < (sizeof(powerups_fields)/sizeof(PyStructSequence_Field)) - 1; i++) {
+    for (int i = 0; i < powerups_desc.n_in_sequence; i++) {
         index = i+PW_QUAD;
         if (index == PW_FLIGHT) // Skip flight.
             index = PW_INVULNERABILITY;
@@ -945,7 +945,7 @@ static PyObject* PyMinqlx_SetWeapons(PyObject* self, PyObject* args) {
     }
 
     PyObject* w;
-    for (int i = 0; i < 15; i++) {
+    for (int i = 0; i < weapons_desc.n_in_sequence; i++) {
         w = PyStructSequence_GetItem(weapons, i);
         if (!PyBool_Check(w)) {
             PyErr_Format(PyExc_ValueError, "Tuple argument %d is not a boolean.", i);
@@ -1011,7 +1011,7 @@ static PyObject* PyMinqlx_SetAmmo(PyObject* self, PyObject* args) {
     }
 
     PyObject* a;
-    for (int i = 0; i < 15; i++) {
+    for (int i = 0; i < weapons_desc.n_in_sequence; i++) {
         a = PyStructSequence_GetItem(ammos, i);
         if (!PyLong_Check(a)) {
             PyErr_Format(PyExc_ValueError, "Tuple argument %d is not an integer.", i);
@@ -1051,7 +1051,7 @@ static PyObject* PyMinqlx_SetPowerups(PyObject* self, PyObject* args) {
     PyObject* powerup;
 
     // Quad -> Invulnerability, but skip flight.
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; i < powerups_desc.n_in_sequence; i++) {
         powerup = PyStructSequence_GetItem(powerups, i);
         if (!PyLong_Check(powerup)) {
             PyErr_Format(PyExc_ValueError, "Tuple argument %d is not an integer.", i);
