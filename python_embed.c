@@ -107,6 +107,8 @@ static PyStructSequence_Field player_state_fields[] = {
     {"weapon", "The weapon the player is currently using."},
     {"weapons", "The player's weapons."},
     {"ammo", "The player's weapon ammo."},
+    {"powerups", "The player's powerups."},
+    {"holdable", "The player's holdable item."},
     {NULL}
 };
 
@@ -170,6 +172,23 @@ static PyStructSequence_Desc weapons_desc = {
     "A struct sequence containing all the weapons in the game.",
     weapons_fields,
     (sizeof(weapons_fields)/sizeof(PyStructSequence_Field)) - 1
+};
+
+// Powerups
+static PyTypeObject powerups_type = {0};
+
+static PyStructSequence_Field powerups_fields[] = {
+    {"quad", NULL}, {"battlesuit", NULL},
+    {"haste", NULL}, {"invisibility", NULL},
+    {"regeneration", NULL}, {"invulnerability", NULL},
+    {NULL}
+};
+
+static PyStructSequence_Desc powerups_desc = {
+    "Powerups",
+    "A struct sequence containing all the powerups in the game.",
+    powerups_fields,
+    (sizeof(powerups_fields)/sizeof(PyStructSequence_Field)) - 1
 };
 
 /*
@@ -652,6 +671,48 @@ static PyObject* PyMinqlx_PlayerState(PyObject* self, PyObject* args) {
     PyStructSequence_SetItem(state, 7, weapons);  
     PyStructSequence_SetItem(state, 8, ammo);
 
+    PyObject* powerups = PyStructSequence_New(&powerups_type);
+    int index;
+    for (int i = 0; i < (sizeof(powerups_fields)/sizeof(PyStructSequence_Field)) - 1; i++) {
+        index = i+PW_QUAD;
+        if (index == PW_FLIGHT) // Skip flight.
+            index = PW_INVULNERABILITY;
+        int remaining = g_entities[client_id].client->ps.powerups[index];
+        if (remaining) // We don't want the time, but the remaining time.
+            remaining -= level->time;
+        PyStructSequence_SetItem(powerups, i, PyLong_FromLongLong(remaining));
+    }
+    PyStructSequence_SetItem(state, 9, powerups);
+
+    PyObject* holdable;
+    switch (g_entities[client_id].client->ps.stats[STAT_HOLDABLE_ITEM]) {
+        case 0:
+            holdable = Py_None;
+            Py_INCREF(Py_None);
+            break;
+        case 27:
+            holdable = PyUnicode_FromString("teleporter");
+            break;
+        case 28:
+            holdable = PyUnicode_FromString("medkit");
+            break;
+        case 34:
+            holdable = PyUnicode_FromString("flight");
+            break;
+        case 37:
+            holdable = PyUnicode_FromString("kamikaze");
+            break;
+        case 38:
+            holdable = PyUnicode_FromString("portal");
+            break;
+        case 39:
+            holdable = PyUnicode_FromString("invulnerability");
+            break;
+        default:
+            holdable = PyUnicode_FromString("unknown");
+    }
+    PyStructSequence_SetItem(state, 10, holdable);
+
     return state;
 }
 
@@ -935,6 +996,80 @@ static PyObject* PyMinqlx_SetAmmo(PyObject* self, PyObject* args) {
 
 /*
 * ================================================================
+*                           set_powerups
+* ================================================================
+*/
+
+static PyObject* PyMinqlx_SetPowerups(PyObject* self, PyObject* args) {
+    int client_id, t;
+    PyObject* powerups;
+    if (!PyArg_ParseTuple(args, "iO:set_powerups", &client_id, &powerups))
+        return NULL;
+    else if (client_id < 0 || client_id >= sv_maxclients->integer) {
+        PyErr_Format(PyExc_ValueError,
+                     "client_id needs to be a number from 0 to %d.",
+                     sv_maxclients->integer);
+        return NULL;
+    }
+    else if (!g_entities[client_id].client)
+        Py_RETURN_FALSE;
+    else if (!PyObject_TypeCheck(powerups, &powerups_type)) {
+        PyErr_Format(PyExc_ValueError, "Argument must be of type minqlx.Powerups.");
+        return NULL;
+    }
+
+    PyObject* powerup;
+
+    // Quad -> Invulnerability, but skip flight.
+    for (int i = 0; i < 6; i++) {
+        powerup = PyStructSequence_GetItem(powerups, i);
+        if (!PyLong_Check(powerup)) {
+            PyErr_Format(PyExc_ValueError, "Tuple argument %d is not an integer.", i);
+            return NULL;
+        }
+
+        // If i == 5, it'll modify flight, which isn't a real powerup.
+        // We bump it up and modify invulnerability instead.
+        if (i+PW_QUAD == PW_FLIGHT)
+            i = PW_INVULNERABILITY - PW_QUAD;
+
+        t = PyLong_AsLong(powerup);
+        if (!t) {
+            g_entities[client_id].client->ps.powerups[i+PW_QUAD] = 0;
+            continue;
+        }
+        
+        g_entities[client_id].client->ps.powerups[i+PW_QUAD] = level->time - (level->time % 1000) + t;
+    }
+
+    Py_RETURN_TRUE;
+}
+
+/*
+* ================================================================
+*                           set_holdable
+* ================================================================
+*/
+
+static PyObject* PyMinqlx_SetHoldable(PyObject* self, PyObject* args) {
+    int client_id, i;
+    if (!PyArg_ParseTuple(args, "ii:set_holdable", &client_id, &i))
+        return NULL;
+    else if (client_id < 0 || client_id >= sv_maxclients->integer) {
+        PyErr_Format(PyExc_ValueError,
+                     "client_id needs to be a number from 0 to %d.",
+                     sv_maxclients->integer);
+        return NULL;
+    }
+    else if (!g_entities[client_id].client)
+        Py_RETURN_FALSE;
+
+    g_entities[client_id].client->ps.stats[STAT_HOLDABLE_ITEM] = i;
+    Py_RETURN_TRUE;
+}
+
+/*
+* ================================================================
 *                           set_score
 * ================================================================
 */
@@ -1047,6 +1182,10 @@ static PyMethodDef minqlxMethods[] = {
      "Sets a player's current weapon."},
     {"set_ammo", PyMinqlx_SetAmmo, METH_VARARGS,
      "Sets a player's ammo."},
+    {"set_powerups", PyMinqlx_SetPowerups, METH_VARARGS,
+     "Sets a player's powerups."},
+    {"set_holdable", PyMinqlx_SetHoldable, METH_VARARGS,
+     "Sets a player's holdable item."},
     {"set_score", PyMinqlx_SetScore, METH_VARARGS,
      "Sets a player's score."},
     {"callvote", PyMinqlx_Callvote, METH_VARARGS,
@@ -1124,17 +1263,20 @@ static PyObject* PyMinqlx_InitModule(void) {
     PyStructSequence_InitType(&player_stats_type, &player_stats_desc);
     PyStructSequence_InitType(&vector3_type, &vector3_desc);
     PyStructSequence_InitType(&weapons_type, &weapons_desc);
+    PyStructSequence_InitType(&powerups_type, &powerups_desc);
     Py_INCREF((PyObject*)&player_info_type);
     Py_INCREF((PyObject*)&player_state_type);
     Py_INCREF((PyObject*)&player_stats_type);
     Py_INCREF((PyObject*)&vector3_type);
     Py_INCREF((PyObject*)&weapons_type);
+    Py_INCREF((PyObject*)&powerups_type);
     // Add new types.
     PyModule_AddObject(module, "PlayerInfo", (PyObject*)&player_info_type);
     PyModule_AddObject(module, "PlayerState", (PyObject*)&player_state_type);
     PyModule_AddObject(module, "PlayerStats", (PyObject*)&player_stats_type);
     PyModule_AddObject(module, "Vector3", (PyObject*)&vector3_type);
     PyModule_AddObject(module, "Weapons", (PyObject*)&weapons_type);
+    PyModule_AddObject(module, "Powerups", (PyObject*)&powerups_type);
     
     return module;
 }
