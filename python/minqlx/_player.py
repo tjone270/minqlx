@@ -381,6 +381,7 @@ class Player():
             minqlx.set_holdable(self.id, 28)
         elif value == "flight":
             minqlx.set_holdable(self.id, 34)
+            self.flight(reset=True)
         elif value == "kamikaze":
             minqlx.set_holdable(self.id, 37)
         elif value == "portal":
@@ -389,6 +390,25 @@ class Player():
             minqlx.set_holdable(self.id, 39)
         else:
             raise ValueError("Invalid holdable item.")
+
+    def flight(self, reset=False, **kwargs):
+        state = self.state
+        if state.holdable != "flight":
+            self.holdable = "flight"
+            reset = True
+        
+        if reset:
+            # Set to defaults on reset.
+            fl = minqlx.Flight((16000, 16000, 1200, 0))
+        else:
+            fl = state.flight
+        
+        fuel = fl.fuel if "fuel" not in kwargs else kwargs["fuel"]
+        max_fuel = fl.max_fuel if "max_fuel" not in kwargs else kwargs["max_fuel"]
+        thrust = fl.thrust if "thrust" not in kwargs else kwargs["thrust"]
+        refuel = fl.refuel if "refuel" not in kwargs else kwargs["refuel"]
+
+        return minqlx.set_flight(self.id, minqlx.Flight((fuel, max_fuel, thrust, refuel)))
 
     @property
     def noclip(self):
