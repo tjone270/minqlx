@@ -19,7 +19,7 @@
 import minqlx
 import re
 
-_re_vote = re.compile(r"^(?P<cmd>[^ ]+)(?: \"?(?P<args>.+?)\"?)?$")
+_re_vote = re.compile(r"^(?P<cmd>[^ ]+)(?: \"?(?P<args>.*?)\"?)?$")
 
 # ====================================================================
 #                               EVENTS
@@ -375,6 +375,13 @@ class PlayerDisonnectDispatcher(EventDispatcher):
     def dispatch(self, player, reason):
         return super().dispatch(player, reason)
 
+class PlayerSpawnDispatcher(EventDispatcher):
+    """Event that triggers when a player spawns. Cannot be cancelled."""
+    name = "player_spawn"
+    
+    def dispatch(self, player):
+        return super().dispatch(player)
+
 class StatsDispatcher(EventDispatcher):
     """Event that triggers whenever the server sends stats over ZMQ."""
     name = "stats"
@@ -394,20 +401,17 @@ class VoteEndedDispatcher(EventDispatcher):
     name = "vote_ended"
 
     def dispatch(self, passed):
-        super().dispatch(passed)
-
-    def cancel(self):
         # Check if there's a current vote in the first place.
         cs = minqlx.get_configstring(9)
         if not cs:
+            minqlx.get_logger().warning("vote_ended went off without configstring 9.")
             return
 
         res = _re_vote.match(cs)
         vote = res.group("cmd")
         args = res.group("args") if res.group("args") else ""
         votes = (int(minqlx.get_configstring(10)), int(minqlx.get_configstring(11)))
-        # Return None if the vote's cancelled (like if the round starts before vote's over).
-        super().trigger(votes, vote, args, None)
+        super().dispatch(votes, vote, args, passed)
 
 class VoteDispatcher(EventDispatcher):
     """Event that goes off whenever someone tries to vote either yes or no."""
@@ -525,6 +529,7 @@ EVENT_DISPATCHERS.add_dispatcher(UnloadDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(PlayerConnectDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(PlayerLoadedDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(PlayerDisonnectDispatcher)
+EVENT_DISPATCHERS.add_dispatcher(PlayerSpawnDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(StatsDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(VoteCalledDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(VoteEndedDispatcher)

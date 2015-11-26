@@ -17,6 +17,7 @@
 # along with minqlx. If not, see <http://www.gnu.org/licenses/>.
 
 import minqlx
+import collections
 import sched
 import re
 
@@ -89,7 +90,7 @@ def handle_client_command(client_id, cmd):
             return cmd
 
         res = _re_callvote.match(cmd)
-        if res:
+        if res and not minqlx.Plugin.is_vote_active():
             vote = res.group("cmd")
             args = res.group("args") if res.group("args") else ""
             if minqlx.EVENT_DISPATCHERS["vote_called"].dispatch(player, vote, args) == False:
@@ -165,6 +166,7 @@ def handle_server_command(client_id, cmd):
 # weird behavior if you were to use threading. This list will act as a task queue.
 # Tasks can be added by simply adding the @minqlx.next_frame decorator to functions.
 frame_tasks = sched.scheduler()
+next_frame_tasks = collections.deque()
 
 def handle_frame():
     """This will be called every frame. To allow threads to call stuff from the
@@ -188,6 +190,14 @@ def handle_frame():
     except:
         minqlx.log_exception()
         return True
+
+    try:
+        while True:
+            func, args, kwargs = next_frame_tasks.popleft()
+            frame_tasks.enter(0, 0, func, args, kwargs)
+    except IndexError:
+        pass
+
 
 _zmq_warning_issued = False
 _first_game = True
@@ -248,12 +258,11 @@ def handle_set_configstring(index, value):
             new_state = new_cs["g_gameState"]
             if old_state != new_state:
                 if old_state == "PRE_GAME" and new_state == "IN_PROGRESS":
-                    minqlx.EVENT_DISPATCHERS["vote_ended"].cancel() # Cancel current vote if any.
-                    #minqlx.EVENT_DISPATCHERS["game_start"].dispatch()
+                    pass
                 elif old_state == "PRE_GAME" and new_state == "COUNT_DOWN":
                     minqlx.EVENT_DISPATCHERS["game_countdown"].dispatch()
                 elif old_state == "COUNT_DOWN" and new_state == "IN_PROGRESS":
-                    minqlx.EVENT_DISPATCHERS["vote_ended"].cancel() # Cancel current vote if any.
+                    pass
                     #minqlx.EVENT_DISPATCHERS["game_start"].dispatch()
                 elif old_state == "IN_PROGRESS" and new_state == "PRE_GAME":
                     pass
@@ -333,6 +342,19 @@ def handle_player_disconnect(client_id, reason):
         minqlx.log_exception()
         return True
 
+def handle_player_spawn(client_id):
+    """Called when a player spawns. Note that a spectator going in free spectate mode
+    makes the client spawn, so you'll want to check for that if you only want "actual"
+    spawns.
+
+    """
+    try:
+        player = minqlx.Player(client_id)
+        return minqlx.EVENT_DISPATCHERS["player_spawn"].dispatch(player)
+    except:
+        minqlx.log_exception()
+        return True
+
 def handle_console_print(text):
     """Called whenever the server tries to set a configstring. Can return
     False to stop the event and can be modified along the handler chain.
@@ -355,7 +377,6 @@ def handle_console_print(text):
         minqlx.log_exception()
         return True
 
-
 def register_handlers():
     minqlx.register_handler("rcon", handle_rcon)
     minqlx.register_handler("client_command", handle_client_command)
@@ -366,4 +387,5 @@ def register_handlers():
     minqlx.register_handler("player_connect", handle_player_connect)
     minqlx.register_handler("player_loaded", handle_player_loaded)
     minqlx.register_handler("player_disconnect", handle_player_disconnect)
+    minqlx.register_handler("player_spawn", handle_player_spawn)
     minqlx.register_handler("console_print", handle_console_print)

@@ -164,6 +164,27 @@ typedef enum {
 } roundStateState_t;
 
 typedef enum {
+  STAT_HEALTH,
+  STAT_HOLDABLE_ITEM,
+  STAT_RUNE,
+  STAT_WEAPONS,
+  STAT_ARMOR,
+  STAT_BSKILL,
+  STAT_CLIENTS_READY,
+  STAT_MAX_HEALTH,
+  STAT_SPINUP,
+  STAT_FLIGHT_THRUST,
+  STAT_MAX_FLIGHT_FUEL,
+  STAT_CUR_FLIGHT_FUEL,
+  STAT_FLIGHT_REFUEL,
+  STAT_QUADKILLS,
+  STAT_ARMORTYPE,
+  STAT_KEY,
+  STAT_OTHER_HEALTH,
+  STAT_OTHER_ARMOR,
+} statIndex_t;
+
+typedef enum {
 	GAME_INIT,	// ( int levelTime, int randomSeed, int restart );
 	// init and shutdown will be called every single level
 	// The game should call G_GET_ENTITY_TOKEN to parse through all the
@@ -376,6 +397,13 @@ typedef enum {
 } weapon_t;
 
 typedef enum {
+  WEAPON_READY = 0x0,
+  WEAPON_RAISING = 0x1,
+  WEAPON_DROPPING = 0x2,
+  WEAPON_FIRING = 0x3,
+} weaponstate_t;
+
+typedef enum {
     RUNE_NONE = 0x0,
     RUNE_SCOUT = 0x1,
     RUNE_GUARD = 0x2,
@@ -418,6 +446,20 @@ typedef enum {
 	MOVER_1TO2,
 	MOVER_2TO1
 } moverState_t;
+
+enum {
+  PERS_ROUND_SCORE = 0x0,
+  PERS_COMBOKILL_COUNT = 0x1,
+  PERS_RAMPAGE_COUNT = 0x2,
+  PERS_MIDAIR_COUNT = 0x3,
+  PERS_REVENGE_COUNT = 0x4,
+  PERS_PERFORATED_COUNT = 0x5,
+  PERS_HEADSHOT_COUNT = 0x6,
+  PERS_ACCURACY_COUNT = 0x7,
+  PERS_QUADGOD_COUNT = 0x8,
+  PERS_FIRSTFRAG_COUNT = 0x9,
+  PERS_PERFECT_COUNT = 0xA,
+};
 
 enum cvar_flags {
     CVAR_ARCHIVE = 1,
@@ -1383,6 +1425,7 @@ typedef void (__cdecl *G_InitGame_ptr)(int levelTime, int randomSeed, int restar
 typedef int (__cdecl *CheckPrivileges_ptr)(gentity_t* ent, char* cmd);
 typedef char* (__cdecl *ClientConnect_ptr)(int clientNum, qboolean firstTime, qboolean isBot);
 typedef void (__cdecl *ClientDisconnect_ptr)(int clientNum);
+typedef void (__cdecl *ClientSpawn_ptr)(gentity_t* ent);
 
 // Some of them are initialized by Initialize(), but not all of them necessarily.
 extern Com_Printf_ptr Com_Printf;
@@ -1413,6 +1456,7 @@ extern G_InitGame_ptr G_InitGame;
 extern CheckPrivileges_ptr CheckPrivileges;
 extern ClientConnect_ptr ClientConnect;
 extern ClientDisconnect_ptr ClientDisconnect;
+extern ClientSpawn_ptr ClientSpawn;
 
 // Server replacement functions for hooks.
 void __cdecl My_Cmd_AddCommand(char* cmd, void* func);
@@ -1428,6 +1472,7 @@ void __cdecl My_Com_Printf(char* fmt, ...);
 void __cdecl My_G_RunFrame(int time);
 void __cdecl My_G_InitGame(int levelTime, int randomSeed, int restart);
 char* __cdecl My_ClientConnect(int clientNum, qboolean firstTime, qboolean isBot);
+void __cdecl My_ClientSpawn(gentity_t* ent);
 #endif
 
 // Custom commands added using Cmd_AddCommand during initialization.

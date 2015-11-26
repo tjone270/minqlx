@@ -108,5 +108,8 @@ void __cdecl RestartPython(void) {
     if (PyMinqlx_IsInitialized())
     	PyMinqlx_Finalize();
     PyMinqlx_Initialize();
+    // minqlx initializes after the first new game starts, but since the game already
+    // start, we manually trigger the event to make it initialize properly.
+    NewGameDispatcher(0);
 }
 #endif

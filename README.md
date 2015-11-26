@@ -77,7 +77,7 @@ see the [plugins repository](https://github.com/MinoMino/minqlx-plugins).
 - `qlx_owner`: The SteamID64 of the server owner. This is should be set, otherwise minqlx
 can't tell who the owner is and will refuse to execute admin commands.
 - `qlx_plugins`: A comma-separated list of plugins that should be loaded at launch.
-  - Default: `plugin_manager, essentials, motd, permission, ban, clan`.
+  - Default: `plugin_manager, essentials, motd, permission, ban, clan, names`.
 - `qlx_pluginsPath`: The path (either relative or absolute) to the directory with the plugins.
   - Default: `minqlx-plugins`
 - `qlx_database`: The default database to use. You should not change this unless you know what you're doing.
@@ -121,6 +121,17 @@ as `!kick` you need to use client IDs. Look them up with `!id` first. You can al
 for commands like `!ban` where the target player might not currently be connected.
 
 [See here for a full command list.](https://github.com/MinoMino/minqlx/wiki/Command-List)
+
+Updating
+========
+Since this and plugins use different repositories, they will also be updated separately. However, the latest master
+branch of both repositories should always be compatible. If you want to try out the develop branch, make sure you use
+the develop branch of both repositories too, otherwise you might run into issues.
+
+To update the core, just use `wget` to get the latest binary tarball and put it in your QLDS directory, then simply
+extract it with `tar -xvf <tarball>`. To update the plugins, use `cd` to change the working directory to `qlds/minqlx-plugins`
+and do `git pull origin` and you should be good to go. Git should not remove any untracked files, so you can have your
+own custom plugins there and still keep your local copy of the repo up to date.
 
 Compiling
 =========

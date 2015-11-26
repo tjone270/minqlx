@@ -225,3 +225,21 @@ char* ConsolePrintDispatcher(char* text) {
     PyGILState_Release(gstate);
     return ret;
 }
+
+void ClientSpawnDispatcher(int client_id) {
+    if (!client_spawn_handler)
+        return; // No registered handler.
+
+    PyGILState_STATE gstate = PyGILState_Ensure();
+
+    PyObject* result = PyObject_CallFunction(client_spawn_handler, "i", client_id);
+
+    // Only change to 0 if we got False returned to us.
+    if (result == NULL) {
+        DebugError("PyObject_CallFunction() returned NULL.\n",
+                __FILE__, __LINE__, __func__);
+    }
+    Py_XDECREF(result);
+
+    PyGILState_Release(gstate);
+}

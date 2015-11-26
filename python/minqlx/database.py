@@ -138,15 +138,24 @@ class Redis(AbstractDatabase):
         """Gets the permission of a player.
 
         :param player: The player in question.
-        :type player: minqlx.Player
+        :type player: minqlx.Player, int
         :returns: int
 
         """
         if isinstance(player, minqlx.Player):
-            key = "minqlx:players:{}:permission".format(player.steam_id)
+            steam_id = player.steam_id
+        elif isinstance(player, int):
+            steam_id = player
+        elif isinstance(player, str):
+            steam_id = int(player)
         else:
-            key = "minqlx:players:{}:permission".format(player)
+            raise ValueError("Invalid player. Use either a minqlx.Player instance or a SteamID64.")
+
+        # If it's the owner, treat it like a 5.
+        if steam_id == minqlx.owner():
+            return 5
         
+        key = "minqlx:players:{}:permission".format(steam_id)
         perm = self[key]
         if perm == None:
             return 0

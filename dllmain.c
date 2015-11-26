@@ -61,6 +61,7 @@ G_InitGame_ptr G_InitGame;
 CheckPrivileges_ptr CheckPrivileges;
 ClientConnect_ptr ClientConnect;
 ClientDisconnect_ptr ClientDisconnect;
+ClientSpawn_ptr ClientSpawn;
 
 // VM global variables.
 gentity_t* g_entities;
@@ -292,6 +293,14 @@ void SearchVmFunctions(void) {
 		failed = 1;
 	}
 	else DebugPrint("ClientDisconnect: %p\n", ClientDisconnect);
+
+	ClientSpawn = (ClientSpawn_ptr)PatternSearch((void*)((pint)qagame + 0xB000),
+			0xB0000, PTRN_CLIENTSPAWN, MASK_CLIENTSPAWN);
+	if (ClientSpawn == NULL) {
+		DebugPrint("ERROR: Unable to find ClientSpawn.\n");
+		failed = 1;
+	}
+	else DebugPrint("ClientSpawn: %p\n", ClientSpawn);
 
 	if (failed) {
 			DebugPrint("Exiting.\n");

@@ -33,24 +33,24 @@ import logging
 import shlex
 import sys
 import os
-import re
 
 from logging.handlers import RotatingFileHandler
 
 # Team number -> string
-TEAMS = dict(enumerate(("free", "red", "blue", "spectator")))
+TEAMS = collections.OrderedDict(enumerate(("free", "red", "blue", "spectator")))
 
 # Game type number -> string
-GAMETYPES = dict(enumerate(("Free for All", "Duel", "Race", "Team Deathmatch", "Clan Arena",
+GAMETYPES = collections.OrderedDict(enumerate(("Free for All", "Duel", "Race", "Team Deathmatch", "Clan Arena",
     "Capture the Flag", "Overload", "Harvester", "Freeze Tag", "Domination", "Attack and Defend", "Red Rover")))
 
 # Game type number -> short string
-GAMETYPES_SHORT = dict(enumerate(("ffa", "duel", "race", "tdm", "ca", "ctf", "ob", "har", "ft", "dom", "ad", "rr")))
+GAMETYPES_SHORT = collections.OrderedDict(enumerate(("ffa", "duel", "race", "tdm", "ca", "ctf", "ob", "har", "ft", "dom", "ad", "rr")))
 
 # Connection states.
-STATES = dict(enumerate(("free", "zombie", "connected", "primed", "active")))
+CONNECTION_STATES = collections.OrderedDict(enumerate(("free", "zombie", "connected", "primed", "active")))
 
-_re_varsplit = re.compile(r"\\*")
+WEAPONS = collections.OrderedDict(enumerate(("_none", "g", "mg", "sg", "gl", "rl", "lg", "rg",
+    "pg", "bfg", "gh", "ng", "pl", "cg", "hmg", "hands")))
 
 # ====================================================================
 #                               HELPERS
@@ -74,12 +74,14 @@ def parse_variables(varstr, ordered=False):
     if not varstr.strip():
         return res
     
-    vars = _re_varsplit.split(varstr.lstrip("\\"))
+    vars = varstr.lstrip("\\").split("\\")
     try:
         for i in range(0, len(vars), 2):
             res[vars[i]] = vars[i + 1]
-    except:
-        raise ValueError("Uneven number of keys and values: {}".format(varstr))
+    except IndexError:
+        # Log and return incomplete dict.
+        logger = minqlx.get_logger()
+        logger.warning("Uneven number of keys and values: {}".format(varstr))
     
     return res
 
@@ -210,7 +212,7 @@ def set_map_subtitles():
 
 def next_frame(func):
     def f(*args, **kwargs):
-        minqlx.frame_tasks.enter(0, 0, func, args, kwargs)
+        minqlx.next_frame_tasks.append((func, args, kwargs))
     
     return f
 

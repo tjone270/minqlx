@@ -24,37 +24,6 @@ _DUMMY_USERINFO = ("ui_singlePlayerActive\\0\\cg_autoAction\\1\\cg_autoHop\\0"
     "\\handicap\\100\\cl_anonymous\\0\\color1\\4\\color2\\23\\sex\\male"
     "\\teamtask\\0\\rate\\25000\\country\\NO")
 
-def _player(client_id):
-    """A wrapper for minqlx.player_info() to make the output more usable."""
-    info = minqlx.player_info(client_id)
-    if info == None:
-        return None
-    
-    d = minqlx.parse_variables(info["userinfo"])
-    for key in info:
-        if key == "userinfo":
-            pass
-        else:
-            d[key] = info[key]
-
-    return d
-
-def _players():
-    """A wrapper for minqlx.players_info() to make the output more usable."""
-    ret = {}
-    for i, player in enumerate(minqlx.players_info()):
-        if not player:
-            continue
-        
-        d = minqlx.parse_variables(player["userinfo"])
-        for key in player:
-            if key == "userinfo":
-                pass
-            else:
-                d[key] = player[key]
-        ret[i] = d
-    return ret
-
 class NonexistentPlayerError(Exception):
     """An exception that is raised when a player that disconnected is being used
     as if the player were still present.
@@ -71,26 +40,34 @@ class Player():
     and the player has disconnected, it will raise a
     :exc:`minqlx.NonexistentPlayerError` exception.
 
-    At the same time, that also means that if you access an attribute a lot, you should
-    probably assign it to a temporary variable first.
-
     """
-    def __init__(self, client_id, cvars_func=_player, player_dict=None):
-        self._cvars_func = cvars_func
+    def __init__(self, client_id, info=None):
         self._valid = True
-        # player_dict used for more efficient Plugin.players().
-        if player_dict:
+
+        # Can pass own info for efficiency when getting all players and to allow dummy players.
+        if info:
             self._id = client_id
-            self._cvars = player_dict
+            self._info = info
         else:
             self._id = client_id
-            self._cvars = cvars_func(client_id)
-            if not self._cvars:
+            self._info = minqlx.player_info(client_id)
+            if not self._info:
                 self._invalidate("Tried to initialize a Player instance of nonexistant player {}."
                     .format(client_id))
 
-        self._steam_id = self._cvars["steam_id"]
-        self._name = self._cvars["name"]
+        self._userinfo = None
+        self._steam_id = self._info.steam_id
+
+        # When a player connects, a the name field in the client struct has yet to be initialized,
+        # so we fall back to the userinfo and try parse it ourselves to get the name if needed.
+        if self._info.name:
+            self._name = self._info.name
+        else:
+            self._userinfo = minqlx.parse_variables(self._info.userinfo, ordered=True)
+            if "name" in self._userinfo:
+                self._name = self._userinfo["name"]
+            else: # No name at all. Weird userinfo during connection perhaps?
+                self._name = ""
 
     def __repr__(self):
         if not self._valid:
@@ -127,12 +104,19 @@ class Player():
         :raises: minqlx.NonexistentPlayerError
 
         """
-        self._cvars = self._cvars_func(self._id)
+        self._info = minqlx.player_info(self._id)
 
-        if not self._cvars or self.steam_id != self._steam_id:
+        if not self._info or self._steam_id != self._info.steam_id:
             self._invalidate()
 
-        self._name = self._cvars["name"]
+        if self._info.name:
+            self._name = self._info.name
+        else:
+            self._userinfo = minqlx.parse_variables(self._info.userinfo, ordered=True)
+            if "name" in self._userinfo:
+                self._name = self._userinfo["name"]
+            else:
+                self._name = ""
 
     def _invalidate(self, e="The player does not exist anymore. Did the player disconnect?"):
         self._valid = False
@@ -143,7 +127,10 @@ class Player():
         if not self._valid:
             self._invalidate()
 
-        return self._cvars.copy()
+        if not self._userinfo:
+            self._userinfo = minqlx.parse_variables(self._info.userinfo)
+        
+        return self._userinfo.copy()
 
     @property
     def steam_id(self):
@@ -173,9 +160,8 @@ class Player():
 
     @name.setter
     def name(self, value):
-        info = minqlx.parse_variables(minqlx.get_userinfo(self.id), ordered=True)
-        info["name"] = value
-        new_info = "\\".join(["{}\\{}".format(key, info[key]) for key in info])
+        self._userinfo["name"] = value
+        new_info = "\\".join(["{}\\{}".format(key, self._userinfo[key]) for key in self._userinfo])
         minqlx.client_command(self.id, "userinfo \"{}\"".format(new_info))
         self._name = value
 
@@ -190,7 +176,7 @@ class Player():
     
     @property
     def team(self):
-        return minqlx.TEAMS[self["team"]]
+        return minqlx.TEAMS[self._info.team]
     
     @property
     def colors(self):
@@ -206,7 +192,23 @@ class Player():
         return self["headmodel"]
 
     @property
-    def state(self):
+    def handicap(self):
+        return self["handicap"]
+
+    @property
+    def autohop(self):
+        return bool(int(self["cg_autoHop"]))
+
+    @property
+    def autoaction(self):
+        return bool(int(self["cg_autoAction"]))
+
+    @property
+    def predictitems(self):
+        return bool(int(self["cg_predictItems"]))
+
+    @property
+    def connection_state(self):
         """A string describing the connection state of a player.
 
         Possible values:
@@ -216,22 +218,26 @@ class Player():
         - *primed* -- The player was sent the necessary information to play, but has yet to send commands.
         - *active* -- The player finished loading and is actively sending commands to the server.
 
-        In other words, if you need to make sure a player is in-game, check if ``player.state == "active"``.
+        In other words, if you need to make sure a player is in-game, check if ``player.connection_state == "active"``.
 
         """
-        return minqlx.STATES[self["state"]]
+        return minqlx.CONNECTION_STATES[self._info.connection_state]
+
+    @property
+    def state(self):
+        return minqlx.player_state(self.id)
 
     @property
     def privileges(self):
-        if self["privileges"] == minqlx.PRIV_NONE:
+        if self._info.privileges == minqlx.PRIV_NONE:
             return None
-        elif self["privileges"] == minqlx.PRIV_MOD:
+        elif self._info.privileges == minqlx.PRIV_MOD:
             return "mod"
-        elif self["privileges"] == minqlx.PRIV_ADMIN:
+        elif self._info.privileges == minqlx.PRIV_ADMIN:
             return "admin"
-        elif self["privileges"] == minqlx.PRIV_ROOT:
+        elif self._info.privileges == minqlx.PRIV_ROOT:
             return "root"
-        elif self["privileges"] == minqlx.PRIV_BANNED:
+        elif self._info.privileges == minqlx.PRIV_BANNED:
             return "banned"
     
     @property
@@ -240,11 +246,201 @@ class Player():
 
     @property
     def valid(self):
-        try:
-            self["name"]
-            return True
-        except NonexistentPlayerError:
-            return False
+        return self._valid
+
+    @property
+    def stats(self):
+        return minqlx.player_stats(self.id)
+
+    def position(self, reset=False, **kwargs):
+        if reset:
+            pos = minqlx.Vector3((0, 0, 0))
+        else:
+            pos = self.state.position
+        
+        if not kwargs:
+            return pos
+        
+        x = pos.x if "x" not in kwargs else kwargs["x"]
+        y = pos.y if "y" not in kwargs else kwargs["y"]
+        z = pos.z if "z" not in kwargs else kwargs["z"]
+
+        return minqlx.set_position(self.id, minqlx.Vector3((x, y, z)))
+
+    def velocity(self, reset=False, **kwargs):
+        if reset:
+            vel = minqlx.Vector3((0, 0, 0))
+        else:
+            vel = self.state.velocity
+        
+        if not kwargs:
+            return vel
+        
+        x = vel.x if "x" not in kwargs else kwargs["x"]
+        y = vel.y if "y" not in kwargs else kwargs["y"]
+        z = vel.z if "z" not in kwargs else kwargs["z"]
+
+        return minqlx.set_velocity(self.id, minqlx.Vector3((x, y, z)))
+
+    def weapons(self, reset=False, **kwargs):
+        if reset:
+            weaps = minqlx.Weapons(((False,)*15))
+        else:
+            weaps = self.state.weapons
+        
+        if not kwargs:
+            return weaps
+        
+        g = weaps.g if "g" not in kwargs else kwargs["g"]
+        mg = weaps.mg if "mg" not in kwargs else kwargs["mg"]
+        sg = weaps.sg if "sg" not in kwargs else kwargs["sg"]
+        gl = weaps.gl if "gl" not in kwargs else kwargs["gl"]
+        rl = weaps.rl if "rl" not in kwargs else kwargs["rl"]
+        lg = weaps.lg if "lg" not in kwargs else kwargs["lg"]
+        rg = weaps.rg if "rg" not in kwargs else kwargs["rg"]
+        pg = weaps.pg if "pg" not in kwargs else kwargs["pg"]
+        bfg = weaps.bfg if "bfg" not in kwargs else kwargs["bfg"]
+        gh = weaps.gh if "gh" not in kwargs else kwargs["gh"]
+        ng = weaps.ng if "ng" not in kwargs else kwargs["ng"]
+        pl = weaps.pl if "pl" not in kwargs else kwargs["pl"]
+        cg = weaps.cg if "cg" not in kwargs else kwargs["cg"]
+        hmg = weaps.hmg if "hmg" not in kwargs else kwargs["hmg"]
+        hands = weaps.hands if "hands" not in kwargs else kwargs["hands"]
+
+        return minqlx.set_weapons(self.id,
+            minqlx.Weapons((g, mg, sg, gl, rl, lg, rg, pg, bfg, gh, ng, pl, cg, hmg, hands)))
+
+    def weapon(self, new_weapon=None):
+        if new_weapon is None:
+            return self.state.weapon
+        elif new_weapon in minqlx.WEAPONS:
+            pass
+        elif new_weapon in minqlx.WEAPONS.values():
+            new_weapon = tuple(minqlx.WEAPONS.values()).index(new_weapon)
+
+        return minqlx.set_weapon(self.id, new_weapon)
+
+    def ammo(self, reset=False, **kwargs):
+        if reset:
+            a = minqlx.Weapons(((0,)*15))
+        else:
+            a = self.state.ammo
+        
+        if not kwargs:
+            return a
+        
+        g = a.g if "g" not in kwargs else kwargs["g"]
+        mg = a.mg if "mg" not in kwargs else kwargs["mg"]
+        sg = a.sg if "sg" not in kwargs else kwargs["sg"]
+        gl = a.gl if "gl" not in kwargs else kwargs["gl"]
+        rl = a.rl if "rl" not in kwargs else kwargs["rl"]
+        lg = a.lg if "lg" not in kwargs else kwargs["lg"]
+        rg = a.rg if "rg" not in kwargs else kwargs["rg"]
+        pg = a.pg if "pg" not in kwargs else kwargs["pg"]
+        bfg = a.bfg if "bfg" not in kwargs else kwargs["bfg"]
+        gh = a.gh if "gh" not in kwargs else kwargs["gh"]
+        ng = a.ng if "ng" not in kwargs else kwargs["ng"]
+        pl = a.pl if "pl" not in kwargs else kwargs["pl"]
+        cg = a.cg if "cg" not in kwargs else kwargs["cg"]
+        hmg = a.hmg if "hmg" not in kwargs else kwargs["hmg"]
+        hands = a.hands if "hands" not in kwargs else kwargs["hands"]
+
+        return minqlx.set_ammo(self.id,
+            minqlx.Weapons((g, mg, sg, gl, rl, lg, rg, pg, bfg, gh, ng, pl, cg, hmg, hands)))
+
+    def powerups(self, reset=False, **kwargs):
+        if reset:
+            pu = minqlx.Powerups(((0,)*6))
+        else:
+            pu = self.state.powerups
+        
+        if not kwargs:
+            return pu
+        
+        quad = pu.quad if "quad" not in kwargs else kwargs["quad"]
+        bs = pu.battlesuit if "battlesuit" not in kwargs else kwargs["battlesuit"]
+        haste = pu.haste if "haste" not in kwargs else kwargs["haste"]
+        invis = pu.invisibility if "invisibility" not in kwargs else kwargs["invisibility"]
+        regen = pu.regeneration if "regeneration" not in kwargs else kwargs["regeneration"]
+        invul = pu.invulnerability if "invulnerability" not in kwargs else kwargs["invulnerability"]
+
+        return minqlx.set_powerups(self.id,
+            minqlx.Powerups((quad, bs, haste, invis, regen, invul)))
+
+    @property
+    def holdable(self):
+        return self.state.holdable
+
+    @holdable.setter
+    def holdable(self, value):
+        if not value:
+            minqlx.set_holdable(self.id, 0)
+        elif value == "teleporter":
+            minqlx.set_holdable(self.id, 27)
+        elif value == "medkit":
+            minqlx.set_holdable(self.id, 28)
+        elif value == "flight":
+            minqlx.set_holdable(self.id, 34)
+            self.flight(reset=True)
+        elif value == "kamikaze":
+            minqlx.set_holdable(self.id, 37)
+        elif value == "portal":
+            minqlx.set_holdable(self.id, 38)
+        elif value == "invulnerability":
+            minqlx.set_holdable(self.id, 39)
+        else:
+            raise ValueError("Invalid holdable item.")
+
+    def flight(self, reset=False, **kwargs):
+        state = self.state
+        if state.holdable != "flight":
+            self.holdable = "flight"
+            reset = True
+        
+        if reset:
+            # Set to defaults on reset.
+            fl = minqlx.Flight((16000, 16000, 1200, 0))
+        else:
+            fl = state.flight
+        
+        fuel = fl.fuel if "fuel" not in kwargs else kwargs["fuel"]
+        max_fuel = fl.max_fuel if "max_fuel" not in kwargs else kwargs["max_fuel"]
+        thrust = fl.thrust if "thrust" not in kwargs else kwargs["thrust"]
+        refuel = fl.refuel if "refuel" not in kwargs else kwargs["refuel"]
+
+        return minqlx.set_flight(self.id, minqlx.Flight((fuel, max_fuel, thrust, refuel)))
+
+    @property
+    def noclip(self):
+        return self.state.noclip
+
+    @noclip.setter
+    def noclip(self, value):
+        minqlx.noclip(self.id, bool(value))
+
+    @property
+    def health(self):
+        return self.state.health
+
+    @health.setter
+    def health(self, value):
+        minqlx.set_health(self.id, value)
+
+    @property
+    def armor(self):
+        return self.state.armor
+
+    @armor.setter
+    def armor(self, value):
+        minqlx.set_armor(self.id, value)
+
+    @property
+    def score(self):
+        return self.stats.score
+
+    @score.setter
+    def score(self, value):
+        return minqlx.set_score(self.id, value)
 
     def tell(self, msg, **kwargs):
         return minqlx.Plugin.tell(msg, self, **kwargs)
@@ -290,12 +486,13 @@ class Player():
 
     @classmethod
     def all_players(cls):
-        players = _players()
-        return [cls(cid, player_dict=players[cid]) for cid in players]
+        return [cls(i, info=info) for i, info in enumerate(minqlx.players_info()) if info]
 
 class AbstractDummyPlayer(Player):
-    def __init__(self):
-        self._cvars = minqlx.parse_variables(_DUMMY_USERINFO)
+    def __init__(self, name="DummyPlayer"):
+        info = minqlx.PlayerInfo((-1, name, minqlx.CS_CONNECTED,
+            _DUMMY_USERINFO, -1, minqlx.TEAM_SPECTATOR, minqlx.PRIV_NONE))
+        super().__init__(-1, info=info)
 
     @property
     def id(self):
@@ -304,6 +501,9 @@ class AbstractDummyPlayer(Player):
     @property
     def steam_id(self):
         raise NotImplementedError("steam_id property needs to be implemented.")
+
+    def update(self):
+        pass
 
     def tell(self, msg):
         raise NotImplementedError("tell() needs to be implemented.")
