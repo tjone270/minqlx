@@ -19,6 +19,7 @@
 import minqlx
 import re
 
+MAX_MSG_LENGTH = 1000
 re_color_tag = re.compile(r"\^[^\^]")
 
 # ====================================================================
@@ -237,28 +238,34 @@ class AbstractChannel:
     def reply(self, msg):
         raise NotImplementedError()
 
-    def split_long_msg(self, msg, limit=100, delimiter=" "):
-        """Split a message into several pieces for channels with limtations."""
-        if len(msg) < limit:
-            return [msg]
-        out = []
-        index = limit
-        for i in reversed(range(limit)):
-            if msg[i:i + len(delimiter)] == delimiter:
-                index = i
-                out.append(msg[0:index])
-                # Keep going, but skip the delimiter.
-                rest = msg[index + len(delimiter):]
-                if rest:
-                    out.extend(self.split_long_msg(rest, limit, delimiter))
-                return out
+    def split_long_lines(self, msg, limit=100, delimiter=" "):
+        res = []
 
-        out.append(msg[0:index])
-        # Keep going.
-        rest = msg[index:]
-        if rest:
-            out.extend(self.split_long_msg(rest, limit, delimiter))
-        return out
+        while msg:
+            i = msg.find("\n")
+            if 0 <= i <= limit:
+                res.append(msg[:i])
+                msg = msg[i+1:]
+                continue
+
+            if len(msg) < limit:
+                if msg:
+                    res.append(msg)
+                break
+
+            length = 0
+            while True:
+                i = msg[length:].find(delimiter)
+                if i == -1 or i+length > limit:
+                    if not length:
+                        length = limit+1
+                    res.append(msg[:length-1])
+                    msg = msg[length+len(delimiter)-1:]
+                    break
+                else:
+                    length += i+1
+
+        return res
 
 class ChatChannel(AbstractChannel):
     """A channel for chat to and from the server."""
@@ -285,7 +292,21 @@ class ChatChannel(AbstractChannel):
                 if p.team == self.team:
                     targets.append(p.id)
         
-        for s in self.split_long_msg(msg, limit, delimiter):
+        split_msgs = self.split_long_lines(msg, limit, delimiter)
+        # We've split messages, but we can still just join them up to 1000-ish
+        # bytes before we need to send multiple server cmds.
+        joined_msgs = []
+        for s in split_msgs:
+            if not len(joined_msgs):
+                joined_msgs.append(s)
+            else:
+                s_new = joined_msgs[-1] + "\n" + s
+                if len(s_new.encode(errors="replace")) > MAX_MSG_LENGTH:
+                    joined_msgs.append(s)
+                else:
+                    joined_msgs[-1] = s_new
+
+        for s in joined_msgs:
             if not targets:
                 minqlx.send_server_command(None, self.fmt.format(last_color + s))
             else:
