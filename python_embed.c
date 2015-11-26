@@ -1193,6 +1193,25 @@ static PyObject* PyMinqlx_Callvote(PyObject* self, PyObject* args) {
 }
 
 /*
+* ================================================================
+*                      allow_single_player
+* ================================================================
+*/
+
+static PyObject* PyMinqlx_AllowSinglePlayer(PyObject* self, PyObject* args) {
+    int x;
+    if (!PyArg_ParseTuple(args, "p:allow_single_player", &x))
+        return NULL;
+
+    if (x)
+        level->mapIsTrainingMap = qtrue;
+    else
+        level->mapIsTrainingMap = qfalse;
+
+    Py_RETURN_NONE;
+}
+
+/*
  * ================================================================
  *             Module definition and initialization
  * ================================================================
@@ -1261,6 +1280,8 @@ static PyMethodDef minqlxMethods[] = {
      "Sets a player's score."},
     {"callvote", PyMinqlx_Callvote, METH_VARARGS,
      "Calls a vote as if started by the server and not a player."},
+    {"allow_single_player", PyMinqlx_AllowSinglePlayer, METH_VARARGS,
+     "Allows or disallows a game with only a single player in it to go on without forfeiting. Useful for race."},
     {NULL, NULL, 0, NULL}
 };
 
