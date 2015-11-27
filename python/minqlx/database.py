@@ -74,9 +74,8 @@ class AbstractDatabase:
         raise NotImplementedError("The base plugin can't do database actions.")
 
     def clear_flag(self, player, flag):
-        """Should clear specified player flag.
-        """
-        return set_flag(self, player, flag, False)
+        """Should clear specified player flag."""
+        return self.set_flag(self, player, flag, False)
 
     def get_flag(self, player, flag, default=False):
         """Abstract method. Should return specified player flag
