@@ -21,6 +21,7 @@ OBJS_NOPY = $(SOURCES_NOPY:.c=.o)
 OUTPUT = $(BINDIR)/minqlx.so
 OUTPUT_NOPY = $(BINDIR)/minqlx_nopy.so
 PYMODULE = $(BINDIR)/minqlx.zip
+PYFILES = $(wildcard python/minqlx/*.py)
 
 .PHONY: depend clean
 
@@ -54,7 +55,7 @@ $(OUTPUT): $(OBJS)
 $(OUTPUT_NOPY): $(OBJS_NOPY)
 	$(CC) $(CFLAGS) -o $(OUTPUT_NOPY) $(OBJS_NOPY) $(LDFLAGS_NOPY)
 
-$(PYMODULE):
+$(PYMODULE): $(PYFILES)
 	@python3.5 -m zipfile -c $(PYMODULE) python/minqlx
 
 .c.o:
