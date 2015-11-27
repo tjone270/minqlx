@@ -19,6 +19,9 @@
 import minqlx
 import redis
 
+# ====================================================================
+#                          AbstractDatabase
+# ====================================================================
 class AbstractDatabase:
     # An instance counter. Useful for closing connections.
     _counter = 0
@@ -55,6 +58,28 @@ class AbstractDatabase:
         """Abstract method. Should return whether or not a player has more than or equal
         to a certain permission level. Should only take a value of 0 to 5, where 0 is
         always True.
+
+        :returns: bool
+        :raises: NotImplementedError
+
+        """
+        raise NotImplementedError("The base plugin can't do database actions.")
+
+    def set_flag(self, player, flag, value=True):
+        """Abstract method. Should set specified player flag to value.
+
+        :raises: NotImplementedError
+
+        """
+        raise NotImplementedError("The base plugin can't do database actions.")
+
+    def clear_flag(self, player, flag):
+        """Should clear specified player flag.
+        """
+        return set_flag(self, player, flag, False)
+
+    def get_flag(self, player, flag, default=False):
+        """Abstract method. Should return specified player flag
 
         :returns: bool
         :raises: NotImplementedError
@@ -131,7 +156,7 @@ class Redis(AbstractDatabase):
             key = "minqlx:players:{}:permission".format(player.steam_id)
         else:
             key = "minqlx:players:{}:permission".format(player)
-        
+ 
         self[key] = level
 
     def get_permission(self, player):
@@ -154,7 +179,7 @@ class Redis(AbstractDatabase):
         # If it's the owner, treat it like a 5.
         if steam_id == minqlx.owner():
             return 5
-        
+ 
         key = "minqlx:players:{}:permission".format(steam_id)
         perm = self[key]
         if perm == None:
@@ -173,6 +198,46 @@ class Redis(AbstractDatabase):
 
         """
         return self.get_permission(player) >= level
+
+    def set_flag(self, player, flag, value=True):
+        """Sets specified player flag
+
+        :param player: The player in question.
+        :type player: minqlx.Player
+        :param flag: The flag to set.
+        :type flag: string
+        :param value: (optional, default=True) Value to set
+        :type value: bool
+
+        """
+        if isinstance(player, minqlx.Player):
+            key = "minqlx:players:{0}:flags:{1}".format(player.steam_id, flag)
+        else:
+            key = "minqlx:players:{0}:flags:{1}".format(player, flag)
+
+        self[key] = 1 if value else 0
+
+    def get_flag(self, player, flag, default=False):
+        """Clears the specified player flag
+
+        :param player: The player in question.
+        :type player: minqlx.Player
+        :param flag: The flag to get
+        :type flag: string
+        :param default: (optional, default=False) The value to return if the flag is unknown
+        :type default: bool
+
+        """
+        if isinstance(player, minqlx.Player):
+            key = "minqlx:players:{0}:flags:{1}".format(player.steam_id, flag)
+        else:
+            key = "minqlx:players:{0}:flags:{1}".format(player, flag)
+
+        val = self[key]
+        if val:
+            return bool(int(val))
+        else:
+            return default
 
     def connect(self, host=None, database=0, unix_socket=False, password=None):
         """Returns a connection to a Redis database. If *host* is None, it will
@@ -218,7 +283,7 @@ class Redis(AbstractDatabase):
                 port = int(split_host[1])
             else:
                 port = 6379 # Default port.
-            
+ 
             if unix_socket:
                 self._conn = redis.StrictRedis(unix_socket_path=host, db=database, password=password, decode_responses=True)
             else:
