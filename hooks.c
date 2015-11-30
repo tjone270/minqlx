@@ -66,7 +66,8 @@ void __cdecl My_G_InitGame(int levelTime, int randomSeed, int restart) {
     InitializeCvars();
 
 #ifndef NOPY
-	NewGameDispatcher(restart);
+    if (restart)
+	   NewGameDispatcher(restart);
 #endif
 }
 
@@ -152,6 +153,14 @@ void __cdecl My_Com_Printf(char* fmt, ...) {
         Com_Printf(buf);
 }
 
+void __cdecl My_SV_SpawnServer(char* server, qboolean killBots) {
+    SV_SpawnServer(server, killBots);
+
+    // We call NewGameDispatcher here instead of G_InitGame when it's not just a map_restart,
+    // otherwise configstring 0 and such won't be initialized and we can't instantiate minqlx.Game.
+    NewGameDispatcher(qfalse);
+}
+
 void  __cdecl My_G_RunFrame(int time) {
     // Dropping frames is probably not a good idea, so we don't allow cancelling.
     FrameDispatcher();
@@ -233,6 +242,12 @@ void HookStatic(void) {
     res = Hook((void*)Com_Printf, My_Com_Printf, (void*)&Com_Printf);
     if (res) {
         DebugPrint("ERROR: Failed to hook Com_Printf: %d\n", res);
+        failed = 1;
+    }
+
+    res = Hook((void*)SV_SpawnServer, My_SV_SpawnServer, (void*)&SV_SpawnServer);
+    if (res) {
+        DebugPrint("ERROR: Failed to hook SV_SpawnServer: %d\n", res);
         failed = 1;
     }
 #endif

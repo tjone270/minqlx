@@ -1418,6 +1418,7 @@ typedef void (__cdecl *SV_DropClient_ptr)(client_t* drop, const char* reason);
 typedef void (__cdecl *FS_Startup_ptr)(const char* gameName);
 typedef void (__cdecl *Sys_SetModuleOffset_ptr)(char* moduleName, void* offset);
 typedef void (__cdecl *SV_LinkEntity_ptr)(sharedEntity_t* gEnt);
+typedef void (__cdecl *SV_SpawnServer_ptr)(char* server, qboolean killBots);
 // VM functions.
 typedef void (__cdecl *G_RunFrame_ptr)(int time);
 typedef void (__cdecl *G_AddEvent_ptr)(gentity_t* ent, int event, int eventParm);
@@ -1449,6 +1450,7 @@ extern SV_SetConfigstring_ptr SV_SetConfigstring;
 extern SV_GetConfigstring_ptr SV_GetConfigstring;
 extern SV_DropClient_ptr SV_DropClient;
 extern Sys_SetModuleOffset_ptr Sys_SetModuleOffset;
+extern SV_SpawnServer_ptr SV_SpawnServer;
 // VM functions.
 extern G_RunFrame_ptr G_RunFrame;
 extern G_AddEvent_ptr G_AddEvent;
@@ -1468,6 +1470,7 @@ void __cdecl My_SV_ClientEnterWorld(client_t* client, usercmd_t* cmd);
 void __cdecl My_SV_SetConfigstring(int index, char* value);
 void __cdecl My_SV_DropClient(client_t* drop, const char* reason);
 void __cdecl My_Com_Printf(char* fmt, ...);
+void __cdecl My_SV_SpawnServer(char* server, qboolean killBots);
 // VM replacement functions for hooks.
 void __cdecl My_G_RunFrame(int time);
 void __cdecl My_G_InitGame(int levelTime, int randomSeed, int restart);
