@@ -17,6 +17,7 @@
 # along with minqlx. If not, see <http://www.gnu.org/licenses/>.
 
 import minqlx
+import collections
 
 class Plugin():
     """The base plugin class.
@@ -392,7 +393,7 @@ class Plugin():
         else:
             players = player_list
 
-        res = dict.fromkeys(minqlx.TEAMS.values())
+        res = collections.OrderedDict.fromkeys(minqlx.TEAMS.values())
         for key in res:
             res[key] = []
 
