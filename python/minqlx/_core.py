@@ -208,6 +208,10 @@ def set_map_subtitles():
         .format(minqlx.__version__, minqlx.__plugins_version__))
     minqlx.set_configstring(679, "Check ^6http://github.com/MinoMino/minqlx^7 for more details.")
 
+def reference_steamworks(item_id):
+    new_ref = minqlx.get_configstring(715) + "{} ".format(item_id)
+    minqlx.set_configstring(715, new_ref)
+
 # ====================================================================
 #                              DECORATORS
 # ====================================================================
