@@ -148,7 +148,7 @@ class Player():
     @property
     def ip(self):
         if "ip" in self:
-            return self["ip"]
+            return self["ip"].split(":")[0]
         else:
             return ""
 
