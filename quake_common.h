@@ -218,6 +218,16 @@ typedef enum {
 } gameExport_t;
 
 typedef enum {
+  PM_NORMAL = 0x0,
+  PM_NOCLIP = 0x1,
+  PM_SPECTATOR = 0x2,
+  PM_DEAD = 0x3,
+  PM_FREEZE = 0x4,
+  PM_INTERMISSION = 0x5,
+  PM_TUTORIAL = 0x6,
+} pmtype_t;
+
+typedef enum {
     EV_NONE = 0x0,
     EV_FOOTSTEP = 0x1,
     EV_FOOTSTEP_METAL = 0x2,
