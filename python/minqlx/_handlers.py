@@ -143,8 +143,13 @@ def handle_client_command(client_id, cmd):
                     changed[key] = new_info[key]
 
             if changed:
-                if minqlx.EVENT_DISPATCHERS["userinfo"].dispatch(player, changed) == False:
+                ret = minqlx.EVENT_DISPATCHERS["userinfo"].dispatch(player, changed)
+                if ret == False:
                     return False
+                elif isinstance(ret, dict):
+                    for key in ret:
+                        new_info[key] = ret[key]
+                    cmd = "userinfo \"{}\"".format("".join(["\\{}\\{}".format(key, new_info[key]) for key in new_info]))
 
         return cmd
     except:
