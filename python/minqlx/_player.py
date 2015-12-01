@@ -499,6 +499,22 @@ class Player():
         minqlx.set_armor(self.id, value)
 
     @property
+    def is_alive(self):
+        return self.state.is_alive
+    
+    @is_alive.setter
+    def is_alive(self, value):
+        if not isinstance(value, bool):
+            raise ValueError("is_alive needs to be a boolean.")
+
+        cur = self.is_alive
+        if cur and value == False:
+            # TODO: Proper death and not just setting health to 0.
+            self.health = 0
+        elif not cur and value == True:
+            minqlx.player_spawn(self.id)
+
+    @property
     def score(self):
         return self.stats.score
 

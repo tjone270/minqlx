@@ -1214,6 +1214,30 @@ static PyObject* PyMinqlx_AllowSinglePlayer(PyObject* self, PyObject* args) {
 }
 
 /*
+* ================================================================
+*                           player_spawn
+* ================================================================
+*/
+
+static PyObject* PyMinqlx_PlayerSpawn(PyObject* self, PyObject* args) {
+    int client_id;
+    if (!PyArg_ParseTuple(args, "i:player_spawn", &client_id))
+        return NULL;
+    else if (client_id < 0 || client_id >= sv_maxclients->integer) {
+        PyErr_Format(PyExc_ValueError,
+                     "client_id needs to be a number from 0 to %d.",
+                     sv_maxclients->integer);
+        return NULL;
+    }
+    else if (!g_entities[client_id].client)
+        Py_RETURN_FALSE;
+
+    g_entities[client_id].client->ps.pm_type = PM_NORMAL;
+    My_ClientSpawn(&g_entities[client_id]);
+    Py_RETURN_TRUE;
+}
+
+/*
  * ================================================================
  *             Module definition and initialization
  * ================================================================
@@ -1283,6 +1307,8 @@ static PyMethodDef minqlxMethods[] = {
     {"callvote", PyMinqlx_Callvote, METH_VARARGS,
      "Calls a vote as if started by the server and not a player."},
     {"allow_single_player", PyMinqlx_AllowSinglePlayer, METH_VARARGS,
+     "Allows or disallows a game with only a single player in it to go on without forfeiting. Useful for race."},
+    {"player_spawn", PyMinqlx_PlayerSpawn, METH_VARARGS,
      "Allows or disallows a game with only a single player in it to go on without forfeiting. Useful for race."},
     {NULL, NULL, 0, NULL}
 };
