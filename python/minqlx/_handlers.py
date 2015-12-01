@@ -31,6 +31,7 @@ _re_callvote = re.compile(r"^(?:cv|callvote) +(?P<cmd>[^ ]+)(?: \"?(?P<args>.+?)
 _re_vote = re.compile(r"^vote +(?P<arg>.)", flags=re.IGNORECASE)
 _re_team = re.compile(r"^team +(?P<arg>.)", flags=re.IGNORECASE)
 _re_vote_ended = re.compile(r"^print \"Vote (?P<result>passed|failed).\n\"$")
+_re_userinfo = re.compile(r"^userinfo \"(?P<vars>.+)\"$")
 
 # ====================================================================
 #                         LOW-LEVEL HANDLERS
@@ -130,6 +131,20 @@ def handle_client_command(client_id, cmd):
                 if minqlx.EVENT_DISPATCHERS["team_switch_attempt"].dispatch(player, player.team, target_team) == False:
                     return False
             return cmd
+
+        res = _re_userinfo.match(cmd)
+        if res:
+            new_info = minqlx.parse_variables(res.group("vars"), ordered=True)
+            old_info = player.cvars
+            changed = {}
+
+            for key in new_info:
+                if key not in old_info or (key in old_info and new_info[key] != old_info[key]):
+                    changed[key] = new_info[key]
+
+            if changed:
+                if minqlx.EVENT_DISPATCHERS["userinfo"].dispatch(player, changed) == False:
+                    return False
 
         return cmd
     except:

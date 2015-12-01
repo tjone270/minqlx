@@ -517,6 +517,13 @@ class DeathDispatcher(EventDispatcher):
     def dispatch(self, victim, killer, data):
         return super().dispatch(victim, killer, data)
 
+class UserinfoDispatcher(EventDispatcher):
+    """Event for clients changing their userinfo."""
+    name = "userinfo"
+    
+    def dispatch(self, player, changed):
+        return super().dispatch(player, changed)
+
 EVENT_DISPATCHERS = EventDispatcherManager()
 EVENT_DISPATCHERS.add_dispatcher(ConsolePrintDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(CommandDispatcher)
@@ -546,3 +553,4 @@ EVENT_DISPATCHERS.add_dispatcher(MapDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(NewGameDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(KillDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(DeathDispatcher)
+EVENT_DISPATCHERS.add_dispatcher(UserinfoDispatcher)
