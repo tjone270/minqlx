@@ -158,6 +158,8 @@ class Plugin():
             return bool(int(res))
         elif return_type == list:
             return [s.strip() for s in res.split(",")]
+        elif return_type == set:
+            return {s.strip() for s in res.split(",")}
         elif return_type == tuple:
             return tuple([s.strip() for s in res.split(",")])
         else:
