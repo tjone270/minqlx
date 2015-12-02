@@ -374,12 +374,12 @@ def reload_plugin(plugin):
 def initialize_cvars():
     # Core
     minqlx.set_cvar_once("qlx_owner", "-1")
-    minqlx.set_cvar_once("qlx_plugins", "plugin_manager, essentials, motd, permission, ban, clan, names")
+    minqlx.set_cvar_once("qlx_plugins", "plugin_manager, essentials, motd, permission, ban, silence, clan, names, log")
     minqlx.set_cvar_once("qlx_pluginsPath", "minqlx-plugins")
     minqlx.set_cvar_once("qlx_database", "Redis")
     minqlx.set_cvar_once("qlx_commandPrefix", "!")
-    minqlx.set_cvar_once("qlx_logs", "5")
-    minqlx.set_cvar_once("qlx_logsSize", str(5*10**6)) # 5 MB
+    minqlx.set_cvar_once("qlx_logs", "2")
+    minqlx.set_cvar_once("qlx_logsSize", str(3*10**6)) # 3 MB
     # Redis
     minqlx.set_cvar_once("qlx_redisAddress", "127.0.0.1")
     minqlx.set_cvar_once("qlx_redisDatabase", "0")
