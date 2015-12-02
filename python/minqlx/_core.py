@@ -54,6 +54,8 @@ CONNECTION_STATES = collections.OrderedDict(enumerate(("free", "zombie", "connec
 WEAPONS = collections.OrderedDict([(i, w) for i, w in enumerate(("", "g", "mg", "sg", "gl", "rl", "lg", "rg",
     "pg", "bfg", "gh", "ng", "pl", "cg", "hmg", "hands")) if w])
 
+DEFAULT_PLUGINS = ("plugin_manager", "essentials", "motd", "permission", "ban", "silence", "clan", "names", "log")
+
 # ====================================================================
 #                               HELPERS
 # ====================================================================
@@ -291,15 +293,19 @@ class PluginUnloadError(Exception):
     pass
 
 def load_preset_plugins():
-    plugins_cvar = minqlx.get_cvar("qlx_plugins")
+    plugins = minqlx.Plugin.get_cvar("qlx_plugins", set)
+    if "DEFAULT" in plugins:
+        plugins.remove("DEFAULT")
+        plugins.update(DEFAULT_PLUGINS)
+
     plugins_path = os.path.abspath(minqlx.get_cvar("qlx_pluginsPath"))
     plugins_dir = os.path.basename(plugins_path)
 
     if os.path.isdir(plugins_path):
         # Filter out already loaded plugins.
-        plugins = [p.strip() for p in plugins_cvar.split(",") if "{}.{}".format(plugins_dir, p) not in sys.modules]
-        for plugin in plugins:
-            load_plugin(plugin.strip())
+        plugins = [p for p in plugins if "{}.{}".format(plugins_dir, p) not in sys.modules]
+        for p in plugins:
+            load_plugin(p)
     else:
         raise(PluginLoadError("Cannot find the plugins directory '{}'."
             .format(os.path.abspath(plugins_path))))
@@ -374,7 +380,7 @@ def reload_plugin(plugin):
 def initialize_cvars():
     # Core
     minqlx.set_cvar_once("qlx_owner", "-1")
-    minqlx.set_cvar_once("qlx_plugins", "plugin_manager, essentials, motd, permission, ban, silence, clan, names, log")
+    minqlx.set_cvar_once("qlx_plugins", ", ".join(DEFAULT_PLUGINS))
     minqlx.set_cvar_once("qlx_pluginsPath", "minqlx-plugins")
     minqlx.set_cvar_once("qlx_database", "Redis")
     minqlx.set_cvar_once("qlx_commandPrefix", "!")
