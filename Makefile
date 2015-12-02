@@ -26,13 +26,13 @@ PYFILES = $(wildcard python/minqlx/*.py)
 .PHONY: depend clean
 
 all: CFLAGS += $(shell python3.5-config --cflags)
-all: version $(OUTPUT) $(PYMODULE)
-	@python3.5 python/version.py -unset
+all: VERSION := MINQLX_VERSION=\"$(shell python3.5 python/version.py)\"
+all: $(OUTPUT) $(PYMODULE)
 	@echo Done!
 
 debug: CFLAGS += $(shell python3.5-config --includes) -gdwarf-2 -Wall -O0 -fvar-tracking
-debug: version_debug $(OUTPUT)
-	@python3.5 python/version.py -unset_debug
+debug: VERSION := MINQLX_VERSION=\"$(shell python3.5 python/version.py -d)\"
+debug: $(OUTPUT)
 	@echo Done!
 
 nopy: CFLAGS += -Wall -DNOPY
@@ -43,23 +43,17 @@ nopy_debug: CFLAGS +=  -gdwarf-2 -Wall -O0 -DNOPY
 nopy_debug: $(OUTPUT_NOPY)
 	@echo Done!
 
-version:
-	@python3.5 python/version.py -set
-
-version_debug:
-	@python3.5 python/version.py -set_debug
-
 $(OUTPUT): $(OBJS)
-	$(CC) $(CFLAGS) -o $(OUTPUT) $(OBJS) $(LDFLAGS)
+	$(CC) $(CFLAGS) -D$(VERSION) -o $(OUTPUT) $(OBJS) $(LDFLAGS)
 
 $(OUTPUT_NOPY): $(OBJS_NOPY)
-	$(CC) $(CFLAGS) -o $(OUTPUT_NOPY) $(OBJS_NOPY) $(LDFLAGS_NOPY)
+	$(CC) $(CFLAGS) -D$(VERSION) -o $(OUTPUT_NOPY) $(OBJS_NOPY) $(LDFLAGS_NOPY)
 
 $(PYMODULE): $(PYFILES)
 	@python3.5 -m zipfile -c $(PYMODULE) python/minqlx
 
 .c.o:
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -D$(VERSION) -c $< -o $@
 
 clean:
 	@echo Cleaning...
