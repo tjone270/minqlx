@@ -188,22 +188,35 @@ def set_cvar_limit_once(name, value, minimum, maximum, flags=0):
     return False
 
 def set_plugins_version(path):
-    args = shlex.split("git describe --long --tags --dirty --always")
+    args_version = shlex.split("git describe --long --tags --dirty --always")
+    args_branch = shlex.split("git rev-parse --abbrev-ref HEAD")
 
     # We keep environment variables, but remove LD_PRELOAD to avoid a warning the OS might throw.
     env = dict(os.environ)
     del env["LD_PRELOAD"]
     try:
-        p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=path, env=env)
+        # Get the version using git describe.
+        p = subprocess.Popen(args_version, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=path, env=env)
         p.wait(timeout=1)
         if p.returncode != 0:
             setattr(minqlx, "__plugins_version__", "NOT_SET")
             return
+
+        version = p.stdout.read().decode().strip()
+
+        # Get the branch using git rev-parse.
+        p = subprocess.Popen(args_branch, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=path, env=env)
+        p.wait(timeout=1)
+        if p.returncode != 0:
+            setattr(minqlx, "__plugins_version__", version)
+            return
+        
+        branch = p.stdout.read().decode().strip()
     except (FileNotFoundError, subprocess.TimeoutExpired):
         setattr(minqlx, "__plugins_version__", "NOT_SET")
         return
 
-    setattr(minqlx, "__plugins_version__", p.stdout.read().decode().strip())
+    setattr(minqlx, "__plugins_version__", "{}-{}".format(version, branch))
 
 def set_map_subtitles():
     cs = minqlx.get_configstring(678)
