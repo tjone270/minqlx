@@ -276,7 +276,10 @@ class ChatChannel(AbstractChannel):
     
     @minqlx.next_frame
     def reply(self, msg, limit=100, delimiter=" "):
-        msg = str(msg)
+        # We convert whatever we got to a string and replace all double quotes
+        # to single quotes, since the engine doesn't support escaping them.
+        # TODO: rcon can print quotes to clients using NET_OutOfBandPrint. Maybe we should too?
+        msg = str(msg).replace("\"", "'")
         # Can deal with all the below ChatChannel subclasses.
         last_color = ""
         targets = None
