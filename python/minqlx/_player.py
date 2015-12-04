@@ -128,9 +128,14 @@ class Player():
             self._invalidate()
 
         if not self._userinfo:
-            self._userinfo = minqlx.parse_variables(self._info.userinfo)
+            self._userinfo = minqlx.parse_variables(self._info.userinfo, ordered=True)
         
         return self._userinfo.copy()
+
+    @cvars.setter
+    def cvars(self, new_cvars):
+        new = "".join(["\\{}\\{}".format(key, new_cvars[key]) for key in new_cvars])
+        minqlx.client_command(self.id, "userinfo \"{}\"".format(new))
 
     @property
     def steam_id(self):
@@ -142,7 +147,10 @@ class Player():
 
     @property
     def ip(self):
-        return self["ip"]
+        if "ip" in self:
+            return self["ip"].split(":")[0]
+        else:
+            return ""
 
     @property
     def clan(self):
@@ -160,10 +168,9 @@ class Player():
 
     @name.setter
     def name(self, value):
-        self._userinfo["name"] = value
-        new_info = "\\".join(["{}\\{}".format(key, self._userinfo[key]) for key in self._userinfo])
-        minqlx.client_command(self.id, "userinfo \"{}\"".format(new_info))
-        self._name = value
+        new = self.cvars
+        new["name"] = value
+        self.cvars = new
 
     @property
     def clean_name(self):
@@ -172,40 +179,91 @@ class Player():
 
     @property
     def qport(self):
-        return int(self["qport"])
+        if "qport" in self:
+            return int(self["qport"])
+        else:
+            return -1
     
     @property
     def team(self):
         return minqlx.TEAMS[self._info.team]
+
+    @team.setter
+    def team(self, new_team):
+        self.put(new_team)
     
     @property
     def colors(self):
         # Float because they can occasionally be floats for some reason.
         return float(self["color1"]), float(self["color2"])
+
+    @colors.setter
+    def colors(self, value):
+        new = self.cvars
+        c1, c2 = value
+        new["color1"] = c1
+        new["color2"] = c2
+        self.cvars = new
     
     @property
     def model(self):
         return self["model"]
 
+    @model.setter
+    def model(self, value):
+        new = self.cvars
+        new["model"] = value
+        self.cvars = new
+
     @property
     def headmodel(self):
         return self["headmodel"]
+
+    @headmodel.setter
+    def headmodel(self, value):
+        new = self.cvars
+        new["headmodel"] = value
+        self.cvars = new
 
     @property
     def handicap(self):
         return self["handicap"]
 
+    @handicap.setter
+    def handicap(self, value):
+        new = self.cvars
+        new["handicap"] = value
+        self.cvars = new
+
     @property
     def autohop(self):
         return bool(int(self["cg_autoHop"]))
+
+    @autohop.setter
+    def autohop(self, value):
+        new = self.cvars
+        new["autohop"] = int(value)
+        self.cvars = new
 
     @property
     def autoaction(self):
         return bool(int(self["cg_autoAction"]))
 
+    @autoaction.setter
+    def autoaction(self, value):
+        new = self.cvars
+        new["cg_autoAction"] = int(value)
+        self.cvars = new
+
     @property
     def predictitems(self):
         return bool(int(self["cg_predictItems"]))
+
+    @predictitems.setter
+    def predictitems(self, value):
+        new = self.cvars
+        new["cg_predictItems"] = int(value)
+        self.cvars = new
 
     @property
     def connection_state(self):
@@ -243,6 +301,12 @@ class Player():
     @property
     def country(self):
         return self["country"]
+
+    @country.setter
+    def country(self, value):
+        new = self.cvars
+        new["country"] = value
+        self.cvars = new
 
     @property
     def valid(self):
@@ -435,12 +499,32 @@ class Player():
         minqlx.set_armor(self.id, value)
 
     @property
+    def is_alive(self):
+        return self.state.is_alive
+    
+    @is_alive.setter
+    def is_alive(self, value):
+        if not isinstance(value, bool):
+            raise ValueError("is_alive needs to be a boolean.")
+
+        cur = self.is_alive
+        if cur and value == False:
+            # TODO: Proper death and not just setting health to 0.
+            self.health = 0
+        elif not cur and value == True:
+            minqlx.player_spawn(self.id)
+
+    @property
     def score(self):
         return self.stats.score
 
     @score.setter
     def score(self, value):
         return minqlx.set_score(self.id, value)
+
+    @property
+    def channel(self):
+        return minqlx.TellChannel(self)
 
     def tell(self, msg, **kwargs):
         return minqlx.Plugin.tell(msg, self, **kwargs)
@@ -505,13 +589,24 @@ class AbstractDummyPlayer(Player):
     def update(self):
         pass
 
+    @property
+    def channel(self):
+        raise NotImplementedError("channel property needs to be implemented.")
+
     def tell(self, msg):
         raise NotImplementedError("tell() needs to be implemented.")
     
 class RconDummyPlayer(AbstractDummyPlayer):
+    def __init__(self):
+        super().__init__(name=self.__class__.__name__)
+    
     @property
     def steam_id(self):
         return minqlx.owner()
 
+    @property
+    def channel(self):
+        return minqlx.CONSOLE_CHANNEL
+
     def tell(self, msg):
-        minqlx.CONSOLE_CHANNEL.reply(msg)
+        self.channel.reply(msg)

@@ -31,6 +31,7 @@ _re_callvote = re.compile(r"^(?:cv|callvote) +(?P<cmd>[^ ]+)(?: \"?(?P<args>.+?)
 _re_vote = re.compile(r"^vote +(?P<arg>.)", flags=re.IGNORECASE)
 _re_team = re.compile(r"^team +(?P<arg>.)", flags=re.IGNORECASE)
 _re_vote_ended = re.compile(r"^print \"Vote (?P<result>passed|failed).\n\"$")
+_re_userinfo = re.compile(r"^userinfo \"(?P<vars>.+)\"$")
 
 # ====================================================================
 #                         LOW-LEVEL HANDLERS
@@ -43,7 +44,11 @@ def handle_rcon(cmd):
     interact with the Python part of minqlx without having to connect.
 
     """
-    minqlx.COMMANDS.handle_input(minqlx.RconDummyPlayer(), cmd, minqlx.CONSOLE_CHANNEL)
+    try:
+        minqlx.COMMANDS.handle_input(minqlx.RconDummyPlayer(), cmd, minqlx.CONSOLE_CHANNEL)
+    except:
+        minqlx.log_exception()
+        return True
 
 def handle_client_command(client_id, cmd):
     """Client commands are commands such as "say", "say_team", "scores",
@@ -130,6 +135,25 @@ def handle_client_command(client_id, cmd):
                 if minqlx.EVENT_DISPATCHERS["team_switch_attempt"].dispatch(player, player.team, target_team) == False:
                     return False
             return cmd
+
+        res = _re_userinfo.match(cmd)
+        if res:
+            new_info = minqlx.parse_variables(res.group("vars"), ordered=True)
+            old_info = player.cvars
+            changed = {}
+
+            for key in new_info:
+                if key not in old_info or (key in old_info and new_info[key] != old_info[key]):
+                    changed[key] = new_info[key]
+
+            if changed:
+                ret = minqlx.EVENT_DISPATCHERS["userinfo"].dispatch(player, changed)
+                if ret == False:
+                    return False
+                elif isinstance(ret, dict):
+                    for key in ret:
+                        new_info[key] = ret[key]
+                    cmd = "userinfo \"{}\"".format("".join(["\\{}\\{}".format(key, new_info[key]) for key in new_info]))
 
         return cmd
     except:
@@ -356,10 +380,7 @@ def handle_player_spawn(client_id):
         return True
 
 def handle_console_print(text):
-    """Called whenever the server tries to set a configstring. Can return
-    False to stop the event and can be modified along the handler chain.
-
-    """
+    """Called whenever the server prints something to the console and when rcon is used."""
     try:
         text = text.rstrip()
         if not text:
@@ -372,10 +393,54 @@ def handle_console_print(text):
         if res == False:
             return False
         elif isinstance(res, str):
-            return res
+            text = res
+
+        if _print_redirection:
+            global _print_buffer
+            _print_buffer += text
+
+        return res
     except:
         minqlx.log_exception()
         return True
+
+_print_redirection = None
+_print_buffer = ""
+
+def redirect_print(channel):
+    """Redirects print output to a channel. Useful for commands that execute console commands
+    and want to redirect the output to the channel instead of letting it go to the console.
+
+    To use it, use the return value with the "with" statement.
+
+    .. code-block:: python
+        def cmd_echo(self, player, msg, channel):
+            with minqlx.redirect_print(channel):
+                minqlx.console_command("echo {}".format(" ".join(msg)))
+
+    """
+    class PrintRedirector:
+        def __init__(self, channel):
+            if not isinstance(channel, minqlx.AbstractChannel):
+                raise ValueError("The redirection channel must be an instance of minqlx.AbstractChannel.")
+            
+            self.channel = channel
+
+        def __enter__(self):
+            global _print_redirection
+            _print_redirection = self.channel
+
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            global _print_redirection
+            self.flush()
+            _print_redirection = None
+
+        def flush(self):
+            global _print_buffer
+            self.channel.reply(_print_buffer)
+            _print_buffer = ""
+
+    return PrintRedirector(channel)
 
 def register_handlers():
     minqlx.register_handler("rcon", handle_rcon)

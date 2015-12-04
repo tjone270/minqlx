@@ -394,7 +394,7 @@ static PyObject* PyMinqlx_ConsoleCommand(PyObject* self, PyObject* args) {
     if (!PyArg_ParseTuple(args, "s:console_command", &cmd))
         return NULL;
 
-    Cbuf_ExecuteText(EXEC_INSERT, cmd);
+    Cmd_ExecuteString(cmd);
 
     Py_RETURN_NONE;
 }
@@ -768,7 +768,9 @@ static PyObject* PyMinqlx_PlayerStats(PyObject* self, PyObject* args) {
         Py_RETURN_NONE;
 
     PyObject* stats = PyStructSequence_New(&player_stats_type);
-    PyStructSequence_SetItem(stats, 0, PyLong_FromLongLong(g_entities[client_id].client->ps.persistant[PERS_ROUND_SCORE]));
+    int score = g_entities[client_id].client->sess.sessionTeam == TEAM_SPECTATOR ?
+        0 : g_entities[client_id].client->ps.persistant[PERS_ROUND_SCORE];
+    PyStructSequence_SetItem(stats, 0, PyLong_FromLongLong(score));
     PyStructSequence_SetItem(stats, 1, PyLong_FromLongLong(g_entities[client_id].client->expandedStats.numKills));
     PyStructSequence_SetItem(stats, 2, PyLong_FromLongLong(g_entities[client_id].client->expandedStats.numDeaths));
     PyStructSequence_SetItem(stats, 3, PyLong_FromLongLong(g_entities[client_id].client->expandedStats.totalDamageDealt));
@@ -1212,6 +1214,30 @@ static PyObject* PyMinqlx_AllowSinglePlayer(PyObject* self, PyObject* args) {
 }
 
 /*
+* ================================================================
+*                           player_spawn
+* ================================================================
+*/
+
+static PyObject* PyMinqlx_PlayerSpawn(PyObject* self, PyObject* args) {
+    int client_id;
+    if (!PyArg_ParseTuple(args, "i:player_spawn", &client_id))
+        return NULL;
+    else if (client_id < 0 || client_id >= sv_maxclients->integer) {
+        PyErr_Format(PyExc_ValueError,
+                     "client_id needs to be a number from 0 to %d.",
+                     sv_maxclients->integer);
+        return NULL;
+    }
+    else if (!g_entities[client_id].client)
+        Py_RETURN_FALSE;
+
+    g_entities[client_id].client->ps.pm_type = PM_NORMAL;
+    My_ClientSpawn(&g_entities[client_id]);
+    Py_RETURN_TRUE;
+}
+
+/*
  * ================================================================
  *             Module definition and initialization
  * ================================================================
@@ -1281,6 +1307,8 @@ static PyMethodDef minqlxMethods[] = {
     {"callvote", PyMinqlx_Callvote, METH_VARARGS,
      "Calls a vote as if started by the server and not a player."},
     {"allow_single_player", PyMinqlx_AllowSinglePlayer, METH_VARARGS,
+     "Allows or disallows a game with only a single player in it to go on without forfeiting. Useful for race."},
+    {"player_spawn", PyMinqlx_PlayerSpawn, METH_VARARGS,
      "Allows or disallows a game with only a single player in it to go on without forfeiting. Useful for race."},
     {NULL, NULL, 0, NULL}
 };

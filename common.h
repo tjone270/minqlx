@@ -1,7 +1,9 @@
 #ifndef COMMON_H
 #define COMMON_H
 
+#ifndef MINQLX_VERSION
 #define MINQLX_VERSION "NOT_SET"
+#endif
 
 #define DEBUG_PRINT_PREFIX "[minqlx] "
 #define DEBUG_ERROR_FORMAT "[minqlx] ERROR @ %s:%d in %s:\n" DEBUG_PRINT_PREFIX

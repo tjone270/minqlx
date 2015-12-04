@@ -7,6 +7,7 @@ int allow_free_client = -1;
 
 char* ClientCommandDispatcher(int client_id, char* cmd) {
     char* ret = cmd;
+    static char ccmd_buf[4096];
     if (!client_command_handler)
         return ret; // No registered handler.
     
@@ -20,8 +21,10 @@ char* ClientCommandDispatcher(int client_id, char* cmd) {
                 __FILE__, __LINE__, __func__);
     else if (PyBool_Check(result) && result == Py_False)
         ret = NULL;
-    else if (PyUnicode_Check(result))
-        ret = PyUnicode_AsUTF8(result);
+    else if (PyUnicode_Check(result)) {
+        strncpy(ccmd_buf, PyUnicode_AsUTF8(result), sizeof(ccmd_buf));
+        ret = ccmd_buf;
+    }
     
     Py_XDECREF(cmd_string);
     Py_XDECREF(result);
@@ -32,6 +35,7 @@ char* ClientCommandDispatcher(int client_id, char* cmd) {
 
 char* ServerCommandDispatcher(int client_id, char* cmd) {
     char* ret = cmd;
+    static char scmd_buf[4096];
     if (!server_command_handler)
         return ret; // No registered handler.
 
@@ -45,8 +49,10 @@ char* ServerCommandDispatcher(int client_id, char* cmd) {
                 __FILE__, __LINE__, __func__);
     else if (PyBool_Check(result) && result == Py_False)
         ret = NULL;
-    else if (PyUnicode_Check(result))
-        ret = PyUnicode_AsUTF8(result);
+    else if (PyUnicode_Check(result)) {
+        strncpy(scmd_buf, PyUnicode_AsUTF8(result), sizeof(scmd_buf));
+        ret = scmd_buf;
+    }
 
     Py_XDECREF(cmd_string);
     Py_XDECREF(result);
@@ -71,6 +77,7 @@ void FrameDispatcher(void) {
 
 char* ClientConnectDispatcher(int client_id, int is_bot) {
 	char* ret = NULL;
+    static char connect_buf[4096];
 	if (!client_connect_handler)
 		return ret; // No registered handler.
 
@@ -86,8 +93,10 @@ char* ClientConnectDispatcher(int client_id, int is_bot) {
 				__FILE__, __LINE__, __func__);
 	else if (PyBool_Check(result) && result == Py_False)
 		ret = "You are banned from this server.";
-	else if (PyUnicode_Check(result))
-		ret = PyUnicode_AsUTF8(result);
+	else if (PyUnicode_Check(result)) {
+		strncpy(connect_buf, PyUnicode_AsUTF8(result), sizeof(connect_buf));
+        ret = connect_buf;
+    }
 
 	Py_XDECREF(result);
 
@@ -162,6 +171,7 @@ void NewGameDispatcher(int restart) {
 
 char* SetConfigstringDispatcher(int index, char* value) {
 	char* ret = value;
+    static char setcs_buf[4096];
 	if (!set_configstring_handler)
 		return ret; // No registered handler.
 
@@ -175,8 +185,10 @@ char* SetConfigstringDispatcher(int index, char* value) {
 				__FILE__, __LINE__, __func__);
 	else if (PyBool_Check(result) && result == Py_False)
 		ret = NULL;
-	else if (PyUnicode_Check(result))
-		ret = PyUnicode_AsUTF8(result);
+	else if (PyUnicode_Check(result)) {
+		strncpy(setcs_buf, PyUnicode_AsUTF8(result), sizeof(setcs_buf));
+        ret = setcs_buf;
+    }
 
     Py_XDECREF(value_string);
 	Py_XDECREF(result);
@@ -203,6 +215,7 @@ void RconDispatcher(const char* cmd) {
 
 char* ConsolePrintDispatcher(char* text) {
     char* ret = text;
+    static char print_buf[4096];
     if (!console_print_handler)
         return ret; // No registered handler.
 
@@ -216,8 +229,10 @@ char* ConsolePrintDispatcher(char* text) {
                 __FILE__, __LINE__, __func__);
     else if (PyBool_Check(result) && result == Py_False)
         ret = NULL;
-    else if (PyUnicode_Check(result))
-        ret = PyUnicode_AsUTF8(result);
+    else if (PyUnicode_Check(result)) {
+        strncpy(print_buf, PyUnicode_AsUTF8(result), sizeof(print_buf));
+        ret = print_buf;
+    }
 
     Py_XDECREF(text_string);
     Py_XDECREF(result);

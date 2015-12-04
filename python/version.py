@@ -3,56 +3,15 @@ import sys
 from subprocess import check_output
 
 def print_usage():
-    print("Usage: {} -set(_debug)|-unset(_debug)".format(sys.argv[0]))
-
-def set(version):
-    with open("common.h", "r+") as f:
-        lines = f.readlines()
-        f.seek(0)
-        f.truncate()
-        for line in lines:
-            if line.startswith("#define MINQLX_VERSION"):
-                f.write('#define MINQLX_VERSION "{}"\n'.format(version))
-            else:
-                f.write(line)
-
-def unset(version):
-    with open("common.h", "r+") as f:
-        lines = f.readlines()
-        f.seek(0)
-        f.truncate()
-        for line in lines:
-            if line.startswith("#define MINQLX_VERSION"):
-                f.write('#define MINQLX_VERSION "NOT_SET"\n')
-            else:
-                f.write(line)
-
-
+    print("Usage: {} [-d]".format(sys.argv[0]))
 
 if __name__ == "__main__":
     version = check_output(["git", "describe", "--long", "--tags", "--dirty", "--always"]).decode().strip()
+    branch = check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"]).decode().strip()
 
     if len(sys.argv) < 2:
-        print_usage()
-    elif sys.argv[1] == "-set":
-        print("Setting to version {}...".format(version))
-        if "dirty" in version:
-            print("ERROR: Please commit changes before building.")
-            exit(1)
-        set(version)
-        print("Version set!")
-    elif sys.argv[1] == "-set_debug":
-        version += "_debug"
-        print("Setting to debug version {}...".format(version))
-        set(version)
-        print("Debug version set!")
-    elif sys.argv[1] == "-unset":
-        print("Unsetting version...")
-        unset(version)
-        print("Version unset!")
-    elif sys.argv[1] == "-unset_debug":
-        print("Unsetting debug version...")
-        unset(version)
-        print("Debug version unset!")
+        print("{}-{}".format(version, branch))
+    elif sys.argv[1] == "-d":
+        print("{}_debug-{}".format(version, branch))
     else:
         print_usage()

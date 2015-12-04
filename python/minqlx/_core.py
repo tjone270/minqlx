@@ -40,17 +40,21 @@ from logging.handlers import RotatingFileHandler
 TEAMS = collections.OrderedDict(enumerate(("free", "red", "blue", "spectator")))
 
 # Game type number -> string
-GAMETYPES = collections.OrderedDict(enumerate(("Free for All", "Duel", "Race", "Team Deathmatch", "Clan Arena",
-    "Capture the Flag", "Overload", "Harvester", "Freeze Tag", "Domination", "Attack and Defend", "Red Rover")))
+GAMETYPES = collections.OrderedDict([(i, gt) for i, gt in enumerate(("Free for All", "Duel", "Race", "Team Deathmatch",
+    "Clan Arena", "Capture the Flag", "One Flag", "", "Harvester", "Freeze Tag", "Domination", "Attack and Defend",
+    "Red Rover")) if gt])
 
 # Game type number -> short string
-GAMETYPES_SHORT = collections.OrderedDict(enumerate(("ffa", "duel", "race", "tdm", "ca", "ctf", "ob", "har", "ft", "dom", "ad", "rr")))
+GAMETYPES_SHORT = collections.OrderedDict([(i, gt) for i, gt in enumerate(("ffa", "duel", "race", "tdm", "ca", "ctf",
+    "1f", "", "har", "ft", "dom", "ad", "rr")) if gt])
 
 # Connection states.
 CONNECTION_STATES = collections.OrderedDict(enumerate(("free", "zombie", "connected", "primed", "active")))
 
-WEAPONS = collections.OrderedDict(enumerate(("_none", "g", "mg", "sg", "gl", "rl", "lg", "rg",
-    "pg", "bfg", "gh", "ng", "pl", "cg", "hmg", "hands")))
+WEAPONS = collections.OrderedDict([(i, w) for i, w in enumerate(("", "g", "mg", "sg", "gl", "rl", "lg", "rg",
+    "pg", "bfg", "gh", "ng", "pl", "cg", "hmg", "hands")) if w])
+
+DEFAULT_PLUGINS = ("plugin_manager", "essentials", "motd", "permission", "ban", "silence", "clan", "names", "log")
 
 # ====================================================================
 #                               HELPERS
@@ -184,27 +188,50 @@ def set_cvar_limit_once(name, value, minimum, maximum, flags=0):
     return False
 
 def set_plugins_version(path):
-    args = shlex.split("git describe --long --tags --dirty --always")
+    args_version = shlex.split("git describe --long --tags --dirty --always")
+    args_branch = shlex.split("git rev-parse --abbrev-ref HEAD")
 
     # We keep environment variables, but remove LD_PRELOAD to avoid a warning the OS might throw.
     env = dict(os.environ)
     del env["LD_PRELOAD"]
     try:
-        p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=path, env=env)
+        # Get the version using git describe.
+        p = subprocess.Popen(args_version, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=path, env=env)
         p.wait(timeout=1)
         if p.returncode != 0:
             setattr(minqlx, "__plugins_version__", "NOT_SET")
             return
+
+        version = p.stdout.read().decode().strip()
+
+        # Get the branch using git rev-parse.
+        p = subprocess.Popen(args_branch, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=path, env=env)
+        p.wait(timeout=1)
+        if p.returncode != 0:
+            setattr(minqlx, "__plugins_version__", version)
+            return
+        
+        branch = p.stdout.read().decode().strip()
     except (FileNotFoundError, subprocess.TimeoutExpired):
         setattr(minqlx, "__plugins_version__", "NOT_SET")
         return
 
-    setattr(minqlx, "__plugins_version__", p.stdout.read().decode().strip())
+    setattr(minqlx, "__plugins_version__", "{}-{}".format(version, branch))
 
 def set_map_subtitles():
-    minqlx.set_configstring(678, "Running minqlx ^6{}^7 with plugins ^6{}^7."
+    cs = minqlx.get_configstring(678)
+    if cs:
+        cs += " - "
+    minqlx.set_configstring(678, cs + "Running minqlx ^6{}^7 with plugins ^6{}^7."
         .format(minqlx.__version__, minqlx.__plugins_version__))
-    minqlx.set_configstring(679, "Check ^6http://github.com/MinoMino/minqlx^7 for more details.")
+    cs = minqlx.get_configstring(679)
+    if cs:
+        cs += " - "
+    minqlx.set_configstring(679, cs + "Check ^6http://github.com/MinoMino/minqlx^7 for more details.")
+
+def reference_steamworks(item_id):
+    new_ref = minqlx.get_configstring(715) + "{} ".format(item_id)
+    minqlx.set_configstring(715, new_ref)
 
 # ====================================================================
 #                              DECORATORS
@@ -279,15 +306,19 @@ class PluginUnloadError(Exception):
     pass
 
 def load_preset_plugins():
-    plugins_cvar = minqlx.get_cvar("qlx_plugins")
+    plugins = minqlx.Plugin.get_cvar("qlx_plugins", set)
+    if "DEFAULT" in plugins:
+        plugins.remove("DEFAULT")
+        plugins.update(DEFAULT_PLUGINS)
+
     plugins_path = os.path.abspath(minqlx.get_cvar("qlx_pluginsPath"))
     plugins_dir = os.path.basename(plugins_path)
 
     if os.path.isdir(plugins_path):
         # Filter out already loaded plugins.
-        plugins = [p.strip() for p in plugins_cvar.split(",") if "{}.{}".format(plugins_dir, p) not in sys.modules]
-        for plugin in plugins:
-            load_plugin(plugin.strip())
+        plugins = [p for p in plugins if "{}.{}".format(plugins_dir, p) not in sys.modules]
+        for p in plugins:
+            load_plugin(p)
     else:
         raise(PluginLoadError("Cannot find the plugins directory '{}'."
             .format(os.path.abspath(plugins_path))))
@@ -362,12 +393,12 @@ def reload_plugin(plugin):
 def initialize_cvars():
     # Core
     minqlx.set_cvar_once("qlx_owner", "-1")
-    minqlx.set_cvar_once("qlx_plugins", "plugin_manager, essentials, motd, permission, ban, clan, names")
+    minqlx.set_cvar_once("qlx_plugins", ", ".join(DEFAULT_PLUGINS))
     minqlx.set_cvar_once("qlx_pluginsPath", "minqlx-plugins")
     minqlx.set_cvar_once("qlx_database", "Redis")
     minqlx.set_cvar_once("qlx_commandPrefix", "!")
-    minqlx.set_cvar_once("qlx_logs", "5")
-    minqlx.set_cvar_once("qlx_logsSize", str(5*10**6)) # 5 MB
+    minqlx.set_cvar_once("qlx_logs", "2")
+    minqlx.set_cvar_once("qlx_logsSize", str(3*10**6)) # 3 MB
     # Redis
     minqlx.set_cvar_once("qlx_redisAddress", "127.0.0.1")
     minqlx.set_cvar_once("qlx_redisDatabase", "0")

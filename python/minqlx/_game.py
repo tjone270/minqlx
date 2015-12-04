@@ -251,6 +251,17 @@ class Game():
         else:
             raise ValueError("tags need to be a string or an iterable returning strings.")
 
+    @property
+    def steamworks_items(self):
+        return minqlx.get_configstring(715).split()
+
+    @steamworks_items.setter
+    def steamworks_items(self, new_items):
+        if hasattr(new_items, "__iter__"):
+            minqlx.set_configstring(715, " ".join([str(i) for i in new_items]) + " ")
+        else:
+            raise ValueError("The value needs to be an iterable.")
+
     @classmethod
     def shuffle(cls):
         minqlx.console_command("forceshuffle")

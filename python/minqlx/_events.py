@@ -321,11 +321,12 @@ class ChatEventDispatcher(EventDispatcher):
     name = "chat"
     
     def dispatch(self, player, msg, channel):
-        ret = super().dispatch(player, msg, channel)
+        ret = minqlx.COMMANDS.handle_input(player, msg, channel)
         if not ret: # Stop event if told to.
             return False
         
-        return minqlx.COMMANDS.handle_input(player, msg, channel)
+        return super().dispatch(player, msg, channel)
+        
 
 class UnloadDispatcher(EventDispatcher):
     """Event that triggers whenever a plugin is unloaded. Cannot be cancelled."""
@@ -517,6 +518,22 @@ class DeathDispatcher(EventDispatcher):
     def dispatch(self, victim, killer, data):
         return super().dispatch(victim, killer, data)
 
+class UserinfoDispatcher(EventDispatcher):
+    """Event for clients changing their userinfo."""
+    name = "userinfo"
+    
+    def dispatch(self, player, changed):
+        return super().dispatch(player, changed)
+
+    def handle_return(self, handler, value):
+        """Takes a returned dictionary and applies it to the current userinfo."""
+        if isinstance(value, dict):
+            player, changed = self.args
+            self.args = (player, changed)
+            self.return_value = changed
+        else:
+            return super().handle_return(handler, value)
+
 EVENT_DISPATCHERS = EventDispatcherManager()
 EVENT_DISPATCHERS.add_dispatcher(ConsolePrintDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(CommandDispatcher)
@@ -546,3 +563,4 @@ EVENT_DISPATCHERS.add_dispatcher(MapDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(NewGameDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(KillDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(DeathDispatcher)
+EVENT_DISPATCHERS.add_dispatcher(UserinfoDispatcher)
