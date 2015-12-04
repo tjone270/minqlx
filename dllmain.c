@@ -54,6 +54,7 @@ SV_GetConfigstring_ptr SV_GetConfigstring;
 SV_DropClient_ptr SV_DropClient;
 Sys_SetModuleOffset_ptr Sys_SetModuleOffset;
 SV_SpawnServer_ptr SV_SpawnServer;
+Cmd_ExecuteString_ptr Cmd_ExecuteString;
 
 // VM functions
 G_RunFrame_ptr G_RunFrame;
@@ -253,6 +254,13 @@ static void SearchFunctions(void) {
 		failed = 1;
 	}
 	else DebugPrint("SV_SpawnServer: %p\n", SV_SpawnServer);
+
+	Cmd_ExecuteString = (Cmd_ExecuteString_ptr)PatternSearchModule(&module, PTRN_CMD_EXECUTESTRING, MASK_CMD_EXECUTESTRING);
+	if (Cmd_ExecuteString == NULL) {
+		DebugPrint("ERROR: Unable to find Cmd_ExecuteString.\n");
+		failed = 1;
+	}
+	else DebugPrint("Cmd_ExecuteString: %p\n", Cmd_ExecuteString);
 
 	// Cmd_Argc is really small, making it hard to search for, so we use a reference to it instead.
 	Cmd_Argc = (Cmd_Argc_ptr)(*(int32_t*)OFFSET_RELP_CMD_ARGC + OFFSET_RELP_CMD_ARGC + 4);
