@@ -44,7 +44,11 @@ def handle_rcon(cmd):
     interact with the Python part of minqlx without having to connect.
 
     """
-    minqlx.COMMANDS.handle_input(minqlx.RconDummyPlayer(), cmd, minqlx.CONSOLE_CHANNEL)
+    try:
+        minqlx.COMMANDS.handle_input(minqlx.RconDummyPlayer(), cmd, minqlx.CONSOLE_CHANNEL)
+    except:
+        minqlx.log_exception()
+        return True
 
 def handle_client_command(client_id, cmd):
     """Client commands are commands such as "say", "say_team", "scores",
