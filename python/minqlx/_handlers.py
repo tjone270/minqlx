@@ -376,10 +376,7 @@ def handle_player_spawn(client_id):
         return True
 
 def handle_console_print(text):
-    """Called whenever the server tries to set a configstring. Can return
-    False to stop the event and can be modified along the handler chain.
-
-    """
+    """Called whenever the server prints something to the console and when rcon is used."""
     try:
         text = text.rstrip()
         if not text:
