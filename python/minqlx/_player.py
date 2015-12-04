@@ -597,9 +597,16 @@ class AbstractDummyPlayer(Player):
         raise NotImplementedError("tell() needs to be implemented.")
     
 class RconDummyPlayer(AbstractDummyPlayer):
+    def __init__(self):
+        super().__init__(name=self.__class__.__name__)
+    
     @property
     def steam_id(self):
         return minqlx.owner()
 
+    @property
+    def channel(self):
+        return minqlx.CONSOLE_CHANNEL
+
     def tell(self, msg):
-        minqlx.CONSOLE_CHANNEL.reply(msg)
+        self.channel.reply(msg)
