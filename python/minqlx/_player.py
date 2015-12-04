@@ -522,6 +522,10 @@ class Player():
     def score(self, value):
         return minqlx.set_score(self.id, value)
 
+    @property
+    def channel(self):
+        return minqlx.TellChannel(self)
+
     def tell(self, msg, **kwargs):
         return minqlx.Plugin.tell(msg, self, **kwargs)
 
@@ -584,6 +588,10 @@ class AbstractDummyPlayer(Player):
 
     def update(self):
         pass
+
+    @property
+    def channel(self):
+        raise NotImplementedError("channel property needs to be implemented.")
 
     def tell(self, msg):
         raise NotImplementedError("tell() needs to be implemented.")
