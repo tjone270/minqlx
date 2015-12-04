@@ -36,6 +36,7 @@ debug: $(OUTPUT)
 	@echo Done!
 
 nopy: CFLAGS += -Wall -DNOPY
+nopy: VERSION := MINQLX_VERSION=\"$(shell git describe --long --tags --dirty --always)-nopy\"
 nopy: $(OUTPUT_NOPY)
 	@echo Done!
 
