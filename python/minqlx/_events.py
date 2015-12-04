@@ -321,11 +321,12 @@ class ChatEventDispatcher(EventDispatcher):
     name = "chat"
     
     def dispatch(self, player, msg, channel):
-        ret = super().dispatch(player, msg, channel)
+        ret = minqlx.COMMANDS.handle_input(player, msg, channel)
         if not ret: # Stop event if told to.
             return False
         
-        return minqlx.COMMANDS.handle_input(player, msg, channel)
+        return super().dispatch(player, msg, channel)
+        
 
 class UnloadDispatcher(EventDispatcher):
     """Event that triggers whenever a plugin is unloaded. Cannot be cancelled."""
