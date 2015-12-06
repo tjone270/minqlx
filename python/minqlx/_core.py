@@ -315,8 +315,7 @@ def load_preset_plugins():
     plugins_dir = os.path.basename(plugins_path)
 
     if os.path.isdir(plugins_path):
-        # Filter out already loaded plugins.
-        plugins = [p for p in plugins if "{}.{}".format(plugins_dir, p) not in sys.modules]
+        plugins = [p for p in plugins if "{}.{}".format(plugins_dir, p)]
         for p in plugins:
             load_plugin(p)
     else:
