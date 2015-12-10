@@ -54,7 +54,7 @@ CONNECTION_STATES = collections.OrderedDict(enumerate(("free", "zombie", "connec
 WEAPONS = collections.OrderedDict([(i, w) for i, w in enumerate(("", "g", "mg", "sg", "gl", "rl", "lg", "rg",
     "pg", "bfg", "gh", "ng", "pl", "cg", "hmg", "hands")) if w])
 
-DEFAULT_PLUGINS = ("plugin_manager", "essentials", "motd", "permission", "ban", "silence", "clan", "names", "log")
+DEFAULT_PLUGINS = ("plugin_manager", "essentials", "motd", "permission", "ban", "silence", "clan", "names", "log", "workshop")
 
 # ====================================================================
 #                               HELPERS
