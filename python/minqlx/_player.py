@@ -297,6 +297,17 @@ class Player():
             return "root"
         elif self._info.privileges == minqlx.PRIV_BANNED:
             return "banned"
+
+    @privileges.setter
+    def privileges(self, value):
+        if not value or value == "none":
+            minqlx.set_privileges(self.id, minqlx.PRIV_NONE)
+        elif value == "mod":
+            minqlx.set_privileges(self.id, minqlx.PRIV_MOD)
+        elif value == "admin":
+            minqlx.set_privileges(self.id, minqlx.PRIV_ADMIN)
+        else:
+            raise ValueError("Invalid privilege level.")
     
     @property
     def country(self):
