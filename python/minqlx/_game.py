@@ -252,11 +252,11 @@ class Game():
             raise ValueError("tags need to be a string or an iterable returning strings.")
 
     @property
-    def steamworks_items(self):
-        return minqlx.get_configstring(715).split()
+    def workshop_items(self):
+        return [int(i) for i in minqlx.get_configstring(715).split()]
 
-    @steamworks_items.setter
-    def steamworks_items(self, new_items):
+    @workshop_items.setter
+    def workshop_items(self, new_items):
         if hasattr(new_items, "__iter__"):
             minqlx.set_configstring(715, " ".join([str(i) for i in new_items]) + " ")
         else:
