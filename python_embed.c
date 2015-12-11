@@ -552,7 +552,7 @@ static PyObject* PyMinqlx_SetConfigstring(PyObject* self, PyObject* args) {
 		return NULL;
     }
 
-    SV_SetConfigstring(i, cs);
+    My_SV_SetConfigstring(i, cs);
 
     Py_RETURN_NONE;
 }
