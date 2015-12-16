@@ -37,7 +37,6 @@ Cmd_AddCommand_ptr Cmd_AddCommand;
 Cmd_Args_ptr Cmd_Args;
 Cmd_Argv_ptr Cmd_Argv;
 Cmd_Argc_ptr Cmd_Argc;
-Cmd_ArgsFrom_ptr Cmd_ArgsFrom;
 Cmd_TokenizeString_ptr Cmd_TokenizeString;
 Cbuf_ExecuteText_ptr Cbuf_ExecuteText;
 Cvar_FindVar_ptr Cvar_FindVar;
@@ -135,13 +134,6 @@ static void SearchFunctions(void) {
 		failed = 1;
 	}
 	else DebugPrint("Cmd_Argc: %p\n", Cmd_Argc);
-
-	Cmd_ArgsFrom = (Cmd_ArgsFrom_ptr)PatternSearchModule(&module, PTRN_CMD_ARGSFROM, MASK_CMD_ARGSFROM);
-	if (Cmd_ArgsFrom == NULL) {
-		DebugPrint("ERROR: Unable to find Cmd_ArgsFrom.\n");
-		failed = 1;
-	}
-	else DebugPrint("Cmd_ArgsFrom: %p\n", Cmd_ArgsFrom);
 
 	Cmd_TokenizeString = (Cmd_TokenizeString_ptr)PatternSearchModule(&module, PTRN_CMD_TOKENIZESTRING, MASK_CMD_TOKENIZESTRING);
 	if (Cmd_TokenizeString == NULL) {
