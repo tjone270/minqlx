@@ -130,6 +130,7 @@ static PyStructSequence_Field player_stats_fields[] = {
     {"damage_dealt", "The player's total damage dealt."},
     {"damage_taken", "The player's total damage taken."},
     {"time", "The time in milliseconds the player has on a team since the game started."},
+    {"ping", "The player's ping."},
     {NULL}
 };
 
@@ -780,6 +781,7 @@ static PyObject* PyMinqlx_PlayerStats(PyObject* self, PyObject* args) {
     PyStructSequence_SetItem(stats, 3, PyLong_FromLongLong(g_entities[client_id].client->expandedStats.totalDamageDealt));
     PyStructSequence_SetItem(stats, 4, PyLong_FromLongLong(g_entities[client_id].client->expandedStats.totalDamageTaken));
     PyStructSequence_SetItem(stats, 5, PyLong_FromLongLong(level->time - g_entities[client_id].client->pers.enterTime));
+    PyStructSequence_SetItem(stats, 6, PyLong_FromLongLong(g_entities[client_id].client->ps.ping));
 
     return stats;
 }

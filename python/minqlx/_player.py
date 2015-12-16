@@ -327,6 +327,10 @@ class Player():
     def stats(self):
         return minqlx.player_stats(self.id)
 
+    @property
+    def ping(self):
+        return self.stats.ping
+
     def position(self, reset=False, **kwargs):
         if reset:
             pos = minqlx.Vector3((0, 0, 0))
