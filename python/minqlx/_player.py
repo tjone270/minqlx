@@ -297,6 +297,17 @@ class Player():
             return "root"
         elif self._info.privileges == minqlx.PRIV_BANNED:
             return "banned"
+
+    @privileges.setter
+    def privileges(self, value):
+        if not value or value == "none":
+            minqlx.set_privileges(self.id, minqlx.PRIV_NONE)
+        elif value == "mod":
+            minqlx.set_privileges(self.id, minqlx.PRIV_MOD)
+        elif value == "admin":
+            minqlx.set_privileges(self.id, minqlx.PRIV_ADMIN)
+        else:
+            raise ValueError("Invalid privilege level.")
     
     @property
     def country(self):
@@ -421,12 +432,12 @@ class Player():
         if not kwargs:
             return pu
         
-        quad = pu.quad if "quad" not in kwargs else kwargs["quad"]
-        bs = pu.battlesuit if "battlesuit" not in kwargs else kwargs["battlesuit"]
-        haste = pu.haste if "haste" not in kwargs else kwargs["haste"]
-        invis = pu.invisibility if "invisibility" not in kwargs else kwargs["invisibility"]
-        regen = pu.regeneration if "regeneration" not in kwargs else kwargs["regeneration"]
-        invul = pu.invulnerability if "invulnerability" not in kwargs else kwargs["invulnerability"]
+        quad = pu.quad if "quad" not in kwargs else round(kwargs["quad"]*1000)
+        bs = pu.battlesuit if "battlesuit" not in kwargs else round(kwargs["battlesuit"]*1000)
+        haste = pu.haste if "haste" not in kwargs else round(kwargs["haste"]*1000)
+        invis = pu.invisibility if "invisibility" not in kwargs else round(kwargs["invisibility"]*1000)
+        regen = pu.regeneration if "regeneration" not in kwargs else round(kwargs["regeneration"]*1000)
+        invul = pu.invulnerability if "invulnerability" not in kwargs else round(kwargs["invulnerability"]*1000)
 
         return minqlx.set_powerups(self.id,
             minqlx.Powerups((quad, bs, haste, invis, regen, invul)))

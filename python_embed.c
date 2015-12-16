@@ -436,7 +436,11 @@ static PyObject* PyMinqlx_SetCvar(PyObject* self, PyObject* args) {
         Py_RETURN_TRUE;
     }
     
-    Cvar_Set2(name, value, qfalse);
+    if (flags == -1)
+        Cvar_Set2(name, value, qtrue);
+    else
+        Cvar_Set2(name, value, qfalse);
+
     Py_RETURN_FALSE;
 }
 
@@ -548,7 +552,7 @@ static PyObject* PyMinqlx_SetConfigstring(PyObject* self, PyObject* args) {
 		return NULL;
     }
 
-    SV_SetConfigstring(i, cs);
+    My_SV_SetConfigstring(i, cs);
 
     Py_RETURN_NONE;
 }
@@ -1238,6 +1242,29 @@ static PyObject* PyMinqlx_PlayerSpawn(PyObject* self, PyObject* args) {
 }
 
 /*
+* ================================================================
+*                           set_privileges
+* ================================================================
+*/
+
+static PyObject* PyMinqlx_SetPrivileges(PyObject* self, PyObject* args) {
+    int client_id, priv;
+    if (!PyArg_ParseTuple(args, "ii:set_privileges", &client_id, &priv))
+        return NULL;
+    else if (client_id < 0 || client_id >= sv_maxclients->integer) {
+        PyErr_Format(PyExc_ValueError,
+                     "client_id needs to be a number from 0 to %d.",
+                     sv_maxclients->integer);
+        return NULL;
+    }
+    else if (!g_entities[client_id].client)
+        Py_RETURN_FALSE;
+
+    g_entities[client_id].client->sess.privileges = priv;
+    Py_RETURN_TRUE;
+}
+
+/*
  * ================================================================
  *             Module definition and initialization
  * ================================================================
@@ -1310,6 +1337,8 @@ static PyMethodDef minqlxMethods[] = {
      "Allows or disallows a game with only a single player in it to go on without forfeiting. Useful for race."},
     {"player_spawn", PyMinqlx_PlayerSpawn, METH_VARARGS,
      "Allows or disallows a game with only a single player in it to go on without forfeiting. Useful for race."},
+    {"set_privileges", PyMinqlx_SetPrivileges, METH_VARARGS,
+     "Sets a player's privileges. Does not persist."},
     {NULL, NULL, 0, NULL}
 };
 

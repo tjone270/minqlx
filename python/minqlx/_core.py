@@ -54,7 +54,7 @@ CONNECTION_STATES = collections.OrderedDict(enumerate(("free", "zombie", "connec
 WEAPONS = collections.OrderedDict([(i, w) for i, w in enumerate(("", "g", "mg", "sg", "gl", "rl", "lg", "rg",
     "pg", "bfg", "gh", "ng", "pl", "cg", "hmg", "hands")) if w])
 
-DEFAULT_PLUGINS = ("plugin_manager", "essentials", "motd", "permission", "ban", "silence", "clan", "names", "log")
+DEFAULT_PLUGINS = ("plugin_manager", "essentials", "motd", "permission", "ban", "silence", "clan", "names", "log", "workshop")
 
 # ====================================================================
 #                               HELPERS
@@ -228,10 +228,6 @@ def set_map_subtitles():
     if cs:
         cs += " - "
     minqlx.set_configstring(679, cs + "Check ^6http://github.com/MinoMino/minqlx^7 for more details.")
-
-def reference_steamworks(item_id):
-    new_ref = minqlx.get_configstring(715) + "{} ".format(item_id)
-    minqlx.set_configstring(715, new_ref)
 
 # ====================================================================
 #                              DECORATORS
