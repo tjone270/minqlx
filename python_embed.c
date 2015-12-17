@@ -1191,11 +1191,11 @@ static PyObject* PyMinqlx_Callvote(PyObject* self, PyObject* args) {
         if (g_entities[i].client)
             g_entities[i].client->pers.voteState = VOTE_PENDING;
 
-    SV_SetConfigstring(CS_VOTE_STRING, level->voteDisplayString);
+    My_SV_SetConfigstring(CS_VOTE_STRING, level->voteDisplayString);
     snprintf(buf, sizeof(buf), "%d", level->voteTime);
-    SV_SetConfigstring(CS_VOTE_TIME, buf);    
-    SV_SetConfigstring(CS_VOTE_YES, "0");
-    SV_SetConfigstring(CS_VOTE_NO, "0");
+    My_SV_SetConfigstring(CS_VOTE_TIME, buf);    
+    My_SV_SetConfigstring(CS_VOTE_YES, "0");
+    My_SV_SetConfigstring(CS_VOTE_NO, "0");
 
     Py_RETURN_NONE;
 }
