@@ -391,11 +391,32 @@ class StatsDispatcher(EventDispatcher):
         return super().dispatch(stats)
 
 class VoteCalledDispatcher(EventDispatcher):
-    """Event that goes off whenever a vote is called."""
+    """Event that goes off whenever a player tries to call a vote. Note that
+    this goes off even if it's a vote command that is invalid. Use vote_started
+    if you only need votes that actuall go through. Use this one for custom votes.
+
+    """
     name = "vote_called"
 
     def dispatch(self, player, vote, args):
         return super().dispatch(player, vote, args)
+
+class VoteStartedDispatcher(EventDispatcher):
+    """Event that goes off whenever a vote starts. A vote started with Plugin.callvote()
+    will have the caller set to None.
+
+    """
+    name = "vote_started"
+
+    def __init__(self):
+        super().__init__()
+        self._caller = None
+
+    def dispatch(self, vote, args):
+        return super().dispatch(self._caller, vote, args)
+
+    def caller(self, player):
+        self._caller = player
 
 class VoteEndedDispatcher(EventDispatcher):
     """Event that goes off whenever a vote either passes or fails."""
@@ -549,6 +570,7 @@ EVENT_DISPATCHERS.add_dispatcher(PlayerDisonnectDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(PlayerSpawnDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(StatsDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(VoteCalledDispatcher)
+EVENT_DISPATCHERS.add_dispatcher(VoteStartedDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(VoteEndedDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(VoteDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(GameCountdownDispatcher)

@@ -435,7 +435,13 @@ class Plugin():
 
     @classmethod
     def callvote(cls, vote, display, time=30):
-        minqlx.callvote(vote, display, time)
+        if not cls.is_vote_active():
+            # Tell vote_started's dispatcher that it's a vote called by the server.
+            minqlx.EVENT_DISPATCHERS["vote_started"].caller(None)
+            minqlx.callvote(vote, display, time)
+            return True
+
+        return False
     
     @classmethod
     def force_vote(cls, pass_it):
