@@ -127,7 +127,11 @@ class Redis(AbstractDatabase):
         return self.r.exists(key)
 
     def __getitem__(self, key):
-        return self.r.get(key)
+        res = self.r.get(key)
+        if res is None:
+            raise KeyError("The key '{}' is not present in the database.".format(key))
+        else:
+            return res
 
     def __setitem__(self, key, item):
         res = self.r.set(key, item)
@@ -135,7 +139,9 @@ class Redis(AbstractDatabase):
             raise RuntimeError("The database assignment failed.")
 
     def __delitem__(self, key):
-        self.r.delete(key)
+        res = self.r.delete(key)
+        if res == 0:
+            raise KeyError("The key '{}' is not present in the database.".format(key))
 
     def __getattr__(self, attr):
         return getattr(self.r, attr)
