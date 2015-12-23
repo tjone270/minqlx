@@ -390,24 +390,24 @@ def handle_player_spawn(client_id):
 def handle_console_print(text):
     """Called whenever the server prints something to the console and when rcon is used."""
     try:
-        text = text.rstrip()
         if not text:
             return
         
         # Log console output. Removes the need to have stdout logs in addition to minqlx.log.
-        minqlx.get_logger().debug(text)
+        minqlx.get_logger().debug(text.rstrip("\n"))
 
         res = minqlx.EVENT_DISPATCHERS["console_print"].dispatch(text)
         if res == False:
             return False
-        elif isinstance(res, str):
-            text = res
 
         if _print_redirection:
             global _print_buffer
             _print_buffer += text
 
-        return res
+        if isinstance(res, str):
+            return res
+
+        return text
     except:
         minqlx.log_exception()
         return True
