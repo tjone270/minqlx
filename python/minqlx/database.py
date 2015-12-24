@@ -186,9 +186,10 @@ class Redis(AbstractDatabase):
             return 5
  
         key = "minqlx:players:{}:permission".format(steam_id)
-        perm = self[key]
-        if perm == None:
-            return 0
+        try:
+            perm = self[key]
+        except KeyError:
+            perm = "0"
 
         return int(perm)
 
