@@ -291,15 +291,19 @@ class Game():
         return minqlx.console_command("unpause")
 
     @classmethod
-    def lock(cls, team):
-        if team.lower() not in minqlx.TEAMS.values():
+    def lock(cls, team=None):
+        if team is None:
+            return minqlx.console_command("lock")
+        elif team.lower() not in minqlx.TEAMS.values():
             raise ValueError("Invalid team.")
         
         return minqlx.console_command("lock {}".format(team.lower()))
 
     @classmethod
-    def unlock(cls, team):
-        if team.lower() not in minqlx.TEAMS.values():
+    def unlock(cls, team=None):
+        if team is None:
+            return minqlx.console_command("unlock")
+        elif team.lower() not in minqlx.TEAMS.values():
             raise ValueError("Invalid team.")
 
         return minqlx.console_command("unlock {}".format(team.lower()))

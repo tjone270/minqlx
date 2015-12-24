@@ -571,11 +571,11 @@ class Plugin():
         return minqlx.Game.unpause()
 
     @classmethod
-    def lock(cls, team):
+    def lock(cls, team=None):
         return minqlx.Game.lock(team)
 
     @classmethod
-    def unlock(cls, team):
+    def unlock(cls, team=None):
         return minqlx.Game.unlock(team)
 
     @classmethod
