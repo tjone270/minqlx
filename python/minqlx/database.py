@@ -239,10 +239,9 @@ class Redis(AbstractDatabase):
         else:
             key = "minqlx:players:{0}:flags:{1}".format(player, flag)
 
-        val = self[key]
-        if val:
-            return bool(int(val))
-        else:
+        try:
+            return bool(int(self[key]))
+        except KeyError:
             return default
 
     def connect(self, host=None, database=0, unix_socket=False, password=None):
