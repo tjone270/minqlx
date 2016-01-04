@@ -389,7 +389,7 @@ class Game():
 
     @classmethod
     def abort(cls):
-        return minqlx.console_command("abort")
+        return minqlx.console_command("map_restart")
 
     @classmethod
     def addscore(cls, player, score):
