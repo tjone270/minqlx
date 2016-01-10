@@ -541,6 +541,9 @@ class Player():
     def channel(self):
         return minqlx.TellChannel(self)
 
+    def center_print(self, msg):
+        minqlx.send_server_command(self.id, "cp \"{}\"".format(msg))
+
     def tell(self, msg, **kwargs):
         return minqlx.Plugin.tell(msg, self, **kwargs)
 

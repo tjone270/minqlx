@@ -405,6 +405,13 @@ class Plugin():
         return res
 
     @classmethod
+    def center_print(cls, msg, recipient=None):
+        if recipient:
+            recipient = cls.client_id(recipient)
+
+        minqlx.send_server_command(recipient, "cp \"{}\"".format(msg))
+
+    @classmethod
     def tell(cls, msg, recipient, **kwargs):
         """Send a tell (private message) to someone.
 
