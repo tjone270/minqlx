@@ -161,6 +161,15 @@ class Player():
             return minqlx.parse_variables(minqlx.get_configstring(529 + self._id))["cn"]
         except KeyError:
             return ""
+
+    @clan.setter
+    def clan(self, tag):
+        index = self.id + 529
+        cs = minqlx.parse_variables(minqlx.get_configstring(index), ordered=True)
+        cs["xcn"] = tag
+        cs["cn"] = tag
+        new_cs = "".join(["\\{}\\{}".format(key, cs[key]) for key in cs])
+        minqlx.set_configstring(index, new_cs)
     
     @property
     def name(self):
