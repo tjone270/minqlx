@@ -122,6 +122,8 @@ for commands like `!ban` where the target player might not currently be connecte
 
 [See here for a full command list.](https://github.com/MinoMino/minqlx/wiki/Command-List)
 
+Note that the plugins repository only contains plugins maintained by me. Take a look [here](https://github.com/MinoMino/minqlx/wiki/Useful-Plugins) some of the plugins by other users that could be useful to you.
+
 Updating
 ========
 Since this and plugins use different repositories, they will also be updated separately. However, the latest master
@@ -132,6 +134,8 @@ To update the core, just use `wget` to get the latest binary tarball and put it 
 extract it with `tar -xvf <tarball>`. To update the plugins, use `cd` to change the working directory to `qlds/minqlx-plugins`
 and do `git pull origin` and you should be good to go. Git should not remove any untracked files, so you can have your
 own custom plugins there and still keep your local copy of the repo up to date.
+
+You can also try running [these scripts](https://gist.github.com/MinoMino/5a8c76da3edd953144ef) from your QLDS directory. It will compile the latest version from source and update plugins. The second script is the same, but using the develop branch instead.
 
 Compiling
 =========
