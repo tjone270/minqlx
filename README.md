@@ -25,17 +25,22 @@ but feel free to add instructions to the [wiki](https://github.com/MinoMino/minq
 if you want to help out.
 
 - Install Python 3.5. At the time of writing, in Debian 7 or 8 you can install it by adding the `sid` repository to apt. This can be done by adding the line `deb http://ftp.debian.org/debian sid main` to
-`/etc/apt/sources.list`. We also use Redis and git for our standard plugins, so we install that as well:
+`/etc/apt/sources.list`. You can now go ahead and install it with the following:
 
 ```
 sudo apt-get update
 sudo apt-get -y install python3.5 python3.5-dev
-sudo apt-get -y install redis-server git
 ```
 
 - You should remove `sid` by commenting out or removing the line you added to `sources.list`
 earlier and then do `sudo apt-get update` again to make sure you don't install any unstable
 packages unintentionally later.
+
+- Now you should get Redis and Git, which will be used by minqlx's plugins:
+
+```
+sudo apt-get -y install redis-server git
+```
 
 - Download one of the tarballs in [releases](https://github.com/MinoMino/minqlx/releases) and extract
 its contents into `steamcmd/steamapps/common/qlds`, or whatever other directory you might have put the
@@ -46,7 +51,7 @@ the directory with all the server files (and where you extracted the above files
 
 ```
 git clone https://github.com/MinoMino/minqlx-plugins.git
-wget https://raw.github.com/pypa/pip/master/contrib/get-pip.py
+wget https://bootstrap.pypa.io/get-pip.py
 sudo python3.5 get-pip.py
 rm get-pip.py
 sudo apt-get -y install build-essential
