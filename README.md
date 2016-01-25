@@ -19,8 +19,8 @@ is being used for this one as well. Feel free to drop by.
 Installation
 ============
 These instructions are for Debian 7 or 8 (use the latter if you can choose). For Ubuntu,
-it's pretty much the same except you add Ubuntu 15's package repository temporarily,
-since it has Python 3.5 in it. You're on your own for the time being on other distros,
+see the [wiki entry](https://github.com/MinoMino/minqlx/wiki/Ubuntu) for details.
+You're on your own for the time being on other distros,
 but feel free to add instructions to the [wiki](https://github.com/MinoMino/minqlx/wiki)
 if you want to help out.
 
