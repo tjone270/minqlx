@@ -219,6 +219,11 @@ def set_plugins_version(path):
     setattr(minqlx, "__plugins_version__", "{}-{}".format(version, branch))
 
 def set_map_subtitles():
+    # We save the actual values before setting them so that we can retrieve them in Game.
+    setattr(minqlx, "_map_title", minqlx.get_configstring(3))
+    setattr(minqlx, "_map_subtitle1", minqlx.get_configstring(678))
+    setattr(minqlx, "_map_subtitle2", minqlx.get_configstring(679))
+
     cs = minqlx.get_configstring(678)
     if cs:
         cs += " - "

@@ -96,7 +96,17 @@ class Game():
     @property
     def map_title(self):
         """The full name of the map. Ex.: ``Longest Yard``."""
-        return minqlx.get_configstring(3)
+        return minqlx._map_title
+
+    @property
+    def map_subtitle1(self):
+        """The map's subtitle. Usually either empty or has the author's name."""
+        return minqlx._map_subtitle1
+
+    @property
+    def map_subtitle2(self):
+        """The map's second subtitle. Usually either empty or has the author's name."""
+        return minqlx._map_subtitle2
 
     @property
     def red_score(self):
