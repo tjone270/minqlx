@@ -265,10 +265,7 @@ class Plugin():
         if isinstance(name, minqlx.Player):
             return name
         elif isinstance(name, int) and name >= 0 and name < 64:
-            try:
-                return minqlx.Player(name)
-            except minqlx.NonexistentPlayerError:
-                return None
+            return minqlx.Player(name)
 
 
         if not player_list:
