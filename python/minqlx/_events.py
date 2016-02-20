@@ -322,7 +322,7 @@ class ChatEventDispatcher(EventDispatcher):
     
     def dispatch(self, player, msg, channel):
         ret = minqlx.COMMANDS.handle_input(player, msg, channel)
-        if not ret: # Stop event if told to.
+        if ret is False: # Stop event if told to.
             return False
         
         return super().dispatch(player, msg, channel)
