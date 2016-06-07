@@ -61,7 +61,6 @@ G_AddEvent_ptr G_AddEvent;
 G_InitGame_ptr G_InitGame;
 CheckPrivileges_ptr CheckPrivileges;
 ClientConnect_ptr ClientConnect;
-ClientDisconnect_ptr ClientDisconnect;
 ClientSpawn_ptr ClientSpawn;
 
 // VM global variables.
@@ -293,14 +292,6 @@ void SearchVmFunctions(void) {
 		failed = 1;
 	}
 	else DebugPrint("ClientConnect: %p\n", ClientConnect);
-
-	ClientDisconnect = (ClientDisconnect_ptr)PatternSearch((void*)((pint)qagame + 0xB000),
-			0xB0000, PTRN_CLIENTDISCONNECT, MASK_CLIENTDISCONNECT);
-	if (ClientDisconnect == NULL) {
-		DebugPrint("ERROR: Unable to find ClientDisconnect.\n");
-		failed = 1;
-	}
-	else DebugPrint("ClientDisconnect: %p\n", ClientDisconnect);
 
 	ClientSpawn = (ClientSpawn_ptr)PatternSearch((void*)((pint)qagame + 0xB000),
 			0xB0000, PTRN_CLIENTSPAWN, MASK_CLIENTSPAWN);
