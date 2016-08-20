@@ -110,6 +110,7 @@ static PyStructSequence_Field player_state_fields[] = {
     {"powerups", "The player's powerups."},
     {"holdable", "The player's holdable item."},
     {"flight", "A struct sequence with flight parameters."},
+    {"is_frozen", "Whether the player is frozen(freezetag)."},
     {NULL}
 };
 
@@ -225,7 +226,7 @@ static PyObject* makePlayerTuple(int client_id) {
     if (g_entities[client_id].client != NULL) {
         if (g_entities[client_id].client->pers.connected == CON_DISCONNECTED)
             name = PyUnicode_FromString("");
-        else 
+        else
             name = PyUnicode_DecodeUTF8(g_entities[client_id].client->pers.netname,
                 strlen(g_entities[client_id].client->pers.netname), "ignore");
 
@@ -245,7 +246,7 @@ static PyObject* makePlayerTuple(int client_id) {
     PyObject* state = PyLong_FromLongLong(svs->clients[client_id].state);
     PyObject* userinfo = PyUnicode_DecodeUTF8(svs->clients[client_id].userinfo, strlen(svs->clients[client_id].userinfo), "ignore");
     PyObject* steam_id = PyLong_FromLongLong(svs->clients[client_id].steam_id);
-    
+
     PyObject* info = PyStructSequence_New(&player_info_type);
     PyStructSequence_SetItem(info, 0, cid);
     PyStructSequence_SetItem(info, 1, name);
@@ -262,13 +263,13 @@ static PyObject* PyMinqlx_PlayerInfo(PyObject* self, PyObject* args) {
     int i;
     if (!PyArg_ParseTuple(args, "i:player", &i))
         return NULL;
-    
+
     if (i < 0 || i >= sv_maxclients->integer) {
         PyErr_Format(PyExc_ValueError,
                      "client_id needs to be a number from 0 to %d.",
                      sv_maxclients->integer);
         return NULL;
-        
+
     }
     else if (allow_free_client != i && svs->clients[i].state == CS_FREE) {
         #ifndef NDEBUG
@@ -334,7 +335,7 @@ static PyObject* PyMinqlx_SendServerCommand(PyObject* self, PyObject* args) {
     char* cmd;
     if (!PyArg_ParseTuple(args, "Os:send_server_command", &client_id, &cmd))
         return NULL;
-    
+
     if (client_id == Py_None) {
         My_SV_SendServerCommand(NULL, "%s\n", cmd); // Send to all.
         Py_RETURN_TRUE;
@@ -350,7 +351,7 @@ static PyObject* PyMinqlx_SendServerCommand(PyObject* self, PyObject* args) {
             }
         }
     }
-    
+
     PyErr_Format(PyExc_ValueError,
                  "client_id needs to be a number from 0 to %d, or None.",
                  sv_maxclients->integer);
@@ -436,7 +437,7 @@ static PyObject* PyMinqlx_SetCvar(PyObject* self, PyObject* args) {
         Cvar_Get(name, value, flags);
         Py_RETURN_TRUE;
     }
-    
+
     if (flags == -1)
         Cvar_Set2(name, value, qtrue);
     else
@@ -693,7 +694,7 @@ static PyObject* PyMinqlx_PlayerState(PyObject* self, PyObject* args) {
         PyStructSequence_SetItem(weapons, i, PyBool_FromLong(g_entities[client_id].client->ps.stats[STAT_WEAPONS] & (1 << (i+1))));
         PyStructSequence_SetItem(ammo, i, PyLong_FromLongLong(g_entities[client_id].client->ps.ammo[i+1]));
     }
-    PyStructSequence_SetItem(state, 7, weapons);  
+    PyStructSequence_SetItem(state, 7, weapons);
     PyStructSequence_SetItem(state, 8, ammo);
 
     PyObject* powerups = PyStructSequence_New(&powerups_type);
@@ -748,6 +749,8 @@ static PyObject* PyMinqlx_PlayerState(PyObject* self, PyObject* args) {
     PyStructSequence_SetItem(flight, 3,
         PyLong_FromLongLong(g_entities[client_id].client->ps.stats[STAT_FLIGHT_REFUEL]));
     PyStructSequence_SetItem(state, 11, flight);
+
+    PyStructSequence_SetItem(state, 12, PyBool_FromLong(g_entities[client_id].client->ps.pm_type == 4));
 
     return state;
 }
@@ -964,7 +967,7 @@ static PyObject* PyMinqlx_SetWeapons(PyObject* self, PyObject* args) {
 
         weapon_flags |= w == Py_True ? (1 << (i+1)) : 0;
     }
-    
+
     g_entities[client_id].client->ps.stats[STAT_WEAPONS] = weapon_flags;
     Py_RETURN_TRUE;
 }
@@ -991,7 +994,7 @@ static PyObject* PyMinqlx_SetWeapon(PyObject* self, PyObject* args) {
         PyErr_Format(PyExc_ValueError, "Weapon must be a number from 0 to 15.");
         return NULL;
     }
-    
+
     g_entities[client_id].client->ps.weapon = weapon;
     Py_RETURN_TRUE;
 }
@@ -1078,7 +1081,7 @@ static PyObject* PyMinqlx_SetPowerups(PyObject* self, PyObject* args) {
             g_entities[client_id].client->ps.powerups[i+PW_QUAD] = 0;
             continue;
         }
-        
+
         g_entities[client_id].client->ps.powerups[i+PW_QUAD] = level->time - (level->time % 1000) + t;
     }
 
@@ -1131,7 +1134,7 @@ static PyObject* PyMinqlx_SetFlight(PyObject* self, PyObject* args) {
         PyErr_Format(PyExc_ValueError, "Argument must be of type minqlx.Flight.");
         return NULL;
     }
-    
+
     for (int i = 0; i < flight_desc.n_in_sequence; i++)
         if (!PyLong_Check(PyStructSequence_GetItem(flight, i))) {
             PyErr_Format(PyExc_ValueError, "Tuple argument %d is not an integer.", i);
@@ -1180,7 +1183,7 @@ static PyObject* PyMinqlx_Callvote(PyObject* self, PyObject* args) {
     char buf[64];
     if (!PyArg_ParseTuple(args, "ss|i:callvote", &vote, &vote_disp, &vote_time))
         return NULL;
-    
+
     strncpy(level->voteString, vote, sizeof(level->voteString));
     strncpy(level->voteDisplayString, vote_disp, sizeof(level->voteDisplayString));
     level->voteTime = (level->time - 30000) + vote_time * 1000;
@@ -1193,7 +1196,7 @@ static PyObject* PyMinqlx_Callvote(PyObject* self, PyObject* args) {
 
     My_SV_SetConfigstring(CS_VOTE_STRING, level->voteDisplayString);
     snprintf(buf, sizeof(buf), "%d", level->voteTime);
-    My_SV_SetConfigstring(CS_VOTE_TIME, buf);    
+    My_SV_SetConfigstring(CS_VOTE_TIME, buf);
     My_SV_SetConfigstring(CS_VOTE_YES, "0");
     My_SV_SetConfigstring(CS_VOTE_NO, "0");
 
@@ -1351,17 +1354,17 @@ static PyModuleDef minqlxModule = {
 
 static PyObject* PyMinqlx_InitModule(void) {
     PyObject* module = PyModule_Create(&minqlxModule);
-    
+
     // Set minqlx version.
     PyModule_AddStringConstant(module, "__version__", MINQLX_VERSION);
-    
+
     // Set IS_DEBUG.
     #ifndef NDEBUG
     PyModule_AddObject(module, "DEBUG", Py_True);
     #else
     PyModule_AddObject(module, "DEBUG", Py_False);
     #endif
-    
+
     // Set a bunch of constants. We set them here because if you define functions in Python that use module
     // constants as keyword defaults, we have to always make sure they're exported first, and fuck that.
     PyModule_AddIntMacro(module, RET_NONE);
@@ -1431,12 +1434,12 @@ static PyObject* PyMinqlx_InitModule(void) {
     PyModule_AddObject(module, "Weapons", (PyObject*)&weapons_type);
     PyModule_AddObject(module, "Powerups", (PyObject*)&powerups_type);
     PyModule_AddObject(module, "Flight", (PyObject*)&flight_type);
-    
+
     return module;
 }
 
 int PyMinqlx_IsInitialized(void) {
-   return initialized; 
+   return initialized;
 }
 
 PyMinqlx_InitStatus_t PyMinqlx_Initialize(void) {
@@ -1444,13 +1447,13 @@ PyMinqlx_InitStatus_t PyMinqlx_Initialize(void) {
         DebugPrint("%s was called while already initialized!\n", __func__);
         return PYM_ALREADY_INITIALIZED;
     }
-    
+
     DebugPrint("Initializing Python...\n");
     Py_SetProgramName(PYTHON_FILENAME);
     PyImport_AppendInittab("_minqlx", &PyMinqlx_InitModule);
     Py_Initialize();
     PyEval_InitThreads();
-    
+
     // Add the main module.
     PyObject* main_module = PyImport_AddModule("__main__");
     PyObject* main_dict = PyModule_GetDict(main_module);
@@ -1471,7 +1474,7 @@ PyMinqlx_InitStatus_t PyMinqlx_Initialize(void) {
 		// No need to print anything, since the traceback should be printed already.
 		return PYM_MAIN_SCRIPT_ERROR;
 	}
-    
+
     mainstate = PyEval_SaveThread();
     initialized = 1;
     DebugPrint("Python initialized!\n");
@@ -1483,7 +1486,7 @@ PyMinqlx_InitStatus_t PyMinqlx_Finalize(void) {
         DebugPrint("%s was called before being initialized!\n", __func__);
         return PYM_NOT_INITIALIZED_ERROR;
     }
-    
+
     for (handler_t* h = handlers; h->name; h++) {
 		*h->handler = NULL;
 	}
@@ -1491,6 +1494,6 @@ PyMinqlx_InitStatus_t PyMinqlx_Finalize(void) {
     PyEval_RestoreThread(mainstate);
     Py_Finalize();
     initialized = 0;
-    
+
     return PYM_SUCCESS;
 }
