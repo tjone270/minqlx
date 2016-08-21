@@ -77,7 +77,7 @@ class EventDispatcher:
                 for handler in plugins[plugin][i]:
                     try:
                         res = handler(*self.args, **self.kwargs)
-                        if res == minqlx.RET_NONE or res == None:
+                        if res == minqlx.RET_NONE or res is None:
                             continue
                         elif res == minqlx.RET_STOP:
                             return True
@@ -87,7 +87,7 @@ class EventDispatcher:
                             return False
                         else: # Got an unknown return value.
                             return_handler = self.handle_return(handler, res)
-                            if return_handler != None:
+                            if return_handler is not None:
                                 return return_handler
                     except:
                         minqlx.log_exception(plugin)
@@ -122,7 +122,7 @@ class EventDispatcher:
         :raises: ValueError
         
         """
-        if not (priority >= minqlx.PRI_HIGHEST and priority <= minqlx.PRI_LOWEST):
+        if not (minqlx.PRI_HIGHEST <= priority <= minqlx.PRI_LOWEST):
             raise ValueError("'{}' is an invalid priority level.".format(priority))
         
         if plugin not in self.plugins:
@@ -235,11 +235,11 @@ class ClientCommandDispatcher(EventDispatcher):
     
     def dispatch(self, player, cmd):
         ret = super().dispatch(player, cmd)
-        if ret == False:
+        if not ret:
             return False
 
         ret = minqlx.COMMANDS.handle_input(player, cmd, minqlx.ClientCommandChannel(player))
-        if ret == False:
+        if not ret:
             return False
 
         return self.return_value
@@ -393,7 +393,7 @@ class StatsDispatcher(EventDispatcher):
 class VoteCalledDispatcher(EventDispatcher):
     """Event that goes off whenever a player tries to call a vote. Note that
     this goes off even if it's a vote command that is invalid. Use vote_started
-    if you only need votes that actuall go through. Use this one for custom votes.
+    if you only need votes that actually go through. Use this one for custom votes.
 
     """
     name = "vote_called"

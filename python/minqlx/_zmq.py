@@ -28,7 +28,7 @@ class StatsListener():
         if not bool(int(minqlx.get_cvar("zmq_stats_enable"))):
             self.done = True
             return
-        
+
         stats = minqlx.get_cvar("zmq_stats_ip")
         port = minqlx.get_cvar("zmq_stats_port")
         if not port:
@@ -83,7 +83,7 @@ class StatsListener():
                         player = minqlx.Plugin.player(sid)
                     else: # It's a bot. Forced to use name as an identifier.
                         player = minqlx.Plugin.player(stats["DATA"]["VICTIM"]["NAME"])
-                    
+
                     # Killer player.
                     if not stats["DATA"]["KILLER"]:
                         player_killer = None
@@ -104,7 +104,7 @@ class StatsListener():
                     new_team = stats["DATA"]["KILLER"]["TEAM"].lower()
                     if old_team != new_team:
                         res = minqlx.EVENT_DISPATCHERS["team_switch"].dispatch(player, old_team, new_team)
-                        if res == False:
+                        if not res:
                             player.put(old_team)
 
         except zmq.error.Again:

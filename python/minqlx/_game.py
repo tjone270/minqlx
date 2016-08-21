@@ -321,7 +321,7 @@ class Game():
     @classmethod
     def put(cls, player, team):
         cid = minqlx.Plugin.client_id(player)
-        if cid == None:
+        if cid is None:
             raise ValueError("Invalid player.")
         elif team.lower() not in minqlx.TEAMS.values():
             raise ValueError("Invalid team.")
@@ -332,7 +332,7 @@ class Game():
     @classmethod
     def mute(cls, player):
         cid = minqlx.Plugin.client_id(player)
-        if cid == None:
+        if cid is None:
             raise ValueError("Invalid player.")
 
         return minqlx.console_command("mute {}".format(cid))
@@ -340,7 +340,7 @@ class Game():
     @classmethod
     def unmute(cls, player):
         cid = minqlx.Plugin.client_id(player)
-        if cid == None:
+        if cid is None:
             raise ValueError("Invalid player.")
 
         return minqlx.console_command("unmute {}".format(cid))
@@ -348,7 +348,7 @@ class Game():
     @classmethod
     def tempban(cls, player):
         cid = minqlx.Plugin.client_id(player)
-        if cid == None:
+        if cid is None:
             raise ValueError("Invalid player.")
 
         return minqlx.console_command("tempban {}".format(cid))
@@ -356,7 +356,7 @@ class Game():
     @classmethod
     def ban(cls, player):
         cid = minqlx.Plugin.client_id(player)
-        if cid == None:
+        if cid is None:
             raise ValueError("Invalid player.")
 
         return minqlx.console_command("ban {}".format(cid))
@@ -364,7 +364,7 @@ class Game():
     @classmethod
     def unban(cls, player):
         cid = minqlx.Plugin.client_id(player)
-        if cid == None:
+        if cid is None:
             raise ValueError("Invalid player.")
 
         return minqlx.console_command("unban {}".format(cid))
@@ -376,7 +376,7 @@ class Game():
     @classmethod
     def addadmin(cls, player):
         cid = minqlx.Plugin.client_id(player)
-        if cid == None:
+        if cid is None:
             raise ValueError("Invalid player.")
 
         return minqlx.console_command("addadmin {}".format(cid))
@@ -384,7 +384,7 @@ class Game():
     @classmethod
     def addmod(cls, player):
         cid = minqlx.Plugin.client_id(player)
-        if cid == None:
+        if cid is None:
             raise ValueError("Invalid player.")
 
         return minqlx.console_command("addmod {}".format(cid))
@@ -392,7 +392,7 @@ class Game():
     @classmethod
     def demote(cls, player):
         cid = minqlx.Plugin.client_id(player)
-        if cid == None:
+        if cid is None:
             raise ValueError("Invalid player.")
 
         return minqlx.console_command("demote {}".format(cid))
@@ -404,7 +404,7 @@ class Game():
     @classmethod
     def addscore(cls, player, score):
         cid = minqlx.Plugin.client_id(player)
-        if cid == None:
+        if cid is None:
             raise ValueError("Invalid player.")
 
         return minqlx.console_command("addscore {} {}".format(cid, score))

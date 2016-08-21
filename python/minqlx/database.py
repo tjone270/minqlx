@@ -135,7 +135,7 @@ class Redis(AbstractDatabase):
 
     def __setitem__(self, key, item):
         res = self.r.set(key, item)
-        if res == False:
+        if not res:
             raise RuntimeError("The database assignment failed.")
 
     def __delitem__(self, key):
