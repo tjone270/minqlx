@@ -65,7 +65,7 @@ def handle_client_command(client_id, cmd):
         # Dispatch the "client_command" event before further processing.
         player = minqlx.Player(client_id)
         retval = minqlx.EVENT_DISPATCHERS["client_command"].dispatch(player, cmd)
-        if retval == False:
+        if not retval:
             return False
         elif isinstance(retval, str):
             # Allow plugins to modify the command before passing it on.
@@ -78,7 +78,7 @@ def handle_client_command(client_id, cmd):
             if minqlx.EVENT_DISPATCHERS["chat"].dispatch(player, msg, channel) == False:
                 return False
             return cmd
-        
+
         res = _re_say_team.match(cmd)
         if res:
             msg = res.group("msg").replace("\"", "")
@@ -182,7 +182,7 @@ def handle_server_command(client_id, cmd):
                 minqlx.EVENT_DISPATCHERS["vote_ended"].dispatch(True)
             else:
                 minqlx.EVENT_DISPATCHERS["vote_ended"].dispatch(False)
-        
+
         return cmd
     except:
         minqlx.log_exception()
@@ -200,7 +200,7 @@ def handle_frame():
     and have it be executed here.
 
     """
-    
+
     while True:
         # This will run all tasks that are currently scheduled.
         # If one of the tasks throw an exception, it'll log it
@@ -249,7 +249,7 @@ def handle_new_game(is_restart):
     if not is_restart:
         try:
             minqlx.EVENT_DISPATCHERS["map"].dispatch(
-                minqlx.get_cvar("mapname"), 
+                minqlx.get_cvar("mapname"),
                 minqlx.get_cvar("g_factory"))
         except:
             minqlx.log_exception()
@@ -285,7 +285,7 @@ def handle_set_configstring(index, value):
             old_cs = minqlx.parse_variables(minqlx.get_configstring(index))
             if not old_cs:
                 return
-            
+
             new_cs = minqlx.parse_variables(value)
             old_state = old_cs["g_gameState"]
             new_state = new_cs["g_gameState"]
@@ -392,7 +392,7 @@ def handle_console_print(text):
     try:
         if not text:
             return
-        
+
         # Log console output. Removes the need to have stdout logs in addition to minqlx.log.
         minqlx.get_logger().debug(text.rstrip("\n"))
 
@@ -431,7 +431,7 @@ def redirect_print(channel):
         def __init__(self, channel):
             if not isinstance(channel, minqlx.AbstractChannel):
                 raise ValueError("The redirection channel must be an instance of minqlx.AbstractChannel.")
-            
+
             self.channel = channel
 
         def __enter__(self):

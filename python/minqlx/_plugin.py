@@ -264,9 +264,8 @@ class Plugin():
         # In case 'name' isn't a string.
         if isinstance(name, minqlx.Player):
             return name
-        elif isinstance(name, int) and name >= 0 and name < 64:
+        elif isinstance(name, int) and 0 <= name < 64:
             return minqlx.Player(name)
-
 
         if not player_list:
             players = cls.players()
@@ -337,7 +336,7 @@ class Plugin():
         a client ID and [64, inf) to be a Steam ID.
         
         """
-        if isinstance(name, int) and name >= 0 and name < 64:
+        if isinstance(name, int) and 0 <= name < 64:
             return name
         elif isinstance(name, minqlx.Player):
             return name.id
@@ -461,7 +460,7 @@ class Plugin():
     @classmethod
     def kick(cls, player, reason=""):
         cid = cls.client_id(player)
-        if cid == None:
+        if cid is None:
             raise ValueError("Invalid player.")
 
         if not reason:
@@ -537,7 +536,7 @@ class Plugin():
     @classmethod
     def slap(cls, player, damage=0):
         cid = cls.client_id(player)
-        if cid == None:
+        if cid is None:
             raise ValueError("Invalid player.")
 
         minqlx.console_command("slap {} {}".format(cid, damage))
@@ -545,7 +544,7 @@ class Plugin():
     @classmethod
     def slay(cls, player):
         cid = cls.client_id(player)
-        if cid == None:
+        if cid is None:
             raise ValueError("Invalid player.")
 
         minqlx.console_command("slay {}".format(cid))

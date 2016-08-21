@@ -34,9 +34,9 @@ class Command:
 
     """
     def __init__(self, plugin, name, handler, permission, channels, exclude_channels, client_cmd_pass, client_cmd_perm, prefix, usage):
-        if not (channels == None or hasattr(channels, "__iter__")):
+        if not (channels is None or hasattr(channels, "__iter__")):
             raise ValueError("'channels' must be a finite iterable or None.")
-        elif not (channels == None or hasattr(exclude_channels, "__iter__")):
+        elif not (channels is None or hasattr(exclude_channels, "__iter__")):
             raise ValueError("'exclude_channels' must be a finite iterable or None.")
         self.plugin = plugin # Instance of the owner.
 
@@ -66,7 +66,7 @@ class Command:
             if not name.startswith(prefix):
                 return False
             name = name[len(prefix):]
-        
+
         return name.lower() in self.name
 
     def is_eligible_channel(self, channel):
@@ -101,7 +101,7 @@ class Command:
             (not is_client_cmd and perm == 0) or
             (is_client_cmd and client_cmd_perm == 0)):
             return True
-        
+
         player_perm = self.plugin.db.get_permission(player)
         if is_client_cmd:
             return player_perm >= client_cmd_perm
@@ -126,7 +126,7 @@ class CommandInvoker:
     def add_command(self, command, priority):
         if self.is_registered(command):
             raise ValueError("Attempted to add an already registered command.")
-        
+
         self._commands[priority].append(command)
 
     def remove_command(self, command):
@@ -159,7 +159,7 @@ class CommandInvoker:
         name = msg.strip().split(" ", 1)[0].lower()
         is_client_cmd = channel == "client_command"
         pass_through = True
-        
+
         for priority_level in self._commands:
             for cmd in priority_level:
                 if cmd.is_eligible_name(name) and cmd.is_eligible_channel(channel) and cmd.is_eligible_player(player, is_client_cmd):
@@ -169,9 +169,9 @@ class CommandInvoker:
                         pass_through = cmd.client_cmd_pass
 
                     # Dispatch "command" and allow people to stop it from being executed.
-                    if minqlx.EVENT_DISPATCHERS["command"].dispatch(player, cmd, msg) == False:
+                    if not minqlx.EVENT_DISPATCHERS["command"].dispatch(player, cmd, msg):
                         return True
-                    
+
                     res = cmd.execute(player, msg, channel)
                     if res == minqlx.RET_STOP:
                         return
@@ -182,7 +182,7 @@ class CommandInvoker:
                         return False
                     elif res == minqlx.RET_USAGE and cmd.usage:
                         channel.reply("^7Usage: ^6{} {}".format(name, cmd.usage))
-                    elif res != None and res != minqlx.RET_NONE:
+                    elif res is not None and res != minqlx.RET_NONE:
                         logger = minqlx.get_logger(None)
                         logger.warning("Command '{}' with handler '{}' returned an unknown return value: {}"
                             .format(cmd.name, cmd.handler.__name__, res))
@@ -273,7 +273,7 @@ class ChatChannel(AbstractChannel):
         super().__init__("chat")
         self.fmt = "print \"{}\n\"\n"
         self.team = "all"
-    
+
     @minqlx.next_frame
     def reply(self, msg, limit=100, delimiter=" "):
         # We convert whatever we got to a string and replace all double quotes
@@ -286,7 +286,7 @@ class ChatChannel(AbstractChannel):
 
         if isinstance(self, minqlx.TellChannel):
             cid = minqlx.Plugin.client_id(self.recipient)
-            if cid == None:
+            if cid is None:
                 raise ValueError("Invalid recipient.")
             targets = [cid]
         elif self.team != "all":
@@ -294,7 +294,7 @@ class ChatChannel(AbstractChannel):
             for p in minqlx.Player.all_players():
                 if p.team == self.team:
                     targets.append(p.id)
-        
+
         split_msgs = self.split_long_lines(msg, limit, delimiter)
         # We've split messages, but we can still just join them up to 1000-ish
         # bytes before we need to send multiple server cmds.
@@ -315,7 +315,7 @@ class ChatChannel(AbstractChannel):
             else:
                 for cid in targets:
                     minqlx.send_server_command(cid, self.fmt.format(last_color + s))
-            
+
             find = re_color_tag.findall(s)
             if find:
                 last_color = find[-1]
