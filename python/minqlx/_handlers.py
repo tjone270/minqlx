@@ -75,7 +75,7 @@ def handle_client_command(client_id, cmd):
         if res:
             msg = res.group("msg").replace("\"", "")
             channel = minqlx.CHAT_CHANNEL
-            if minqlx.EVENT_DISPATCHERS["chat"].dispatch(player, msg, channel) == False:
+            if minqlx.EVENT_DISPATCHERS["chat"].dispatch(player, msg, channel) is False:
                 return False
             return cmd
 
@@ -90,7 +90,7 @@ def handle_client_command(client_id, cmd):
                 channel = minqlx.BLUE_TEAM_CHAT_CHANNEL
             else:
                 channel = minqlx.SPECTATOR_CHAT_CHANNEL
-            if minqlx.EVENT_DISPATCHERS["chat"].dispatch(player, msg, channel) == False:
+            if minqlx.EVENT_DISPATCHERS["chat"].dispatch(player, msg, channel) is False:
                 return False
             return cmd
 
@@ -100,7 +100,7 @@ def handle_client_command(client_id, cmd):
             args = res.group("args") if res.group("args") else ""
             # Set the caller for vote_started in case the vote goes through.
             minqlx.EVENT_DISPATCHERS["vote_started"].caller(player)
-            if minqlx.EVENT_DISPATCHERS["vote_called"].dispatch(player, vote, args) == False:
+            if minqlx.EVENT_DISPATCHERS["vote_called"].dispatch(player, vote, args) is False:
                 return False
             return cmd
 
@@ -108,10 +108,10 @@ def handle_client_command(client_id, cmd):
         if res and minqlx.Plugin.is_vote_active():
             arg = res.group("arg").lower()
             if arg == "y" or arg == "1":
-                if minqlx.EVENT_DISPATCHERS["vote"].dispatch(player, True) == False:
+                if minqlx.EVENT_DISPATCHERS["vote"].dispatch(player, True) is False:
                     return False
             elif arg == "n" or arg == "2":
-                if minqlx.EVENT_DISPATCHERS["vote"].dispatch(player, False) == False:
+                if minqlx.EVENT_DISPATCHERS["vote"].dispatch(player, False) is False:
                     return False
             return cmd
 
@@ -134,7 +134,7 @@ def handle_client_command(client_id, cmd):
                 target_team = "any"
 
             if target_team:
-                if minqlx.EVENT_DISPATCHERS["team_switch_attempt"].dispatch(player, player.team, target_team) == False:
+                if minqlx.EVENT_DISPATCHERS["team_switch_attempt"].dispatch(player, player.team, target_team) is False:
                     return False
             return cmd
 
@@ -150,7 +150,7 @@ def handle_client_command(client_id, cmd):
 
             if changed:
                 ret = minqlx.EVENT_DISPATCHERS["userinfo"].dispatch(player, changed)
-                if ret == False:
+                if ret is False:
                     return False
                 elif isinstance(ret, dict):
                     for key in ret:
@@ -171,7 +171,7 @@ def handle_server_command(client_id, cmd):
             return True
 
         retval = minqlx.EVENT_DISPATCHERS["server_command"].dispatch(player, cmd)
-        if retval == False:
+        if retval is False:
             return False
         elif isinstance(retval, str):
             cmd = retval
@@ -268,7 +268,7 @@ def handle_set_configstring(index, value):
     """
     try:
         res = minqlx.EVENT_DISPATCHERS["set_configstring"].dispatch(index, value)
-        if res == False:
+        if res is False:
             return False
         elif isinstance(res, str):
             value = res
@@ -397,7 +397,7 @@ def handle_console_print(text):
         minqlx.get_logger().debug(text.rstrip("\n"))
 
         res = minqlx.EVENT_DISPATCHERS["console_print"].dispatch(text)
-        if res == False:
+        if res is False:
             return False
 
         if _print_redirection:

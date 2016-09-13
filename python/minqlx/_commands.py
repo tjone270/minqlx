@@ -47,8 +47,8 @@ class Command:
             self.name = [name]
         self.handler = handler
         self.permission = permission
-        self.channels = list(channels) if channels != None else []
-        self.exclude_channels = list(exclude_channels) if exclude_channels != None else []
+        self.channels = list(channels) if channels is not None else []
+        self.exclude_channels = list(exclude_channels) if exclude_channels is not None else []
         self.client_cmd_pass = client_cmd_pass
         self.client_cmd_perm = client_cmd_perm
         self.prefix = prefix

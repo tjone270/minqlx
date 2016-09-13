@@ -532,10 +532,10 @@ class Player():
             raise ValueError("is_alive needs to be a boolean.")
 
         cur = self.is_alive
-        if cur and value == False:
+        if cur and value is False:
             # TODO: Proper death and not just setting health to 0.
             self.health = 0
-        elif not cur and value == True:
+        elif not cur and value is True:
             minqlx.player_spawn(self.id)
 
     @property
