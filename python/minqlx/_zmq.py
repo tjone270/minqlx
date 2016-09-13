@@ -104,7 +104,7 @@ class StatsListener():
                     new_team = stats["DATA"]["KILLER"]["TEAM"].lower()
                     if old_team != new_team:
                         res = minqlx.EVENT_DISPATCHERS["team_switch"].dispatch(player, old_team, new_team)
-                        if not res:
+                        if res is False:
                             player.put(old_team)
 
         except zmq.error.Again:

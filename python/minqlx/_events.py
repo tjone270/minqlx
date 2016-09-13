@@ -35,7 +35,7 @@ class EventDispatcher:
     def __init__(self):
         self.name = type(self).name
         self.plugins = {}
-    
+
     def dispatch(self, *args, **kwargs):
         """Calls all the handlers that have been registered when hooking this event.
         The recommended way to use this for events that inherit this class is to
@@ -55,7 +55,7 @@ class EventDispatcher:
 
         :param args: Any arguments.
         :param kwargs: Any keyword arguments.
-        
+
         """
         # Allow subclasses of this to edit the arguments without having
         # to reimplement this method. Whenever an unknown return value
@@ -108,7 +108,7 @@ class EventDispatcher:
         logger = minqlx.get_logger()
         logger.warning("Handler '{}' returned unknown value '{}' for event '{}'"
             .format(handler.__name__, value, self.name))
-    
+
     def add_hook(self, plugin, handler, priority=minqlx.PRI_NORMAL):
         """Hook the event, making the handler get called with relevant arguments
         whenever the event is takes place.
@@ -120,11 +120,11 @@ class EventDispatcher:
         :param priority: The priority of the hook. Determines the order the handlers are called in.
         :type priority: minqlx.PRI_LOWEST, minqlx.PRI_LOW, minqlx.PRI_NORMAL, minqlx.PRI_HIGH or minqlx.PRI_HIGHEST
         :raises: ValueError
-        
+
         """
         if not (minqlx.PRI_HIGHEST <= priority <= minqlx.PRI_LOWEST):
             raise ValueError("'{}' is an invalid priority level.".format(priority))
-        
+
         if plugin not in self.plugins:
             # Initialize tuple.
             self.plugins[plugin] = ([], [], [], [], []) # 5 priority levels.
@@ -134,12 +134,12 @@ class EventDispatcher:
                 for hook in self.plugins[plugin][i]:
                     if handler == hook:
                         raise ValueError("The event has already been hooked with the same handler and priority.")
-        
+
         self.plugins[plugin][priority].append(handler)
-        
+
     def remove_hook(self, plugin, handler, priority=minqlx.PRI_NORMAL):
         """Removes a previously hooked event.
-        
+
         :param plugin: The plugin that hooked the event.
         :type plugin: minqlx.Plugin
         :param handler: The handler used when hooked.
@@ -153,7 +153,7 @@ class EventDispatcher:
             if handler == hook:
                 self.plugins[plugin][priority].remove(handler)
                 return
-        
+
         raise ValueError("The event has not been hooked with the handler provided")
 
 class EventDispatcherManager:
@@ -201,7 +201,7 @@ class ConsolePrintDispatcher(EventDispatcher):
 
     """
     name = "console_print"
-    
+
     def dispatch(self, text):
         return super().dispatch(text)
 
@@ -222,7 +222,7 @@ class CommandDispatcher(EventDispatcher):
 
     """
     name = "command"
-    
+
     def dispatch(self, caller, command, args):
         super().dispatch(caller, command, args)
 
@@ -232,14 +232,14 @@ class ClientCommandDispatcher(EventDispatcher):
 
     """
     name = "client_command"
-    
+
     def dispatch(self, player, cmd):
         ret = super().dispatch(player, cmd)
-        if not ret:
+        if ret is False:
             return False
 
         ret = minqlx.COMMANDS.handle_input(player, cmd, minqlx.ClientCommandChannel(player))
-        if not ret:
+        if ret is False:
             return False
 
         return self.return_value
@@ -262,7 +262,7 @@ class ServerCommandDispatcher(EventDispatcher):
 
     """
     name = "server_command"
-    
+
     def dispatch(self, player, cmd):
         return super().dispatch(player, cmd)
 
@@ -283,7 +283,7 @@ class FrameEventDispatcher(EventDispatcher):
 
     """
     name = "frame"
-    
+
     def dispatch(self):
         return super().dispatch()
 
@@ -295,7 +295,7 @@ class SetConfigstringDispatcher(EventDispatcher):
 
     """
     name = "set_configstring"
-    
+
     def dispatch(self, index, value):
         return super().dispatch(index, value)
 
@@ -319,19 +319,19 @@ class ChatEventDispatcher(EventDispatcher):
 
     """
     name = "chat"
-    
+
     def dispatch(self, player, msg, channel):
         ret = minqlx.COMMANDS.handle_input(player, msg, channel)
         if ret is False: # Stop event if told to.
             return False
-        
+
         return super().dispatch(player, msg, channel)
-        
+
 
 class UnloadDispatcher(EventDispatcher):
     """Event that triggers whenever a plugin is unloaded. Cannot be cancelled."""
     name = "unload"
-    
+
     def dispatch(self, plugin):
         super().dispatch(plugin)
 
@@ -343,7 +343,7 @@ class PlayerConnectDispatcher(EventDispatcher):
 
     """
     name = "player_connect"
-    
+
     def dispatch(self, player):
         return super().dispatch(player)
 
@@ -365,28 +365,28 @@ class PlayerLoadedDispatcher(EventDispatcher):
 
     """
     name = "player_loaded"
-    
+
     def dispatch(self, player):
         return super().dispatch(player)
 
 class PlayerDisonnectDispatcher(EventDispatcher):
     """Event that triggers whenever a player disconnects. Cannot be cancelled."""
     name = "player_disconnect"
-    
+
     def dispatch(self, player, reason):
         return super().dispatch(player, reason)
 
 class PlayerSpawnDispatcher(EventDispatcher):
     """Event that triggers when a player spawns. Cannot be cancelled."""
     name = "player_spawn"
-    
+
     def dispatch(self, player):
         return super().dispatch(player)
 
 class StatsDispatcher(EventDispatcher):
     """Event that triggers whenever the server sends stats over ZMQ."""
     name = "stats"
-    
+
     def dispatch(self, stats):
         return super().dispatch(stats)
 
@@ -445,42 +445,42 @@ class VoteDispatcher(EventDispatcher):
 class GameCountdownDispatcher(EventDispatcher):
     """Event that goes off when the countdown before a game starts."""
     name = "game_countdown"
-    
+
     def dispatch(self):
         return super().dispatch()
 
 class GameStartDispatcher(EventDispatcher):
     """Event that goes off when a game starts."""
     name = "game_start"
-    
+
     def dispatch(self, data):
         return super().dispatch(data)
 
 class GameEndDispatcher(EventDispatcher):
     """Event that goes off when a game ends."""
     name = "game_end"
-    
+
     def dispatch(self, data):
         return super().dispatch(data)
 
 class RoundCountdownDispatcher(EventDispatcher):
     """Event that goes off when the countdown before a round starts."""
     name = "round_countdown"
-    
+
     def dispatch(self, round_number):
         return super().dispatch(round_number)
 
 class RoundStartDispatcher(EventDispatcher):
     """Event that goes off when a round starts."""
     name = "round_start"
-    
+
     def dispatch(self, round_number):
         return super().dispatch(round_number)
 
 class RoundEndDispatcher(EventDispatcher):
     """Event that goes off when a round ends."""
     name = "round_end"
-    
+
     def dispatch(self, data):
         return super().dispatch(data)
 
@@ -491,7 +491,7 @@ class TeamSwitchDispatcher(EventDispatcher):
     If possible, consider using team_switch_attempt for a cleaner
     solution if you need to cancel the event."""
     name = "team_switch"
-    
+
     def dispatch(self, player, old_team, new_team):
         return super().dispatch(player, old_team, new_team)
 
@@ -504,14 +504,14 @@ class TeamSwitchAttemptDispatcher(EventDispatcher):
 
     """
     name = "team_switch_attempt"
-    
+
     def dispatch(self, player, old_team, new_team):
         return super().dispatch(player, old_team, new_team)
 
 class MapDispatcher(EventDispatcher):
     """Event that goes off when a map is loaded, even if the same map is loaded again."""
     name = "map"
-    
+
     def dispatch(self, mapname, factory):
         return super().dispatch(mapname, factory)
 
@@ -521,28 +521,28 @@ class NewGameDispatcher(EventDispatcher):
 
     """
     name = "new_game"
-    
+
     def dispatch(self):
         return super().dispatch()
 
 class KillDispatcher(EventDispatcher):
     """Event that goes off when someone is killed."""
     name = "kill"
-    
+
     def dispatch(self, victim, killer, data):
         return super().dispatch(victim, killer, data)
 
 class DeathDispatcher(EventDispatcher):
     """Event that goes off when someone dies."""
     name = "death"
-    
+
     def dispatch(self, victim, killer, data):
         return super().dispatch(victim, killer, data)
 
 class UserinfoDispatcher(EventDispatcher):
     """Event for clients changing their userinfo."""
     name = "userinfo"
-    
+
     def dispatch(self, player, changed):
         return super().dispatch(player, changed)
 

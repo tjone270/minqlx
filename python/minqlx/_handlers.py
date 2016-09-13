@@ -35,7 +35,7 @@ _re_userinfo = re.compile(r"^userinfo \"(?P<vars>.+)\"$")
 
 # ====================================================================
 #                         LOW-LEVEL HANDLERS
-#        These are all called by the C code, not within Python.  
+#        These are all called by the C code, not within Python.
 # ====================================================================
 
 def handle_rcon(cmd):
@@ -65,7 +65,7 @@ def handle_client_command(client_id, cmd):
         # Dispatch the "client_command" event before further processing.
         player = minqlx.Player(client_id)
         retval = minqlx.EVENT_DISPATCHERS["client_command"].dispatch(player, cmd)
-        if not retval:
+        if retval is False:
             return False
         elif isinstance(retval, str):
             # Allow plugins to modify the command before passing it on.

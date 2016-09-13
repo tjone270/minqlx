@@ -73,7 +73,7 @@ class Command:
         """Check if a chat channel is one this command should execute in.
 
         Exclude takes precedence.
-        
+
         """
         if channel in self.exclude_channels:
             return False
@@ -169,7 +169,7 @@ class CommandInvoker:
                         pass_through = cmd.client_cmd_pass
 
                     # Dispatch "command" and allow people to stop it from being executed.
-                    if not minqlx.EVENT_DISPATCHERS["command"].dispatch(player, cmd, msg):
+                    if minqlx.EVENT_DISPATCHERS["command"].dispatch(player, cmd, msg) is False:
                         return True
 
                     res = cmd.execute(player, msg, channel)
@@ -207,7 +207,7 @@ class AbstractChannel:
     important to keep this in mind if you make a subclass. Say you have a web interface that
     supports multiple users on it simulaneously. The right way would be to set "name" to something
     like "webinterface", and then implement a __repr__() to return something like "webinterface user1".
-    
+
     """
     def __init__(self, name):
         self._name = name
