@@ -39,7 +39,7 @@ class Plugin():
         I/O is the bane of single-threaded applications. You do **not** want blocking operations
         in code called by commands or events. That could make players lag. Helper decorators
         like :func:`minqlx.thread` can be useful.
-    
+
     """
     # Static dictionary of plugins currently loaded for the purpose of inter-plugin communication.
     _loaded_plugins = {}
@@ -61,14 +61,14 @@ class Plugin():
                 .format(self.name))
         elif not hasattr(self, "_db_instance"):
             self._db_instance = self.database(self)
-        
+
         return self._db_instance
 
     @property
     def name(self):
         """The name of the plugin."""
         return self.__class__.__name__
-    
+
     @property
     def plugins(self):
         """A dictionary containing plugin names as keys and plugin instances
@@ -103,12 +103,12 @@ class Plugin():
     def logger(self):
         """An instance of :class:`logging.Logger`, but initialized for this plugin."""
         return minqlx.get_logger(self)
-    
+
     # TODO: Document plugin methods.
     def add_hook(self, event, handler, priority=minqlx.PRI_NORMAL):
         if not hasattr(self, "_hooks"):
             self._hooks = []
-            
+
         self._hooks.append((event, handler, priority))
         minqlx.EVENT_DISPATCHERS[event].add_hook(self.name, handler, priority)
 
@@ -116,15 +116,15 @@ class Plugin():
         if not hasattr(self, "_hooks"):
             self._hooks = []
             return
-        
+
         minqlx.EVENT_DISPATCHERS[event].remove_hook(self.name, handler, priority)
         self._hooks.remove((event, handler, priority))
 
     def add_command(self, name, handler, permission=0, channels=None, exclude_channels=(), priority=minqlx.PRI_NORMAL, client_cmd_pass=False, client_cmd_perm=5, prefix=True, usage=""):
         if not hasattr(self, "_commands"):
             self._commands = []
-        
-        cmd = minqlx.Command(self, name, handler, permission, channels, exclude_channels, client_cmd_pass, client_cmd_perm, prefix, usage)    
+
+        cmd = minqlx.Command(self, name, handler, permission, channels, exclude_channels, client_cmd_pass, client_cmd_perm, prefix, usage)
         self._commands.append(cmd)
         minqlx.COMMANDS.add_command(cmd, priority)
 
@@ -132,7 +132,7 @@ class Plugin():
         if not hasattr(self, "_commands"):
             self._commands = []
             return
-        
+
         for cmd in self._commands:
             if cmd.name == name and cmd.handler == handler:
                 minqlx.COMMANDS.remove_command(cmd)
@@ -180,7 +180,7 @@ class Plugin():
         :rtype: bool
 
         """
-        if cls.get_cvar(name) == None:
+        if cls.get_cvar(name) is None:
             minqlx.set_cvar(name, value, flags)
             return True
         else:
@@ -206,7 +206,7 @@ class Plugin():
         :rtype: bool
 
         """
-        if cls.get_cvar(name) == None:
+        if cls.get_cvar(name) is None:
             minqlx.set_cvar(name, value, flags)
             return True
         else:
@@ -259,7 +259,7 @@ class Plugin():
         """Get a Player instance from the name, client ID,
         or Steam ID. Assumes [0, 64) to be a client ID
         and [64, inf) to be a Steam ID.
-        
+
         """
         # In case 'name' isn't a string.
         if isinstance(name, minqlx.Player):
@@ -284,7 +284,7 @@ class Plugin():
                         return p
 
         return None
-    
+
     @classmethod
     def msg(cls, msg, chat_channel="chat", **kwargs):
         """Send a message to the chat, or any other channel."""
@@ -300,7 +300,7 @@ class Plugin():
             minqlx.CONSOLE_CHANNEL.reply(msg, **kwargs)
         else:
             raise ValueError("Invalid channel.")
-    
+
     @classmethod
     def console(cls, text):
         """Prints text in the console."""
@@ -310,7 +310,7 @@ class Plugin():
     def clean_text(cls, text):
         """Removes color tags from text."""
         return minqlx.re_color_tag.sub("", text)
-    
+
     @classmethod
     def colored_name(cls, name, player_list=None):
         """Get the colored name of a decolored name."""
@@ -321,7 +321,7 @@ class Plugin():
             players = cls.players()
         else:
             players = player_list
-        
+
         clean = cls.clean_text(name).lower()
         for p in players:
             if p.clean_text.lower() == clean:
@@ -334,7 +334,7 @@ class Plugin():
         """Get a player's client id from the name, client ID,
         Player instance, or Steam ID. Assumes [0, 64) to be
         a client ID and [64, inf) to be a Steam ID.
-        
+
         """
         if isinstance(name, int) and 0 <= name < 64:
             return name
@@ -380,7 +380,7 @@ class Plugin():
         for p in players:
             if cls.clean_text(name.lower()) in p.clean_name.lower():
                 res.append(p)
-        
+
         return res
 
     @classmethod
@@ -445,12 +445,12 @@ class Plugin():
             return True
 
         return False
-    
+
     @classmethod
     def force_vote(cls, pass_it):
-        if pass_it == True or pass_it == False:
+        if pass_it is True or pass_it is False:
             return minqlx.force_vote(pass_it)
-        
+
         raise ValueError("pass_it must be either True or False.")
 
     @classmethod
@@ -467,7 +467,7 @@ class Plugin():
             minqlx.kick(cid, None)
         else:
             minqlx.kick(cid, reason)
-    
+
     @classmethod
     def shuffle(cls):
         minqlx.Game().shuffle()
@@ -483,7 +483,7 @@ class Plugin():
             minqlx.Game().map = new_map
         else:
             minqlx.console_command("map {} {}".format(new_map, factory))
-    
+
     @classmethod
     def switch(cls, player, other_player):
         p1 = cls.player(player)
@@ -496,7 +496,7 @@ class Plugin():
 
         t1 = p1.team
         t2 = p2.team
-        
+
         if t1 == t2:
             raise ValueError("Both players are on the same team.")
         else:
