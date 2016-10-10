@@ -75,7 +75,7 @@ class AbstractDatabase:
 
     def clear_flag(self, player, flag):
         """Should clear specified player flag."""
-        return self.set_flag(self, player, flag, False)
+        return self.set_flag(player, flag, False)
 
     def get_flag(self, player, flag, default=False):
         """Abstract method. Should return specified player flag
