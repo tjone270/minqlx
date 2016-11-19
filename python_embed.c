@@ -1107,6 +1107,11 @@ static PyObject* PyMinqlx_SetHoldable(PyObject* self, PyObject* args) {
     else if (!g_entities[client_id].client)
         Py_RETURN_FALSE;
 
+    if (i == 37)  // 37 - kamikaze
+        g_entities[client_id].client->ps.eFlags |= EF_KAMIKAZE;
+    else
+        g_entities[client_id].client->ps.eFlags &= ~EF_KAMIKAZE;
+
     g_entities[client_id].client->ps.stats[STAT_HOLDABLE_ITEM] = i;
     Py_RETURN_TRUE;
 }
