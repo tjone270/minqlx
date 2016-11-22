@@ -1400,6 +1400,7 @@ extern server_t* sv;
 extern serverStatic_t* svs;
 extern gentity_t* g_entities;
 extern level_locals_t* level;
+extern gitem_t* bg_itemlist;
 // Cvars.
 extern cvar_t* sv_maxclients;
 
@@ -1436,6 +1437,7 @@ typedef void (__cdecl *G_InitGame_ptr)(int levelTime, int randomSeed, int restar
 typedef int (__cdecl *CheckPrivileges_ptr)(gentity_t* ent, char* cmd);
 typedef char* (__cdecl *ClientConnect_ptr)(int clientNum, qboolean firstTime, qboolean isBot);
 typedef void (__cdecl *ClientSpawn_ptr)(gentity_t* ent);
+typedef gentity_t* (__cdecl *Drop_Item_ptr)(gentity_t *ent, gitem_t *item, float angle);
 
 // Some of them are initialized by Initialize(), but not all of them necessarily.
 extern Com_Printf_ptr Com_Printf;
@@ -1467,6 +1469,7 @@ extern G_InitGame_ptr G_InitGame;
 extern CheckPrivileges_ptr CheckPrivileges;
 extern ClientConnect_ptr ClientConnect;
 extern ClientSpawn_ptr ClientSpawn;
+extern Drop_Item_ptr Drop_Item;
 
 // Server replacement functions for hooks.
 void __cdecl My_Cmd_AddCommand(char* cmd, void* func);

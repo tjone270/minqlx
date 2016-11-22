@@ -62,10 +62,12 @@ G_InitGame_ptr G_InitGame;
 CheckPrivileges_ptr CheckPrivileges;
 ClientConnect_ptr ClientConnect;
 ClientSpawn_ptr ClientSpawn;
+Drop_Item_ptr Drop_Item;
 
 // VM global variables.
 gentity_t* g_entities;
 level_locals_t* level;
+gitem_t* bg_itemlist;
 
 // Cvars.
 cvar_t* sv_maxclients;
@@ -271,6 +273,7 @@ void SearchVmFunctions(void) {
 	// the module is mapped, so I think this is fine. If it ever breaks, it'll
 	// be trivial to fix.
 	G_AddEvent = (G_AddEvent_ptr)PatternSearch((void*)((pint)qagame + 0xB000), 0xB0000, PTRN_G_ADDEVENT, MASK_G_ADDEVENT);
+
 	if (G_AddEvent == NULL) {
 		DebugPrint("ERROR: Unable to find G_AddEvent.\n");
 		failed = 1;
@@ -300,6 +303,18 @@ void SearchVmFunctions(void) {
 		failed = 1;
 	}
 	else DebugPrint("ClientSpawn: %p\n", ClientSpawn);
+
+	Drop_Item = (Drop_Item_ptr)PatternSearch((void*)((pint)qagame + 0xB000),
+			0xB0000, PTRN_DROP_ITEM, MASK_DROP_ITEM);
+	if (Drop_Item == NULL) {
+		DebugPrint("ERROR: Unable to find Drop_Item.\n");
+		failed = 1;
+	}
+	else DebugPrint("Drop_Item: %p\n", Drop_Item);
+
+	bg_itemlist = qagame + 0x2CB8A0;
+	DebugPrint("bg_itemlist: %p\n", bg_itemlist);
+	DebugPrint("Must be item_armor_shard: %s\n", bg_itemlist[1].classname);
 
 	if (failed) {
 			DebugPrint("Exiting.\n");
