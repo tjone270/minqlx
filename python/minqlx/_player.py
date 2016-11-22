@@ -479,6 +479,9 @@ class Player():
         else:
             raise ValueError("Invalid holdable item.")
 
+    def drop_holdable(self):
+        minqlx.drop_holdable(self.id)
+
     def flight(self, reset=False, **kwargs):
         state = self.state
         if state.holdable != "flight":

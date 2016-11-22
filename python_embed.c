@@ -1118,6 +1118,43 @@ static PyObject* PyMinqlx_SetHoldable(PyObject* self, PyObject* args) {
 
 /*
 * ================================================================
+*                          drop_holdable
+* ================================================================
+*/
+
+static PyObject* PyMinqlx_DropHoldable(PyObject* self, PyObject* args) {
+    int client_id, item;
+    if (!PyArg_ParseTuple(args, "i:drop_holdable", &client_id))
+        return NULL;
+    else if (client_id < 0 || client_id >= sv_maxclients->integer) {
+        PyErr_Format(PyExc_ValueError,
+                     "client_id needs to be a number from 0 to %d.",
+                     sv_maxclients->integer);
+        return NULL;
+    }
+    else if (!g_entities[client_id].client)
+        Py_RETURN_FALSE;
+
+    // removing kamikaze flag (surrounding skulls)
+    g_entities[client_id].client->ps.eFlags &= ~EF_KAMIKAZE;
+
+    item = g_entities[client_id].client->ps.stats[STAT_HOLDABLE_ITEM];
+    if (item == 0) Py_RETURN_FALSE;
+
+    gentity_t* entity = Drop_Item(&g_entities[client_id], bg_itemlist + item, 0);
+
+    // move dropped item above. this hack avoids touching item right after droping
+    entity->s.pos.trBase[2] += 64.;
+
+    // removing holdable from player entity
+    g_entities[client_id].client->ps.stats[STAT_HOLDABLE_ITEM] = 0;
+
+    Py_RETURN_TRUE;
+}
+
+
+/*
+* ================================================================
 *                           set_flight
 * ================================================================
 */
@@ -1337,6 +1374,8 @@ static PyMethodDef minqlxMethods[] = {
      "Sets a player's powerups."},
     {"set_holdable", PyMinqlx_SetHoldable, METH_VARARGS,
      "Sets a player's holdable item."},
+    {"drop_holdable", PyMinqlx_DropHoldable, METH_VARARGS,
+     "Drops player's holdable item."},
     {"set_flight", PyMinqlx_SetFlight, METH_VARARGS,
      "Sets a player's flight parameters, such as current fuel, max fuel and, so on."},
     {"set_score", PyMinqlx_SetScore, METH_VARARGS,
