@@ -63,6 +63,7 @@ CheckPrivileges_ptr CheckPrivileges;
 ClientConnect_ptr ClientConnect;
 ClientSpawn_ptr ClientSpawn;
 Drop_Item_ptr Drop_Item;
+G_FreeEntity_ptr G_FreeEntity;
 
 // VM global variables.
 gentity_t* g_entities;
@@ -311,6 +312,14 @@ void SearchVmFunctions(void) {
 		failed = 1;
 	}
 	else DebugPrint("Drop_Item: %p\n", Drop_Item);
+
+	G_FreeEntity = (G_FreeEntity_ptr)PatternSearch((void*)((pint)qagame + 0xB000),
+			0xB0000, PTRN_G_FREEENTITY, MASK_G_FREEENTITY);
+	if (G_FreeEntity == NULL) {
+		DebugPrint("ERROR: Unable to find G_FreeEntity.\n");
+		failed = 1;
+	}
+	else DebugPrint("G_FreeEntity: %p\n", G_FreeEntity);
 
 	bg_itemlist = qagame + 0x2CB8A0;
 	DebugPrint("bg_itemlist: %p\n", bg_itemlist);
