@@ -1312,6 +1312,32 @@ static PyObject* PyMinqlx_SetPrivileges(PyObject* self, PyObject* args) {
 }
 
 /*
+* ================================================================
+*                        destroy_kamikaze_timers
+* ================================================================
+*/
+
+static PyObject* PyMinqlx_DestroyKamikazeTimers(PyObject* self, PyObject* args) {
+    int i;
+    gentity_t* ent;
+
+    for (i = 0; i < MAX_GENTITIES; i++) {
+        ent = &g_entities[i];
+        if (!ent->inuse)
+            continue;
+
+        // removing kamikaze skull from dead body
+        if (ent->client && ent->health <= 0) {
+            ent->client->ps.eFlags &= ~EF_KAMIKAZE;
+        }
+
+        if (strcmp(ent->classname, "kamikaze timer") == 0)
+            G_FreeEntity(ent);
+    }
+    Py_RETURN_TRUE;
+}
+
+/*
  * ================================================================
  *             Module definition and initialization
  * ================================================================
@@ -1388,6 +1414,8 @@ static PyMethodDef minqlxMethods[] = {
      "Allows or disallows a game with only a single player in it to go on without forfeiting. Useful for race."},
     {"set_privileges", PyMinqlx_SetPrivileges, METH_VARARGS,
      "Sets a player's privileges. Does not persist."},
+    {"destroy_kamikaze_timers", PyMinqlx_DestroyKamikazeTimers, METH_NOARGS,
+     "Removes all current kamikaze timers."},
     {NULL, NULL, 0, NULL}
 };
 
