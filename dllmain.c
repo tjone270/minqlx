@@ -62,6 +62,7 @@ G_InitGame_ptr G_InitGame;
 CheckPrivileges_ptr CheckPrivileges;
 ClientConnect_ptr ClientConnect;
 ClientSpawn_ptr ClientSpawn;
+Touch_Item_ptr Touch_Item;
 Drop_Item_ptr Drop_Item;
 G_FreeEntity_ptr G_FreeEntity;
 
@@ -304,6 +305,14 @@ void SearchVmFunctions(void) {
 		failed = 1;
 	}
 	else DebugPrint("ClientSpawn: %p\n", ClientSpawn);
+
+	Touch_Item = (Touch_Item_ptr)PatternSearch((void*)((pint)qagame + 0xB000),
+			0xB0000, PTRN_TOUCH_ITEM, MASK_TOUCH_ITEM);
+	if (Touch_Item == NULL) {
+		DebugPrint("ERROR: Unable to find Touch_Item.\n");
+		failed = 1;
+	}
+	else DebugPrint("Touch_Item: %p\n", Touch_Item);
 
 	Drop_Item = (Drop_Item_ptr)PatternSearch((void*)((pint)qagame + 0xB000),
 			0xB0000, PTRN_DROP_ITEM, MASK_DROP_ITEM);
