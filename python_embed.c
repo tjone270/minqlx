@@ -1122,6 +1122,20 @@ static PyObject* PyMinqlx_SetHoldable(PyObject* self, PyObject* args) {
 * ================================================================
 */
 
+// FixMe: holdable pickup is predicted on client (if cg_predictItems == 1)
+//        this generates holdable pickup sound on drop
+
+void __cdecl Switch_Touch_Item(gentity_t *ent) {
+    ent->touch = Touch_Item;
+    ent->think = G_FreeEntity;
+    ent->nextthink = level->time + 29000;
+}
+
+void __cdecl My_Touch_Item(gentity_t *ent, gentity_t *other, trace_t *trace) {
+    if (ent->parent == other) return;
+    Touch_Item(ent, other, trace);
+}
+
 static PyObject* PyMinqlx_DropHoldable(PyObject* self, PyObject* args) {
     int client_id, item;
     if (!PyArg_ParseTuple(args, "i:drop_holdable", &client_id))
@@ -1142,9 +1156,10 @@ static PyObject* PyMinqlx_DropHoldable(PyObject* self, PyObject* args) {
     if (item == 0) Py_RETURN_FALSE;
 
     gentity_t* entity = Drop_Item(&g_entities[client_id], bg_itemlist + item, 0);
-
-    // move dropped item above. this hack avoids touching item right after droping
-    entity->s.pos.trBase[2] += 64.;
+    entity->touch     = My_Touch_Item;
+    entity->parent    = &g_entities[client_id];
+    entity->think     = Switch_Touch_Item;
+    entity->nextthink = level->time + 1000;
 
     // removing holdable from player entity
     g_entities[client_id].client->ps.stats[STAT_HOLDABLE_ITEM] = 0;
