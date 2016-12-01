@@ -63,6 +63,7 @@ CheckPrivileges_ptr CheckPrivileges;
 ClientConnect_ptr ClientConnect;
 ClientSpawn_ptr ClientSpawn;
 Touch_Item_ptr Touch_Item;
+LaunchItem_ptr LaunchItem;
 Drop_Item_ptr Drop_Item;
 G_FreeEntity_ptr G_FreeEntity;
 
@@ -313,6 +314,14 @@ void SearchVmFunctions(void) {
 		failed = 1;
 	}
 	else DebugPrint("Touch_Item: %p\n", Touch_Item);
+
+	LaunchItem = (LaunchItem_ptr)PatternSearch((void*)((pint)qagame + 0xB000),
+			0xB0000, PTRN_LAUNCHITEM, MASK_LAUNCHITEM);
+	if (LaunchItem == NULL) {
+		DebugPrint("ERROR: Unable to find LaunchItem.\n");
+		failed = 1;
+	}
+	else DebugPrint("LaunchItem: %p\n", LaunchItem);
 
 	Drop_Item = (Drop_Item_ptr)PatternSearch((void*)((pint)qagame + 0xB000),
 			0xB0000, PTRN_DROP_ITEM, MASK_DROP_ITEM);
