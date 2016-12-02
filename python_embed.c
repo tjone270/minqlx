@@ -1353,6 +1353,32 @@ static PyObject* PyMinqlx_DestroyKamikazeTimers(PyObject* self, PyObject* args) 
 }
 
 /*
+* ================================================================
+*                        spawn_item
+* ================================================================
+*/
+
+static PyObject* PyMinqlx_SpawnItem(PyObject* self, PyObject* args) {
+    int item_id, x, y, z;
+    if (!PyArg_ParseTuple(args, "iiii:spawn_item", &item_id, &x, &y, &z))
+        return NULL;
+    if (item_id < 0 || item_id >= bg_numItems) {
+        PyErr_Format(PyExc_ValueError,
+                     "item_id needs to be a number from 0 to %d.",
+                     bg_numItems);
+        return NULL;
+    }
+
+    vec3_t origin = {x, y, z};
+    vec3_t velocity = {0};
+
+    gentity_t* ent = LaunchItem(bg_itemlist + item_id, origin, velocity);
+    ent->nextthink = 0;
+    ent->think = 0;
+    Py_RETURN_TRUE;
+}
+
+/*
  * ================================================================
  *             Module definition and initialization
  * ================================================================
@@ -1431,6 +1457,8 @@ static PyMethodDef minqlxMethods[] = {
      "Sets a player's privileges. Does not persist."},
     {"destroy_kamikaze_timers", PyMinqlx_DestroyKamikazeTimers, METH_NOARGS,
      "Removes all current kamikaze timers."},
+    {"spawn_item", PyMinqlx_SpawnItem, METH_VARARGS,
+     "Spawns item with specified coordinates."},
     {NULL, NULL, 0, NULL}
 };
 
