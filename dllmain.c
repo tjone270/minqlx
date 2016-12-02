@@ -71,6 +71,7 @@ G_FreeEntity_ptr G_FreeEntity;
 gentity_t* g_entities;
 level_locals_t* level;
 gitem_t* bg_itemlist;
+int bg_numItems;
 
 // Cvars.
 cvar_t* sv_maxclients;
@@ -342,6 +343,9 @@ void SearchVmFunctions(void) {
 	bg_itemlist = qagame + 0x2CB8A0;
 	DebugPrint("bg_itemlist: %p\n", bg_itemlist);
 	DebugPrint("Must be item_armor_shard: %s\n", bg_itemlist[1].classname);
+
+	for (bg_numItems = 1; bg_itemlist[ bg_numItems ].classname; bg_numItems++);
+	DebugPrint("bg_numItems: %d\n", bg_numItems);
 
 	if (failed) {
 			DebugPrint("Exiting.\n");

@@ -1401,6 +1401,7 @@ extern serverStatic_t* svs;
 extern gentity_t* g_entities;
 extern level_locals_t* level;
 extern gitem_t* bg_itemlist;
+extern int bg_numItems;
 // Cvars.
 extern cvar_t* sv_maxclients;
 
