@@ -1379,6 +1379,27 @@ static PyObject* PyMinqlx_SpawnItem(PyObject* self, PyObject* args) {
 }
 
 /*
+* ================================================================
+*                        remove_dropped_items
+* ================================================================
+*/
+
+static PyObject* PyMinqlx_RemoveDroppedItems(PyObject* self, PyObject* args) {
+    int i;
+    gentity_t* ent;
+
+    for (i = 0; i < MAX_GENTITIES; i++) {
+        ent = &g_entities[i];
+        if (!ent->inuse)
+            continue;
+
+        if (ent->flags & FL_DROPPED_ITEM)
+            G_FreeEntity(ent);
+    }
+    Py_RETURN_TRUE;
+}
+
+/*
  * ================================================================
  *             Module definition and initialization
  * ================================================================
@@ -1459,6 +1480,8 @@ static PyMethodDef minqlxMethods[] = {
      "Removes all current kamikaze timers."},
     {"spawn_item", PyMinqlx_SpawnItem, METH_VARARGS,
      "Spawns item with specified coordinates."},
+    {"remove_dropped_items", PyMinqlx_RemoveDroppedItems, METH_NOARGS,
+     "Removes all dropped items."},
     {NULL, NULL, 0, NULL}
 };
 

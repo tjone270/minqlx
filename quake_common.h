@@ -111,6 +111,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define EF_AWARD_DENIED		0x00040000		// denied
 #define EF_TEAMVOTED		0x00080000		// already cast a team vote
 
+#define FL_DROPPED_ITEM 0x00001000
+
 typedef enum {qfalse, qtrue} qboolean;
 typedef unsigned char byte;
 
