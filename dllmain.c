@@ -340,12 +340,19 @@ void SearchVmFunctions(void) {
 	}
 	else DebugPrint("G_FreeEntity: %p\n", G_FreeEntity);
 
-	bg_itemlist = qagame + 0x2CB8A0;
-	DebugPrint("bg_itemlist: %p\n", bg_itemlist);
-	DebugPrint("Must be item_armor_shard: %s\n", bg_itemlist[1].classname);
+	//bg_itemlist = qagame + 0x2CB8A0;
+	bg_itemlist = (gitem_t*)PatternSearch((void*)((pint)qagame + 0x2CB000),
+			0xB0000, PTRN_BG_ITEMLIST, MASK_BG_ITEMLIST);
+	if (bg_itemlist == NULL) {
+		DebugPrint("ERROR: Unable to find bg_itemlist.\n");
+		failed = 1;
+	}
+	else {
+		DebugPrint("bg_itemlist: %p\n", bg_itemlist);
+		for (bg_numItems = 1; bg_itemlist[ bg_numItems ].classname; bg_numItems++);
+		DebugPrint("bg_numItems: %d\n", bg_numItems);
+	}
 
-	for (bg_numItems = 1; bg_itemlist[ bg_numItems ].classname; bg_numItems++);
-	DebugPrint("bg_numItems: %d\n", bg_numItems);
 
 	if (failed) {
 			DebugPrint("Exiting.\n");
