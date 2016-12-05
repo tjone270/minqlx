@@ -1443,6 +1443,7 @@ typedef void (__cdecl *ClientSpawn_ptr)(gentity_t* ent);
 typedef void (__cdecl *Touch_Item_ptr)(gentity_t *ent, gentity_t *other, trace_t *trace);
 typedef gentity_t* (__cdecl *LaunchItem_ptr)(gitem_t *item, vec3_t origin, vec3_t velocity);
 typedef gentity_t* (__cdecl *Drop_Item_ptr)(gentity_t *ent, gitem_t *item, float angle);
+typedef void (__cdecl *G_StartKamikaze_ptr)(gentity_t *ent);
 typedef void (__cdecl *G_FreeEntity_ptr)(gentity_t *ed);
 
 // Some of them are initialized by Initialize(), but not all of them necessarily.
@@ -1478,6 +1479,7 @@ extern ClientSpawn_ptr ClientSpawn;
 extern Touch_Item_ptr Touch_Item;
 extern LaunchItem_ptr LaunchItem;
 extern Drop_Item_ptr Drop_Item;
+extern G_StartKamikaze_ptr G_StartKamikaze;
 extern G_FreeEntity_ptr G_FreeEntity;
 
 // Server replacement functions for hooks.
@@ -1496,6 +1498,8 @@ void __cdecl My_G_RunFrame(int time);
 void __cdecl My_G_InitGame(int levelTime, int randomSeed, int restart);
 char* __cdecl My_ClientConnect(int clientNum, qboolean firstTime, qboolean isBot);
 void __cdecl My_ClientSpawn(gentity_t* ent);
+
+void __cdecl My_G_StartKamikaze(gentity_t* ent);
 #endif
 
 // Custom commands added using Cmd_AddCommand during initialization.

@@ -187,6 +187,10 @@ void __cdecl My_ClientSpawn(gentity_t* ent) {
     // us to set weapons and such without it getting overriden later.
     ClientSpawnDispatcher(ent - g_entities);
 }
+
+void __cdecl My_G_StartKamikaze(gentity_t* ent) {
+    Com_Printf("pook!\n");
+}
 #endif
 
 // Hook static functions. Can be done before program even runs.
@@ -250,6 +254,7 @@ void HookStatic(void) {
         DebugPrint("ERROR: Failed to hook SV_SpawnServer: %d\n", res);
         failed = 1;
     }
+
 #endif
 
     if (failed) {
@@ -297,6 +302,13 @@ void HookVm(void) {
         DebugPrint("ERROR: Failed to hook ClientSpawn: %d\n", res);
         failed = 1;
     }
+
+    res = Hook((void*)G_StartKamikaze, My_G_StartKamikaze, (void*)&G_StartKamikaze);
+    if (res) {
+        DebugPrint("ERROR: Failed to hook G_StartKamikaze: %d\n", res);
+        failed = 1;
+    }
+
 
 	if (failed) {
 		DebugPrint("Exiting.\n");
