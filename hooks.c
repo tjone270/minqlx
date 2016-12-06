@@ -189,8 +189,30 @@ void __cdecl My_ClientSpawn(gentity_t* ent) {
 }
 
 void __cdecl My_G_StartKamikaze(gentity_t* ent) {
-    Com_Printf("pook!\n");
+    int client_id, is_used_on_demand;
+
+    if (ent->client) {
+        // player activated kamikaze item
+        ent->client->ps.eFlags &= ~EF_KAMIKAZE;
+        client_id = ent->client->ps.clientNum;
+        is_used_on_demand = 1;
+    } else if (ent->activator) {
+        // dead player's body blast
+        client_id = ent->activator->r.ownerNum;
+        is_used_on_demand = 0;
+    } else {
+        // I don't know
+        client_id = -1;
+        is_used_on_demand = 0;
+    }
+
+    if (is_used_on_demand)
+       KamikazeUseDispatcher(client_id);
+
     G_StartKamikaze(ent);
+
+    if (client_id != -1)
+        KamikazeExplodeDispatcher(client_id);
 }
 #endif
 

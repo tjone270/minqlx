@@ -24,6 +24,9 @@ PyObject* rcon_handler = NULL;
 PyObject* console_print_handler = NULL;
 PyObject* client_spawn_handler = NULL;
 
+PyObject* kamikaze_use_handler = NULL;
+PyObject* kamikaze_explode_handler = NULL;
+
 static PyThreadState* mainstate;
 static int initialized = 0;
 
@@ -64,6 +67,10 @@ static handler_t handlers[] = {
         {"rcon",                &rcon_handler},
         {"console_print",       &console_print_handler},
         {"player_spawn",        &client_spawn_handler},
+
+        {"kamikaze_use",        &kamikaze_use_handler},
+        {"kamikaze_explode",    &kamikaze_explode_handler},
+
 		{NULL, NULL}
 };
 

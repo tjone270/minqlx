@@ -258,3 +258,39 @@ void ClientSpawnDispatcher(int client_id) {
 
     PyGILState_Release(gstate);
 }
+
+void KamikazeUseDispatcher(int client_id) {
+    if (!kamikaze_use_handler)
+        return; // No registered handler.
+
+    PyGILState_STATE gstate = PyGILState_Ensure();
+
+    PyObject* result = PyObject_CallFunction(kamikaze_use_handler, "i", client_id);
+
+    // Only change to 0 if we got False returned to us.
+    if (result == NULL) {
+        DebugError("PyObject_CallFunction() returned NULL.\n",
+                __FILE__, __LINE__, __func__);
+    }
+    Py_XDECREF(result);
+
+    PyGILState_Release(gstate);
+}
+
+void KamikazeExplodeDispatcher(int client_id) {
+    if (!kamikaze_explode_handler)
+        return; // No registered handler.
+
+    PyGILState_STATE gstate = PyGILState_Ensure();
+
+    PyObject* result = PyObject_CallFunction(kamikaze_explode_handler, "i", client_id);
+
+    // Only change to 0 if we got False returned to us.
+    if (result == NULL) {
+        DebugError("PyObject_CallFunction() returned NULL.\n",
+                __FILE__, __LINE__, __func__);
+    }
+    Py_XDECREF(result);
+
+    PyGILState_Release(gstate);
+}

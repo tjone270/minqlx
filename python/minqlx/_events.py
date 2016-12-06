@@ -555,6 +555,21 @@ class UserinfoDispatcher(EventDispatcher):
         else:
             return super().handle_return(handler, value)
 
+class KamikazeUseDispatcher(EventDispatcher):
+    """Event that goes off when player uses kamikaze item."""
+    name = "kamikaze_use"
+
+    def dispatch(self, player):
+        return super().dispatch(player)
+
+class KamikazeExplodeDispatcher(EventDispatcher):
+    """Event that goes off when kamikaze explodes."""
+    name = "kamikaze_explode"
+
+    def dispatch(self, player):
+        return super().dispatch(player)
+
+
 EVENT_DISPATCHERS = EventDispatcherManager()
 EVENT_DISPATCHERS.add_dispatcher(ConsolePrintDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(CommandDispatcher)
@@ -568,6 +583,8 @@ EVENT_DISPATCHERS.add_dispatcher(PlayerConnectDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(PlayerLoadedDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(PlayerDisonnectDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(PlayerSpawnDispatcher)
+EVENT_DISPATCHERS.add_dispatcher(KamikazeUseDispatcher)
+EVENT_DISPATCHERS.add_dispatcher(KamikazeExplodeDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(StatsDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(VoteCalledDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(VoteStartedDispatcher)

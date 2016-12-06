@@ -387,6 +387,34 @@ def handle_player_spawn(client_id):
         minqlx.log_exception()
         return True
 
+def handle_kamikaze_use(client_id):
+    """This will be called whenever player uses kamikaze item.
+
+    :param client_id: The client identifier.
+    :type client_id: int
+
+    """
+    try:
+        player = minqlx.Player(client_id)
+        return minqlx.EVENT_DISPATCHERS["kamikaze_use"].dispatch(player)
+    except:
+        minqlx.log_exception()
+        return True
+
+def handle_kamikaze_explode(client_id):
+    """This will be called whenever kamikaze explodes.
+
+    :param client_id: The client identifier.
+    :type client_id: int
+
+    """
+    try:
+        player = minqlx.Player(client_id)
+        return minqlx.EVENT_DISPATCHERS["kamikaze_explode"].dispatch(player)
+    except:
+        minqlx.log_exception()
+        return True
+
 def handle_console_print(text):
     """Called whenever the server prints something to the console and when rcon is used."""
     try:
@@ -462,3 +490,6 @@ def register_handlers():
     minqlx.register_handler("player_disconnect", handle_player_disconnect)
     minqlx.register_handler("player_spawn", handle_player_spawn)
     minqlx.register_handler("console_print", handle_console_print)
+
+    minqlx.register_handler("kamikaze_use", handle_kamikaze_use)
+    minqlx.register_handler("kamikaze_explode", handle_kamikaze_explode)
