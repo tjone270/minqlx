@@ -190,6 +190,7 @@ void __cdecl My_ClientSpawn(gentity_t* ent) {
 
 void __cdecl My_G_StartKamikaze(gentity_t* ent) {
     Com_Printf("pook!\n");
+    G_StartKamikaze(ent);
 }
 #endif
 
@@ -297,18 +298,17 @@ void HookVm(void) {
 		failed = 1;
 	}
 
-    res = Hook((void*)ClientSpawn, My_ClientSpawn, (void*)&ClientSpawn);
-    if (res) {
-        DebugPrint("ERROR: Failed to hook ClientSpawn: %d\n", res);
-        failed = 1;
-    }
-
     res = Hook((void*)G_StartKamikaze, My_G_StartKamikaze, (void*)&G_StartKamikaze);
     if (res) {
         DebugPrint("ERROR: Failed to hook G_StartKamikaze: %d\n", res);
         failed = 1;
     }
 
+    res = Hook((void*)ClientSpawn, My_ClientSpawn, (void*)&ClientSpawn);
+    if (res) {
+        DebugPrint("ERROR: Failed to hook ClientSpawn: %d\n", res);
+        failed = 1;
+    }
 
 	if (failed) {
 		DebugPrint("Exiting.\n");
