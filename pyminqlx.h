@@ -90,6 +90,6 @@ char* ConsolePrintDispatcher(char* cmd);
 void ClientSpawnDispatcher(int client_id);
 
 void KamikazeUseDispatcher(int client_id);
-void KamikazeExplodeDispatcher(int client_id);
+void KamikazeExplodeDispatcher(int client_id, int is_used_on_demand);
 
 #endif /* PYMINQLX_H */

@@ -566,8 +566,8 @@ class KamikazeExplodeDispatcher(EventDispatcher):
     """Event that goes off when kamikaze explodes."""
     name = "kamikaze_explode"
 
-    def dispatch(self, player):
-        return super().dispatch(player)
+    def dispatch(self, player, is_used_on_demand):
+        return super().dispatch(player, is_used_on_demand)
 
 
 EVENT_DISPATCHERS = EventDispatcherManager()

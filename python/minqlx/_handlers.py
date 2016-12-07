@@ -401,16 +401,19 @@ def handle_kamikaze_use(client_id):
         minqlx.log_exception()
         return True
 
-def handle_kamikaze_explode(client_id):
+def handle_kamikaze_explode(client_id, is_used_on_demand):
     """This will be called whenever kamikaze explodes.
 
     :param client_id: The client identifier.
     :type client_id: int
+    :param is_used_on_demand: Non-zero if kamikaze is used on demand.
+    :type is_used_on_demand: int
+
 
     """
     try:
         player = minqlx.Player(client_id)
-        return minqlx.EVENT_DISPATCHERS["kamikaze_explode"].dispatch(player)
+        return minqlx.EVENT_DISPATCHERS["kamikaze_explode"].dispatch(player, True if is_used_on_demand else False)
     except:
         minqlx.log_exception()
         return True

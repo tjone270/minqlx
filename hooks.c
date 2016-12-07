@@ -212,7 +212,7 @@ void __cdecl My_G_StartKamikaze(gentity_t* ent) {
     G_StartKamikaze(ent);
 
     if (client_id != -1)
-        KamikazeExplodeDispatcher(client_id);
+        KamikazeExplodeDispatcher(client_id, is_used_on_demand);
 }
 #endif
 
