@@ -24,6 +24,9 @@ PyObject* rcon_handler = NULL;
 PyObject* console_print_handler = NULL;
 PyObject* client_spawn_handler = NULL;
 
+PyObject* kamikaze_use_handler = NULL;
+PyObject* kamikaze_explode_handler = NULL;
+
 static PyThreadState* mainstate;
 static int initialized = 0;
 
@@ -64,6 +67,10 @@ static handler_t handlers[] = {
         {"rcon",                &rcon_handler},
         {"console_print",       &console_print_handler},
         {"player_spawn",        &client_spawn_handler},
+
+        {"kamikaze_use",        &kamikaze_use_handler},
+        {"kamikaze_explode",    &kamikaze_explode_handler},
+
 		{NULL, NULL}
 };
 
@@ -1207,6 +1214,33 @@ static PyObject* PyMinqlx_SetFlight(PyObject* self, PyObject* args) {
 
 /*
 * ================================================================
+*                        set_invulnerability
+* ================================================================
+*/
+
+static PyObject* PyMinqlx_SetInvulnerability(PyObject* self, PyObject* args) {
+    int client_id, time;
+    if (!PyArg_ParseTuple(args, "ii:set_invulnerability", &client_id, &time))
+        return NULL;
+    else if (client_id < 0 || client_id >= sv_maxclients->integer) {
+        PyErr_Format(PyExc_ValueError,
+                     "client_id needs to be a number from 0 to %d.",
+                     sv_maxclients->integer);
+        return NULL;
+    }
+    else if (!g_entities[client_id].client)
+        Py_RETURN_FALSE;
+    else if (time <= 0) {
+        PyErr_Format(PyExc_ValueError, "time needs to be positive integer.");
+        return NULL;
+    }
+
+    g_entities[client_id].client->invulnerabilityTime = level->time + time;
+    Py_RETURN_TRUE;
+}
+
+/*
+* ================================================================
 *                           set_score
 * ================================================================
 */
@@ -1466,6 +1500,8 @@ static PyMethodDef minqlxMethods[] = {
      "Drops player's holdable item."},
     {"set_flight", PyMinqlx_SetFlight, METH_VARARGS,
      "Sets a player's flight parameters, such as current fuel, max fuel and, so on."},
+    {"set_invulnerability", PyMinqlx_SetInvulnerability, METH_VARARGS,
+     "Makes player invulnerable for limited time."},
     {"set_score", PyMinqlx_SetScore, METH_VARARGS,
      "Sets a player's score."},
     {"callvote", PyMinqlx_Callvote, METH_VARARGS,

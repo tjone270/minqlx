@@ -65,6 +65,7 @@ ClientSpawn_ptr ClientSpawn;
 Touch_Item_ptr Touch_Item;
 LaunchItem_ptr LaunchItem;
 Drop_Item_ptr Drop_Item;
+G_StartKamikaze_ptr G_StartKamikaze;
 G_FreeEntity_ptr G_FreeEntity;
 
 // VM global variables.
@@ -331,6 +332,14 @@ void SearchVmFunctions(void) {
 		failed = 1;
 	}
 	else DebugPrint("Drop_Item: %p\n", Drop_Item);
+
+	G_StartKamikaze = (G_StartKamikaze_ptr)PatternSearch((void*)((pint)qagame + 0xB000),
+			0xB0000, PTRN_G_STARTKAMIKAZE, MASK_G_STARTKAMIKAZE);
+	if (G_StartKamikaze == NULL) {
+		DebugPrint("ERROR: Unable to find G_StartKamikaze.\n");
+		failed = 1;
+	}
+	else DebugPrint("G_StartKamikaze: %p\n", G_StartKamikaze);
 
 	G_FreeEntity = (G_FreeEntity_ptr)PatternSearch((void*)((pint)qagame + 0xB000),
 			0xB0000, PTRN_G_FREEENTITY, MASK_G_FREEENTITY);
