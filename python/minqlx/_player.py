@@ -602,6 +602,9 @@ class Player():
     def slay(self):
         return minqlx.Plugin.slay(self)
 
+    def slay_with_mod(self, mod):
+        return minqlx.slay_with_mod(self.id, mod)
+
     @classmethod
     def all_players(cls):
         return [cls(i, info=info) for i, info in enumerate(minqlx.players_info()) if info]

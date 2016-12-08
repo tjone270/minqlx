@@ -1434,6 +1434,38 @@ static PyObject* PyMinqlx_RemoveDroppedItems(PyObject* self, PyObject* args) {
 }
 
 /*
+* ================================================================
+*                         slay_with_mod
+* ================================================================
+*/
+
+// it is alternative to Slay from command.c
+static PyObject* PyMinqlx_SlayWithMod(PyObject* self, PyObject* args) {
+    int client_id, mod;
+    if (!PyArg_ParseTuple(args, "ii:slay_with_mod", &client_id, &mod))
+        return NULL;
+    else if (client_id < 0 || client_id >= sv_maxclients->integer) {
+        PyErr_Format(PyExc_ValueError,
+                     "client_id needs to be a number from 0 to %d.",
+                     sv_maxclients->integer);
+        return NULL;
+    }
+    else if (!g_entities[client_id].client)
+        Py_RETURN_FALSE;
+    else if (g_entities[client_id].health <= 0)
+        Py_RETURN_TRUE;
+
+    gentity_t* ent = &g_entities[client_id];
+    int damage = g_entities[client_id].health + (mod == MOD_KAMIKAZE ? 100000 : 0);
+
+    g_entities[client_id].client->ps.stats[STAT_ARMOR] = 0;
+
+    // self damage = half damage, so multiplaying by 2
+    G_Damage( ent, ent, ent, NULL, NULL, damage*2, DAMAGE_NO_PROTECTION, mod );
+    Py_RETURN_TRUE;
+}
+
+/*
  * ================================================================
  *             Module definition and initialization
  * ================================================================
@@ -1518,6 +1550,8 @@ static PyMethodDef minqlxMethods[] = {
      "Spawns item with specified coordinates."},
     {"remove_dropped_items", PyMinqlx_RemoveDroppedItems, METH_NOARGS,
      "Removes all dropped items."},
+    {"slay_with_mod", PyMinqlx_SlayWithMod, METH_VARARGS,
+     "Slay player with mean of death."},
     {NULL, NULL, 0, NULL}
 };
 
@@ -1584,6 +1618,42 @@ static PyObject* PyMinqlx_InitModule(void) {
     PyModule_AddIntMacro(module, TEAM_RED);
     PyModule_AddIntMacro(module, TEAM_BLUE);
     PyModule_AddIntMacro(module, TEAM_SPECTATOR);
+
+    // Means of death.
+    PyModule_AddIntMacro(module, MOD_UNKNOWN);
+    PyModule_AddIntMacro(module, MOD_SHOTGUN);
+    PyModule_AddIntMacro(module, MOD_GAUNTLET);
+    PyModule_AddIntMacro(module, MOD_MACHINEGUN);
+    PyModule_AddIntMacro(module, MOD_GRENADE);
+    PyModule_AddIntMacro(module, MOD_GRENADE_SPLASH);
+    PyModule_AddIntMacro(module, MOD_ROCKET);
+    PyModule_AddIntMacro(module, MOD_ROCKET_SPLASH);
+    PyModule_AddIntMacro(module, MOD_PLASMA);
+    PyModule_AddIntMacro(module, MOD_PLASMA_SPLASH);
+    PyModule_AddIntMacro(module, MOD_RAILGUN);
+    PyModule_AddIntMacro(module, MOD_LIGHTNING);
+    PyModule_AddIntMacro(module, MOD_BFG);
+    PyModule_AddIntMacro(module, MOD_BFG_SPLASH);
+    PyModule_AddIntMacro(module, MOD_WATER);
+    PyModule_AddIntMacro(module, MOD_SLIME);
+    PyModule_AddIntMacro(module, MOD_LAVA);
+    PyModule_AddIntMacro(module, MOD_CRUSH);
+    PyModule_AddIntMacro(module, MOD_TELEFRAG);
+    PyModule_AddIntMacro(module, MOD_FALLING);
+    PyModule_AddIntMacro(module, MOD_SUICIDE);
+    PyModule_AddIntMacro(module, MOD_TARGET_LASER);
+    PyModule_AddIntMacro(module, MOD_TRIGGER_HURT);
+    PyModule_AddIntMacro(module, MOD_NAIL);
+    PyModule_AddIntMacro(module, MOD_CHAINGUN);
+    PyModule_AddIntMacro(module, MOD_PROXIMITY_MINE);
+    PyModule_AddIntMacro(module, MOD_KAMIKAZE);
+    PyModule_AddIntMacro(module, MOD_JUICED);
+    PyModule_AddIntMacro(module, MOD_GRAPPLE);
+    PyModule_AddIntMacro(module, MOD_SWITCH_TEAMS);
+    PyModule_AddIntMacro(module, MOD_THAW);
+    PyModule_AddIntMacro(module, MOD_LIGHTNING_DISCHARGE);
+    PyModule_AddIntMacro(module, MOD_HMG);
+    PyModule_AddIntMacro(module, MOD_RAILGUN_HEADSHOT);
 
     // Initialize struct sequence types.
     PyStructSequence_InitType(&player_info_type, &player_info_desc);
