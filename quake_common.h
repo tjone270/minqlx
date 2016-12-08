@@ -113,6 +113,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define FL_DROPPED_ITEM 0x00001000
 
+#define DAMAGE_NO_PROTECTION 0x00000008
+
 typedef enum {qfalse, qtrue} qboolean;
 typedef unsigned char byte;
 
@@ -437,6 +439,45 @@ typedef enum {
 
 	TEAM_NUM_TEAMS
 } team_t;
+
+// https://github.com/brugal/wolfcamql/blob/73e2d707e5dd1fb0fc50d4ad9f00940909c4b3ec/code/game/bg_public.h#L1142-L1188
+// means of death
+typedef enum {
+  MOD_UNKNOWN,
+  MOD_SHOTGUN,
+  MOD_GAUNTLET,
+  MOD_MACHINEGUN,
+  MOD_GRENADE,
+  MOD_GRENADE_SPLASH,
+  MOD_ROCKET,
+  MOD_ROCKET_SPLASH,
+  MOD_PLASMA,
+  MOD_PLASMA_SPLASH,
+  MOD_RAILGUN,
+  MOD_LIGHTNING,
+  MOD_BFG,
+  MOD_BFG_SPLASH,
+  MOD_WATER,
+  MOD_SLIME,
+  MOD_LAVA,
+  MOD_CRUSH,
+  MOD_TELEFRAG,
+  MOD_FALLING,
+  MOD_SUICIDE,
+  MOD_TARGET_LASER,
+  MOD_TRIGGER_HURT,
+  MOD_NAIL,
+  MOD_CHAINGUN,
+  MOD_PROXIMITY_MINE,
+  MOD_KAMIKAZE,
+  MOD_JUICED,
+  MOD_GRAPPLE,
+  MOD_SWITCH_TEAMS,
+  MOD_THAW,
+  MOD_LIGHTNING_DISCHARGE,
+  MOD_HMG,
+  MOD_RAILGUN_HEADSHOT
+} meansOfDeath_t;
 
 typedef enum {
 	SPECTATOR_NOT,
@@ -1440,6 +1481,7 @@ typedef void (__cdecl *G_InitGame_ptr)(int levelTime, int randomSeed, int restar
 typedef int (__cdecl *CheckPrivileges_ptr)(gentity_t* ent, char* cmd);
 typedef char* (__cdecl *ClientConnect_ptr)(int clientNum, qboolean firstTime, qboolean isBot);
 typedef void (__cdecl *ClientSpawn_ptr)(gentity_t* ent);
+typedef void (__cdecl *G_Damage_ptr)(gentity_t *targ, gentity_t *inflictor, gentity_t *attacker, vec3_t dir, vec3_t point, int damage, int dflags, int mod);
 typedef void (__cdecl *Touch_Item_ptr)(gentity_t *ent, gentity_t *other, trace_t *trace);
 typedef gentity_t* (__cdecl *LaunchItem_ptr)(gitem_t *item, vec3_t origin, vec3_t velocity);
 typedef gentity_t* (__cdecl *Drop_Item_ptr)(gentity_t *ent, gitem_t *item, float angle);
@@ -1476,6 +1518,7 @@ extern G_InitGame_ptr G_InitGame;
 extern CheckPrivileges_ptr CheckPrivileges;
 extern ClientConnect_ptr ClientConnect;
 extern ClientSpawn_ptr ClientSpawn;
+extern G_Damage_ptr G_Damage;
 extern Touch_Item_ptr Touch_Item;
 extern LaunchItem_ptr LaunchItem;
 extern Drop_Item_ptr Drop_Item;
