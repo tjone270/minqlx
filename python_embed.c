@@ -24,6 +24,9 @@ PyObject* rcon_handler = NULL;
 PyObject* console_print_handler = NULL;
 PyObject* client_spawn_handler = NULL;
 
+PyObject* kamikaze_use_handler = NULL;
+PyObject* kamikaze_explode_handler = NULL;
+
 static PyThreadState* mainstate;
 static int initialized = 0;
 
@@ -64,6 +67,10 @@ static handler_t handlers[] = {
         {"rcon",                &rcon_handler},
         {"console_print",       &console_print_handler},
         {"player_spawn",        &client_spawn_handler},
+
+        {"kamikaze_use",        &kamikaze_use_handler},
+        {"kamikaze_explode",    &kamikaze_explode_handler},
+
 		{NULL, NULL}
 };
 
@@ -1118,6 +1125,58 @@ static PyObject* PyMinqlx_SetHoldable(PyObject* self, PyObject* args) {
 
 /*
 * ================================================================
+*                          drop_holdable
+* ================================================================
+*/
+
+// FixMe: holdable pickup is predicted on client (if cg_predictItems == 1)
+//        this generates holdable pickup sound on drop
+
+void __cdecl Switch_Touch_Item(gentity_t *ent) {
+    ent->touch = Touch_Item;
+    ent->think = G_FreeEntity;
+    ent->nextthink = level->time + 29000;
+}
+
+void __cdecl My_Touch_Item(gentity_t *ent, gentity_t *other, trace_t *trace) {
+    if (ent->parent == other) return;
+    Touch_Item(ent, other, trace);
+}
+
+static PyObject* PyMinqlx_DropHoldable(PyObject* self, PyObject* args) {
+    int client_id, item;
+    if (!PyArg_ParseTuple(args, "i:drop_holdable", &client_id))
+        return NULL;
+    else if (client_id < 0 || client_id >= sv_maxclients->integer) {
+        PyErr_Format(PyExc_ValueError,
+                     "client_id needs to be a number from 0 to %d.",
+                     sv_maxclients->integer);
+        return NULL;
+    }
+    else if (!g_entities[client_id].client)
+        Py_RETURN_FALSE;
+
+    // removing kamikaze flag (surrounding skulls)
+    g_entities[client_id].client->ps.eFlags &= ~EF_KAMIKAZE;
+
+    item = g_entities[client_id].client->ps.stats[STAT_HOLDABLE_ITEM];
+    if (item == 0) Py_RETURN_FALSE;
+
+    gentity_t* entity = Drop_Item(&g_entities[client_id], bg_itemlist + item, 0);
+    entity->touch     = My_Touch_Item;
+    entity->parent    = &g_entities[client_id];
+    entity->think     = Switch_Touch_Item;
+    entity->nextthink = level->time + 1000;
+
+    // removing holdable from player entity
+    g_entities[client_id].client->ps.stats[STAT_HOLDABLE_ITEM] = 0;
+
+    Py_RETURN_TRUE;
+}
+
+
+/*
+* ================================================================
 *                           set_flight
 * ================================================================
 */
@@ -1150,6 +1209,33 @@ static PyObject* PyMinqlx_SetFlight(PyObject* self, PyObject* args) {
     g_entities[client_id].client->ps.stats[STAT_MAX_FLIGHT_FUEL] = PyLong_AsLong(PyStructSequence_GetItem(flight, 1));
     g_entities[client_id].client->ps.stats[STAT_FLIGHT_THRUST] = PyLong_AsLong(PyStructSequence_GetItem(flight, 2));
     g_entities[client_id].client->ps.stats[STAT_FLIGHT_REFUEL] = PyLong_AsLong(PyStructSequence_GetItem(flight, 3));
+    Py_RETURN_TRUE;
+}
+
+/*
+* ================================================================
+*                        set_invulnerability
+* ================================================================
+*/
+
+static PyObject* PyMinqlx_SetInvulnerability(PyObject* self, PyObject* args) {
+    int client_id, time;
+    if (!PyArg_ParseTuple(args, "ii:set_invulnerability", &client_id, &time))
+        return NULL;
+    else if (client_id < 0 || client_id >= sv_maxclients->integer) {
+        PyErr_Format(PyExc_ValueError,
+                     "client_id needs to be a number from 0 to %d.",
+                     sv_maxclients->integer);
+        return NULL;
+    }
+    else if (!g_entities[client_id].client)
+        Py_RETURN_FALSE;
+    else if (time <= 0) {
+        PyErr_Format(PyExc_ValueError, "time needs to be positive integer.");
+        return NULL;
+    }
+
+    g_entities[client_id].client->invulnerabilityTime = level->time + time;
     Py_RETURN_TRUE;
 }
 
@@ -1275,6 +1361,111 @@ static PyObject* PyMinqlx_SetPrivileges(PyObject* self, PyObject* args) {
 }
 
 /*
+* ================================================================
+*                        destroy_kamikaze_timers
+* ================================================================
+*/
+
+static PyObject* PyMinqlx_DestroyKamikazeTimers(PyObject* self, PyObject* args) {
+    int i;
+    gentity_t* ent;
+
+    for (i = 0; i < MAX_GENTITIES; i++) {
+        ent = &g_entities[i];
+        if (!ent->inuse)
+            continue;
+
+        // removing kamikaze skull from dead body
+        if (ent->client && ent->health <= 0) {
+            ent->client->ps.eFlags &= ~EF_KAMIKAZE;
+        }
+
+        if (strcmp(ent->classname, "kamikaze timer") == 0)
+            G_FreeEntity(ent);
+    }
+    Py_RETURN_TRUE;
+}
+
+/*
+* ================================================================
+*                        spawn_item
+* ================================================================
+*/
+
+static PyObject* PyMinqlx_SpawnItem(PyObject* self, PyObject* args) {
+    int item_id, x, y, z;
+    if (!PyArg_ParseTuple(args, "iiii:spawn_item", &item_id, &x, &y, &z))
+        return NULL;
+    if (item_id < 0 || item_id >= bg_numItems) {
+        PyErr_Format(PyExc_ValueError,
+                     "item_id needs to be a number from 0 to %d.",
+                     bg_numItems);
+        return NULL;
+    }
+
+    vec3_t origin = {x, y, z};
+    vec3_t velocity = {0};
+
+    gentity_t* ent = LaunchItem(bg_itemlist + item_id, origin, velocity);
+    ent->nextthink = 0;
+    ent->think = 0;
+    Py_RETURN_TRUE;
+}
+
+/*
+* ================================================================
+*                        remove_dropped_items
+* ================================================================
+*/
+
+static PyObject* PyMinqlx_RemoveDroppedItems(PyObject* self, PyObject* args) {
+    int i;
+    gentity_t* ent;
+
+    for (i = 0; i < MAX_GENTITIES; i++) {
+        ent = &g_entities[i];
+        if (!ent->inuse)
+            continue;
+
+        if (ent->flags & FL_DROPPED_ITEM)
+            G_FreeEntity(ent);
+    }
+    Py_RETURN_TRUE;
+}
+
+/*
+* ================================================================
+*                         slay_with_mod
+* ================================================================
+*/
+
+// it is alternative to Slay from command.c
+static PyObject* PyMinqlx_SlayWithMod(PyObject* self, PyObject* args) {
+    int client_id, mod;
+    if (!PyArg_ParseTuple(args, "ii:slay_with_mod", &client_id, &mod))
+        return NULL;
+    else if (client_id < 0 || client_id >= sv_maxclients->integer) {
+        PyErr_Format(PyExc_ValueError,
+                     "client_id needs to be a number from 0 to %d.",
+                     sv_maxclients->integer);
+        return NULL;
+    }
+    else if (!g_entities[client_id].client)
+        Py_RETURN_FALSE;
+    else if (g_entities[client_id].health <= 0)
+        Py_RETURN_TRUE;
+
+    gentity_t* ent = &g_entities[client_id];
+    int damage = g_entities[client_id].health + (mod == MOD_KAMIKAZE ? 100000 : 0);
+
+    g_entities[client_id].client->ps.stats[STAT_ARMOR] = 0;
+
+    // self damage = half damage, so multiplaying by 2
+    G_Damage( ent, ent, ent, NULL, NULL, damage*2, DAMAGE_NO_PROTECTION, mod );
+    Py_RETURN_TRUE;
+}
+
+/*
  * ================================================================
  *             Module definition and initialization
  * ================================================================
@@ -1337,8 +1528,12 @@ static PyMethodDef minqlxMethods[] = {
      "Sets a player's powerups."},
     {"set_holdable", PyMinqlx_SetHoldable, METH_VARARGS,
      "Sets a player's holdable item."},
+    {"drop_holdable", PyMinqlx_DropHoldable, METH_VARARGS,
+     "Drops player's holdable item."},
     {"set_flight", PyMinqlx_SetFlight, METH_VARARGS,
      "Sets a player's flight parameters, such as current fuel, max fuel and, so on."},
+    {"set_invulnerability", PyMinqlx_SetInvulnerability, METH_VARARGS,
+     "Makes player invulnerable for limited time."},
     {"set_score", PyMinqlx_SetScore, METH_VARARGS,
      "Sets a player's score."},
     {"callvote", PyMinqlx_Callvote, METH_VARARGS,
@@ -1349,6 +1544,14 @@ static PyMethodDef minqlxMethods[] = {
      "Allows or disallows a game with only a single player in it to go on without forfeiting. Useful for race."},
     {"set_privileges", PyMinqlx_SetPrivileges, METH_VARARGS,
      "Sets a player's privileges. Does not persist."},
+    {"destroy_kamikaze_timers", PyMinqlx_DestroyKamikazeTimers, METH_NOARGS,
+     "Removes all current kamikaze timers."},
+    {"spawn_item", PyMinqlx_SpawnItem, METH_VARARGS,
+     "Spawns item with specified coordinates."},
+    {"remove_dropped_items", PyMinqlx_RemoveDroppedItems, METH_NOARGS,
+     "Removes all dropped items."},
+    {"slay_with_mod", PyMinqlx_SlayWithMod, METH_VARARGS,
+     "Slay player with mean of death."},
     {NULL, NULL, 0, NULL}
 };
 
@@ -1415,6 +1618,42 @@ static PyObject* PyMinqlx_InitModule(void) {
     PyModule_AddIntMacro(module, TEAM_RED);
     PyModule_AddIntMacro(module, TEAM_BLUE);
     PyModule_AddIntMacro(module, TEAM_SPECTATOR);
+
+    // Means of death.
+    PyModule_AddIntMacro(module, MOD_UNKNOWN);
+    PyModule_AddIntMacro(module, MOD_SHOTGUN);
+    PyModule_AddIntMacro(module, MOD_GAUNTLET);
+    PyModule_AddIntMacro(module, MOD_MACHINEGUN);
+    PyModule_AddIntMacro(module, MOD_GRENADE);
+    PyModule_AddIntMacro(module, MOD_GRENADE_SPLASH);
+    PyModule_AddIntMacro(module, MOD_ROCKET);
+    PyModule_AddIntMacro(module, MOD_ROCKET_SPLASH);
+    PyModule_AddIntMacro(module, MOD_PLASMA);
+    PyModule_AddIntMacro(module, MOD_PLASMA_SPLASH);
+    PyModule_AddIntMacro(module, MOD_RAILGUN);
+    PyModule_AddIntMacro(module, MOD_LIGHTNING);
+    PyModule_AddIntMacro(module, MOD_BFG);
+    PyModule_AddIntMacro(module, MOD_BFG_SPLASH);
+    PyModule_AddIntMacro(module, MOD_WATER);
+    PyModule_AddIntMacro(module, MOD_SLIME);
+    PyModule_AddIntMacro(module, MOD_LAVA);
+    PyModule_AddIntMacro(module, MOD_CRUSH);
+    PyModule_AddIntMacro(module, MOD_TELEFRAG);
+    PyModule_AddIntMacro(module, MOD_FALLING);
+    PyModule_AddIntMacro(module, MOD_SUICIDE);
+    PyModule_AddIntMacro(module, MOD_TARGET_LASER);
+    PyModule_AddIntMacro(module, MOD_TRIGGER_HURT);
+    PyModule_AddIntMacro(module, MOD_NAIL);
+    PyModule_AddIntMacro(module, MOD_CHAINGUN);
+    PyModule_AddIntMacro(module, MOD_PROXIMITY_MINE);
+    PyModule_AddIntMacro(module, MOD_KAMIKAZE);
+    PyModule_AddIntMacro(module, MOD_JUICED);
+    PyModule_AddIntMacro(module, MOD_GRAPPLE);
+    PyModule_AddIntMacro(module, MOD_SWITCH_TEAMS);
+    PyModule_AddIntMacro(module, MOD_THAW);
+    PyModule_AddIntMacro(module, MOD_LIGHTNING_DISCHARGE);
+    PyModule_AddIntMacro(module, MOD_HMG);
+    PyModule_AddIntMacro(module, MOD_RAILGUN_HEADSHOT);
 
     // Initialize struct sequence types.
     PyStructSequence_InitType(&player_info_type, &player_info_desc);

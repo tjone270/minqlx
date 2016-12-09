@@ -479,6 +479,9 @@ class Player():
         else:
             raise ValueError("Invalid holdable item.")
 
+    def drop_holdable(self):
+        minqlx.drop_holdable(self.id)
+
     def flight(self, reset=False, **kwargs):
         state = self.state
         if state.holdable != "flight":
@@ -598,6 +601,9 @@ class Player():
 
     def slay(self):
         return minqlx.Plugin.slay(self)
+
+    def slay_with_mod(self, mod):
+        return minqlx.slay_with_mod(self.id, mod)
 
     @classmethod
     def all_players(cls):
