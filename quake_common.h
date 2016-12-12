@@ -37,6 +37,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define CS_VOTE_STRING			9
 #define	CS_VOTE_YES				10
 #define	CS_VOTE_NO				11
+#define CS_ITEMS          15
 
 #define MAX_CLIENTS 64
 #define MAX_CHALLENGES  1024
@@ -1137,6 +1138,26 @@ typedef struct gitem_s {
   unsigned int maskGametypeRenderSkip;
   unsigned int maskGametypeForceSpawn;
 } gitem_t;
+
+typedef enum {
+  ET_GENERAL,
+  ET_PLAYER,
+  ET_ITEM,
+  ET_MISSILE,
+  ET_MOVER,
+  ET_BEAM,
+  ET_PORTAL,
+  ET_SPEAKER,
+  ET_PUSH_TRIGGER,
+  ET_TELEPORT_TRIGGER,
+  ET_INVISIBLE,
+  ET_GRAPPLE,       // grapple hooked on wall
+  ET_TEAM,
+
+  ET_EVENTS       // any of the EV_* events can be added freestanding
+              // by setting eType to ET_EVENTS + eventNum
+              // this avoids having to set eFlags and eventNum
+} entityType_t;
 
 struct gclient_s;
 
