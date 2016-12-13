@@ -1589,6 +1589,51 @@ static PyObject* PyMinqlx_ReplaceItems(PyObject* self, PyObject* args) {
 }
 
 /*
+* ================================================================
+*                         dev_print_items
+* ================================================================
+*/
+
+static PyObject* PyMinqlx_DevPrintItems(PyObject* self, PyObject* args) {
+    gentity_t* ent;
+    char buffer[1024], temp_buffer[1024];
+    int buffer_index = 0, chars_written;
+    const char format[]="%d %s\n";
+    qboolean is_buffer_enough = qtrue;
+
+    // default results
+    sprintf(buffer, "No items found in the map");
+
+    for (int i=0; i<MAX_GENTITIES; i++) {
+        ent = &g_entities[i];
+
+        if (!ent->inuse)
+            continue;
+
+        if (ent->s.eType != ET_ITEM)
+            continue;
+
+        chars_written = sprintf(temp_buffer, format, i, ent->classname);
+        if (is_buffer_enough && buffer_index + chars_written >= sizeof(buffer)) {
+            is_buffer_enough = qfalse;
+            SV_SendServerCommand(NULL, "print \"%s\"", buffer);
+            SV_SendServerCommand(NULL, "print \"%s\"\n", "Check server console for other items\n");
+        }
+
+        if (is_buffer_enough == qfalse) {
+            Com_Printf(format, i, ent->classname);
+        }
+
+        chars_written = sprintf(&buffer[buffer_index], format, i, ent->classname);
+        buffer_index += chars_written;
+    }
+
+    if (is_buffer_enough)
+        SV_SendServerCommand(NULL, "print \"%s\"", buffer);
+    Py_RETURN_NONE;
+}
+
+/*
  * ================================================================
  *             Module definition and initialization
  * ================================================================
@@ -1677,6 +1722,8 @@ static PyMethodDef minqlxMethods[] = {
      "Slay player with mean of death."},
     {"replace_items", PyMinqlx_ReplaceItems, METH_VARARGS,
      "Replaces target entity's item with specified one."},
+    {"dev_print_items", PyMinqlx_DevPrintItems, METH_NOARGS,
+     "Prints all items and entity numbers to server console."},
     {NULL, NULL, 0, NULL}
 };
 
