@@ -1466,6 +1466,174 @@ static PyObject* PyMinqlx_SlayWithMod(PyObject* self, PyObject* args) {
 }
 
 /*
+* ================================================================
+*                         replace_items
+* ================================================================
+*/
+
+void replace_item_core(gentity_t* ent, int item_id) {
+    char csbuffer[4096];
+
+    if (item_id) {
+        ent->s.modelindex = item_id;
+        ent->classname = bg_itemlist[item_id].classname;
+        ent->item = &bg_itemlist[item_id];
+
+        // this forces client to load new item
+        SV_GetConfigstring(CS_ITEMS, csbuffer, sizeof(csbuffer));
+        csbuffer[item_id] = '1';
+        My_SV_SetConfigstring(CS_ITEMS, csbuffer);
+
+    } else {
+        G_FreeEntity(ent);
+    }
+}
+
+static PyObject* PyMinqlx_ReplaceItems(PyObject* self, PyObject* args) {
+    PyObject *arg1, *arg2 ;
+    int entity_id = 0, item_id = 0;
+    char *entity_classname = NULL, *item_classname = NULL;
+    gentity_t* ent;
+
+
+    if (!PyArg_ParseTuple(args, "OO:replace_items", &arg1, &arg2))
+        return NULL;
+
+    // checking type of first arg
+    if (PyLong_Check(arg1)) {
+        entity_id = PyLong_AsLong(arg1);
+    } else if (PyUnicode_Check(arg1))
+        entity_classname = PyUnicode_AsUTF8(arg1);
+    else {
+        PyErr_Format(PyExc_ValueError, "entity needs to be type of int or string.");
+        return NULL;
+    }
+
+    // checking type of second arg
+    if (PyLong_Check(arg2))
+        item_id = PyLong_AsLong(arg2);
+    else if (PyUnicode_Check(arg2))
+        item_classname = PyUnicode_AsUTF8(arg2);
+    else {
+        PyErr_Format(PyExc_ValueError, "item needs to be type of int or string.");
+        return NULL;
+    }
+
+    // convert second arg to item_id, if needed
+    int i=1;
+    if (item_classname == NULL) i=bg_numItems;
+    for (; i<bg_numItems; i++)
+        if (strcmp(bg_itemlist[i].classname, item_classname) == 0) {
+            item_id = i;
+            break;
+        }
+
+    // checking for valid item_id or item_classname
+    if (item_classname && item_id == 0) {
+
+        // throw error if invalid item_classname
+        PyErr_Format(PyExc_ValueError, "invalid item classname: %s.", item_classname);
+        return NULL;
+    } else if (item_id < 0 || item_id >= bg_numItems) {
+
+        // throw error if invalid item_id
+        PyErr_Format(PyExc_ValueError, "item_id needs to be between 0 and %d.", bg_numItems-1);
+        return NULL;
+    }
+
+    // Note: if item_id == 0 and item_classname == NULL, then item will be removed
+
+    if (entity_classname == NULL) {
+        // replacing item by entity_id
+
+        // entity_id checking
+        if (entity_id < 0 || entity_id >= MAX_GENTITIES) {
+            PyErr_Format(PyExc_ValueError, "entity_id needs to be between 0 and %d.", MAX_GENTITIES-1);
+            return NULL;
+        } else if (g_entities[entity_id].inuse == 0) {
+            PyErr_Format(PyExc_ValueError, "entity #%d is not in use.", entity_id);
+            return NULL;
+        } else if (g_entities[entity_id].s.eType != ET_ITEM) {
+            PyErr_Format(PyExc_ValueError, "entity #%d is not item. Cannot replace it.", entity_id);
+            return NULL;
+        }
+
+        Com_Printf("%s\n", g_entities[entity_id].classname);
+        replace_item_core(&g_entities[entity_id], item_id);
+        Py_RETURN_TRUE;
+
+    } else {
+        // replacing items by entity_classname
+
+        int is_entity_found = 0;
+        for (i=0; i<MAX_GENTITIES; i++) {
+            ent = &g_entities[i];
+
+            if (!ent->inuse)
+                continue;
+
+            if (ent->s.eType != ET_ITEM)
+                continue;
+
+            if (strcmp(ent->classname, entity_classname) == 0) {
+                is_entity_found = 1;
+                replace_item_core(ent, item_id);
+            }
+        }
+
+        if (is_entity_found)
+            Py_RETURN_TRUE;
+        else
+            Py_RETURN_FALSE;
+    }
+}
+
+/*
+* ================================================================
+*                         dev_print_items
+* ================================================================
+*/
+
+static PyObject* PyMinqlx_DevPrintItems(PyObject* self, PyObject* args) {
+    gentity_t* ent;
+    char buffer[1024], temp_buffer[1024];
+    int buffer_index = 0, chars_written;
+    const char format[]="%d %s\n";
+    qboolean is_buffer_enough = qtrue;
+
+    // default results
+    sprintf(buffer, "No items found in the map");
+
+    for (int i=0; i<MAX_GENTITIES; i++) {
+        ent = &g_entities[i];
+
+        if (!ent->inuse)
+            continue;
+
+        if (ent->s.eType != ET_ITEM)
+            continue;
+
+        chars_written = sprintf(temp_buffer, format, i, ent->classname);
+        if (is_buffer_enough && buffer_index + chars_written >= sizeof(buffer)) {
+            is_buffer_enough = qfalse;
+            SV_SendServerCommand(NULL, "print \"%s\"", buffer);
+            SV_SendServerCommand(NULL, "print \"%s\"\n", "Check server console for other items\n");
+        }
+
+        if (is_buffer_enough == qfalse) {
+            Com_Printf(format, i, ent->classname);
+        }
+
+        chars_written = sprintf(&buffer[buffer_index], format, i, ent->classname);
+        buffer_index += chars_written;
+    }
+
+    if (is_buffer_enough)
+        SV_SendServerCommand(NULL, "print \"%s\"", buffer);
+    Py_RETURN_NONE;
+}
+
+/*
  * ================================================================
  *             Module definition and initialization
  * ================================================================
@@ -1552,6 +1720,10 @@ static PyMethodDef minqlxMethods[] = {
      "Removes all dropped items."},
     {"slay_with_mod", PyMinqlx_SlayWithMod, METH_VARARGS,
      "Slay player with mean of death."},
+    {"replace_items", PyMinqlx_ReplaceItems, METH_VARARGS,
+     "Replaces target entity's item with specified one."},
+    {"dev_print_items", PyMinqlx_DevPrintItems, METH_NOARGS,
+     "Prints all items and entity numbers to server console."},
     {NULL, NULL, 0, NULL}
 };
 
