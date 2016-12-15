@@ -24,6 +24,9 @@ PyObject* rcon_handler = NULL;
 PyObject* console_print_handler = NULL;
 PyObject* client_spawn_handler = NULL;
 
+PyObject* kamikaze_use_handler = NULL;
+PyObject* kamikaze_explode_handler = NULL;
+
 static PyThreadState* mainstate;
 static int initialized = 0;
 
@@ -64,6 +67,10 @@ static handler_t handlers[] = {
         {"rcon",                &rcon_handler},
         {"console_print",       &console_print_handler},
         {"player_spawn",        &client_spawn_handler},
+
+        {"kamikaze_use",        &kamikaze_use_handler},
+        {"kamikaze_explode",    &kamikaze_explode_handler},
+
 		{NULL, NULL}
 };
 
@@ -110,6 +117,7 @@ static PyStructSequence_Field player_state_fields[] = {
     {"powerups", "The player's powerups."},
     {"holdable", "The player's holdable item."},
     {"flight", "A struct sequence with flight parameters."},
+    {"is_frozen", "Whether the player is frozen(freezetag)."},
     {NULL}
 };
 
@@ -225,7 +233,7 @@ static PyObject* makePlayerTuple(int client_id) {
     if (g_entities[client_id].client != NULL) {
         if (g_entities[client_id].client->pers.connected == CON_DISCONNECTED)
             name = PyUnicode_FromString("");
-        else 
+        else
             name = PyUnicode_DecodeUTF8(g_entities[client_id].client->pers.netname,
                 strlen(g_entities[client_id].client->pers.netname), "ignore");
 
@@ -245,7 +253,7 @@ static PyObject* makePlayerTuple(int client_id) {
     PyObject* state = PyLong_FromLongLong(svs->clients[client_id].state);
     PyObject* userinfo = PyUnicode_DecodeUTF8(svs->clients[client_id].userinfo, strlen(svs->clients[client_id].userinfo), "ignore");
     PyObject* steam_id = PyLong_FromLongLong(svs->clients[client_id].steam_id);
-    
+
     PyObject* info = PyStructSequence_New(&player_info_type);
     PyStructSequence_SetItem(info, 0, cid);
     PyStructSequence_SetItem(info, 1, name);
@@ -262,13 +270,13 @@ static PyObject* PyMinqlx_PlayerInfo(PyObject* self, PyObject* args) {
     int i;
     if (!PyArg_ParseTuple(args, "i:player", &i))
         return NULL;
-    
+
     if (i < 0 || i >= sv_maxclients->integer) {
         PyErr_Format(PyExc_ValueError,
                      "client_id needs to be a number from 0 to %d.",
                      sv_maxclients->integer);
         return NULL;
-        
+
     }
     else if (allow_free_client != i && svs->clients[i].state == CS_FREE) {
         #ifndef NDEBUG
@@ -334,7 +342,7 @@ static PyObject* PyMinqlx_SendServerCommand(PyObject* self, PyObject* args) {
     char* cmd;
     if (!PyArg_ParseTuple(args, "Os:send_server_command", &client_id, &cmd))
         return NULL;
-    
+
     if (client_id == Py_None) {
         My_SV_SendServerCommand(NULL, "%s\n", cmd); // Send to all.
         Py_RETURN_TRUE;
@@ -350,7 +358,7 @@ static PyObject* PyMinqlx_SendServerCommand(PyObject* self, PyObject* args) {
             }
         }
     }
-    
+
     PyErr_Format(PyExc_ValueError,
                  "client_id needs to be a number from 0 to %d, or None.",
                  sv_maxclients->integer);
@@ -436,7 +444,7 @@ static PyObject* PyMinqlx_SetCvar(PyObject* self, PyObject* args) {
         Cvar_Get(name, value, flags);
         Py_RETURN_TRUE;
     }
-    
+
     if (flags == -1)
         Cvar_Set2(name, value, qtrue);
     else
@@ -693,7 +701,7 @@ static PyObject* PyMinqlx_PlayerState(PyObject* self, PyObject* args) {
         PyStructSequence_SetItem(weapons, i, PyBool_FromLong(g_entities[client_id].client->ps.stats[STAT_WEAPONS] & (1 << (i+1))));
         PyStructSequence_SetItem(ammo, i, PyLong_FromLongLong(g_entities[client_id].client->ps.ammo[i+1]));
     }
-    PyStructSequence_SetItem(state, 7, weapons);  
+    PyStructSequence_SetItem(state, 7, weapons);
     PyStructSequence_SetItem(state, 8, ammo);
 
     PyObject* powerups = PyStructSequence_New(&powerups_type);
@@ -748,6 +756,8 @@ static PyObject* PyMinqlx_PlayerState(PyObject* self, PyObject* args) {
     PyStructSequence_SetItem(flight, 3,
         PyLong_FromLongLong(g_entities[client_id].client->ps.stats[STAT_FLIGHT_REFUEL]));
     PyStructSequence_SetItem(state, 11, flight);
+
+    PyStructSequence_SetItem(state, 12, PyBool_FromLong(g_entities[client_id].client->ps.pm_type == 4));
 
     return state;
 }
@@ -964,7 +974,7 @@ static PyObject* PyMinqlx_SetWeapons(PyObject* self, PyObject* args) {
 
         weapon_flags |= w == Py_True ? (1 << (i+1)) : 0;
     }
-    
+
     g_entities[client_id].client->ps.stats[STAT_WEAPONS] = weapon_flags;
     Py_RETURN_TRUE;
 }
@@ -991,7 +1001,7 @@ static PyObject* PyMinqlx_SetWeapon(PyObject* self, PyObject* args) {
         PyErr_Format(PyExc_ValueError, "Weapon must be a number from 0 to 15.");
         return NULL;
     }
-    
+
     g_entities[client_id].client->ps.weapon = weapon;
     Py_RETURN_TRUE;
 }
@@ -1078,7 +1088,7 @@ static PyObject* PyMinqlx_SetPowerups(PyObject* self, PyObject* args) {
             g_entities[client_id].client->ps.powerups[i+PW_QUAD] = 0;
             continue;
         }
-        
+
         g_entities[client_id].client->ps.powerups[i+PW_QUAD] = level->time - (level->time % 1000) + t;
     }
 
@@ -1104,9 +1114,66 @@ static PyObject* PyMinqlx_SetHoldable(PyObject* self, PyObject* args) {
     else if (!g_entities[client_id].client)
         Py_RETURN_FALSE;
 
+    if (i == 37)  // 37 - kamikaze
+        g_entities[client_id].client->ps.eFlags |= EF_KAMIKAZE;
+    else
+        g_entities[client_id].client->ps.eFlags &= ~EF_KAMIKAZE;
+
     g_entities[client_id].client->ps.stats[STAT_HOLDABLE_ITEM] = i;
     Py_RETURN_TRUE;
 }
+
+/*
+* ================================================================
+*                          drop_holdable
+* ================================================================
+*/
+
+// FixMe: holdable pickup is predicted on client (if cg_predictItems == 1)
+//        this generates holdable pickup sound on drop
+
+void __cdecl Switch_Touch_Item(gentity_t *ent) {
+    ent->touch = Touch_Item;
+    ent->think = G_FreeEntity;
+    ent->nextthink = level->time + 29000;
+}
+
+void __cdecl My_Touch_Item(gentity_t *ent, gentity_t *other, trace_t *trace) {
+    if (ent->parent == other) return;
+    Touch_Item(ent, other, trace);
+}
+
+static PyObject* PyMinqlx_DropHoldable(PyObject* self, PyObject* args) {
+    int client_id, item;
+    if (!PyArg_ParseTuple(args, "i:drop_holdable", &client_id))
+        return NULL;
+    else if (client_id < 0 || client_id >= sv_maxclients->integer) {
+        PyErr_Format(PyExc_ValueError,
+                     "client_id needs to be a number from 0 to %d.",
+                     sv_maxclients->integer);
+        return NULL;
+    }
+    else if (!g_entities[client_id].client)
+        Py_RETURN_FALSE;
+
+    // removing kamikaze flag (surrounding skulls)
+    g_entities[client_id].client->ps.eFlags &= ~EF_KAMIKAZE;
+
+    item = g_entities[client_id].client->ps.stats[STAT_HOLDABLE_ITEM];
+    if (item == 0) Py_RETURN_FALSE;
+
+    gentity_t* entity = Drop_Item(&g_entities[client_id], bg_itemlist + item, 0);
+    entity->touch     = My_Touch_Item;
+    entity->parent    = &g_entities[client_id];
+    entity->think     = Switch_Touch_Item;
+    entity->nextthink = level->time + 1000;
+
+    // removing holdable from player entity
+    g_entities[client_id].client->ps.stats[STAT_HOLDABLE_ITEM] = 0;
+
+    Py_RETURN_TRUE;
+}
+
 
 /*
 * ================================================================
@@ -1131,7 +1198,7 @@ static PyObject* PyMinqlx_SetFlight(PyObject* self, PyObject* args) {
         PyErr_Format(PyExc_ValueError, "Argument must be of type minqlx.Flight.");
         return NULL;
     }
-    
+
     for (int i = 0; i < flight_desc.n_in_sequence; i++)
         if (!PyLong_Check(PyStructSequence_GetItem(flight, i))) {
             PyErr_Format(PyExc_ValueError, "Tuple argument %d is not an integer.", i);
@@ -1142,6 +1209,33 @@ static PyObject* PyMinqlx_SetFlight(PyObject* self, PyObject* args) {
     g_entities[client_id].client->ps.stats[STAT_MAX_FLIGHT_FUEL] = PyLong_AsLong(PyStructSequence_GetItem(flight, 1));
     g_entities[client_id].client->ps.stats[STAT_FLIGHT_THRUST] = PyLong_AsLong(PyStructSequence_GetItem(flight, 2));
     g_entities[client_id].client->ps.stats[STAT_FLIGHT_REFUEL] = PyLong_AsLong(PyStructSequence_GetItem(flight, 3));
+    Py_RETURN_TRUE;
+}
+
+/*
+* ================================================================
+*                        set_invulnerability
+* ================================================================
+*/
+
+static PyObject* PyMinqlx_SetInvulnerability(PyObject* self, PyObject* args) {
+    int client_id, time;
+    if (!PyArg_ParseTuple(args, "ii:set_invulnerability", &client_id, &time))
+        return NULL;
+    else if (client_id < 0 || client_id >= sv_maxclients->integer) {
+        PyErr_Format(PyExc_ValueError,
+                     "client_id needs to be a number from 0 to %d.",
+                     sv_maxclients->integer);
+        return NULL;
+    }
+    else if (!g_entities[client_id].client)
+        Py_RETURN_FALSE;
+    else if (time <= 0) {
+        PyErr_Format(PyExc_ValueError, "time needs to be positive integer.");
+        return NULL;
+    }
+
+    g_entities[client_id].client->invulnerabilityTime = level->time + time;
     Py_RETURN_TRUE;
 }
 
@@ -1180,7 +1274,7 @@ static PyObject* PyMinqlx_Callvote(PyObject* self, PyObject* args) {
     char buf[64];
     if (!PyArg_ParseTuple(args, "ss|i:callvote", &vote, &vote_disp, &vote_time))
         return NULL;
-    
+
     strncpy(level->voteString, vote, sizeof(level->voteString));
     strncpy(level->voteDisplayString, vote_disp, sizeof(level->voteDisplayString));
     level->voteTime = (level->time - 30000) + vote_time * 1000;
@@ -1193,7 +1287,7 @@ static PyObject* PyMinqlx_Callvote(PyObject* self, PyObject* args) {
 
     My_SV_SetConfigstring(CS_VOTE_STRING, level->voteDisplayString);
     snprintf(buf, sizeof(buf), "%d", level->voteTime);
-    My_SV_SetConfigstring(CS_VOTE_TIME, buf);    
+    My_SV_SetConfigstring(CS_VOTE_TIME, buf);
     My_SV_SetConfigstring(CS_VOTE_YES, "0");
     My_SV_SetConfigstring(CS_VOTE_NO, "0");
 
@@ -1267,6 +1361,279 @@ static PyObject* PyMinqlx_SetPrivileges(PyObject* self, PyObject* args) {
 }
 
 /*
+* ================================================================
+*                        destroy_kamikaze_timers
+* ================================================================
+*/
+
+static PyObject* PyMinqlx_DestroyKamikazeTimers(PyObject* self, PyObject* args) {
+    int i;
+    gentity_t* ent;
+
+    for (i = 0; i < MAX_GENTITIES; i++) {
+        ent = &g_entities[i];
+        if (!ent->inuse)
+            continue;
+
+        // removing kamikaze skull from dead body
+        if (ent->client && ent->health <= 0) {
+            ent->client->ps.eFlags &= ~EF_KAMIKAZE;
+        }
+
+        if (strcmp(ent->classname, "kamikaze timer") == 0)
+            G_FreeEntity(ent);
+    }
+    Py_RETURN_TRUE;
+}
+
+/*
+* ================================================================
+*                        spawn_item
+* ================================================================
+*/
+
+static PyObject* PyMinqlx_SpawnItem(PyObject* self, PyObject* args) {
+    int item_id, x, y, z;
+    if (!PyArg_ParseTuple(args, "iiii:spawn_item", &item_id, &x, &y, &z))
+        return NULL;
+    if (item_id < 0 || item_id >= bg_numItems) {
+        PyErr_Format(PyExc_ValueError,
+                     "item_id needs to be a number from 0 to %d.",
+                     bg_numItems);
+        return NULL;
+    }
+
+    vec3_t origin = {x, y, z};
+    vec3_t velocity = {0};
+
+    gentity_t* ent = LaunchItem(bg_itemlist + item_id, origin, velocity);
+    ent->nextthink = 0;
+    ent->think = 0;
+    Py_RETURN_TRUE;
+}
+
+/*
+* ================================================================
+*                        remove_dropped_items
+* ================================================================
+*/
+
+static PyObject* PyMinqlx_RemoveDroppedItems(PyObject* self, PyObject* args) {
+    int i;
+    gentity_t* ent;
+
+    for (i = 0; i < MAX_GENTITIES; i++) {
+        ent = &g_entities[i];
+        if (!ent->inuse)
+            continue;
+
+        if (ent->flags & FL_DROPPED_ITEM)
+            G_FreeEntity(ent);
+    }
+    Py_RETURN_TRUE;
+}
+
+/*
+* ================================================================
+*                         slay_with_mod
+* ================================================================
+*/
+
+// it is alternative to Slay from command.c
+static PyObject* PyMinqlx_SlayWithMod(PyObject* self, PyObject* args) {
+    int client_id, mod;
+    if (!PyArg_ParseTuple(args, "ii:slay_with_mod", &client_id, &mod))
+        return NULL;
+    else if (client_id < 0 || client_id >= sv_maxclients->integer) {
+        PyErr_Format(PyExc_ValueError,
+                     "client_id needs to be a number from 0 to %d.",
+                     sv_maxclients->integer);
+        return NULL;
+    }
+    else if (!g_entities[client_id].client)
+        Py_RETURN_FALSE;
+    else if (g_entities[client_id].health <= 0)
+        Py_RETURN_TRUE;
+
+    gentity_t* ent = &g_entities[client_id];
+    int damage = g_entities[client_id].health + (mod == MOD_KAMIKAZE ? 100000 : 0);
+
+    g_entities[client_id].client->ps.stats[STAT_ARMOR] = 0;
+
+    // self damage = half damage, so multiplaying by 2
+    G_Damage( ent, ent, ent, NULL, NULL, damage*2, DAMAGE_NO_PROTECTION, mod );
+    Py_RETURN_TRUE;
+}
+
+/*
+* ================================================================
+*                         replace_items
+* ================================================================
+*/
+
+void replace_item_core(gentity_t* ent, int item_id) {
+    char csbuffer[4096];
+
+    if (item_id) {
+        ent->s.modelindex = item_id;
+        ent->classname = bg_itemlist[item_id].classname;
+        ent->item = &bg_itemlist[item_id];
+
+        // this forces client to load new item
+        SV_GetConfigstring(CS_ITEMS, csbuffer, sizeof(csbuffer));
+        csbuffer[item_id] = '1';
+        My_SV_SetConfigstring(CS_ITEMS, csbuffer);
+
+    } else {
+        G_FreeEntity(ent);
+    }
+}
+
+static PyObject* PyMinqlx_ReplaceItems(PyObject* self, PyObject* args) {
+    PyObject *arg1, *arg2 ;
+    int entity_id = 0, item_id = 0;
+    char *entity_classname = NULL, *item_classname = NULL;
+    gentity_t* ent;
+
+
+    if (!PyArg_ParseTuple(args, "OO:replace_items", &arg1, &arg2))
+        return NULL;
+
+    // checking type of first arg
+    if (PyLong_Check(arg1)) {
+        entity_id = PyLong_AsLong(arg1);
+    } else if (PyUnicode_Check(arg1))
+        entity_classname = PyUnicode_AsUTF8(arg1);
+    else {
+        PyErr_Format(PyExc_ValueError, "entity needs to be type of int or string.");
+        return NULL;
+    }
+
+    // checking type of second arg
+    if (PyLong_Check(arg2))
+        item_id = PyLong_AsLong(arg2);
+    else if (PyUnicode_Check(arg2))
+        item_classname = PyUnicode_AsUTF8(arg2);
+    else {
+        PyErr_Format(PyExc_ValueError, "item needs to be type of int or string.");
+        return NULL;
+    }
+
+    // convert second arg to item_id, if needed
+    int i=1;
+    if (item_classname == NULL) i=bg_numItems;
+    for (; i<bg_numItems; i++)
+        if (strcmp(bg_itemlist[i].classname, item_classname) == 0) {
+            item_id = i;
+            break;
+        }
+
+    // checking for valid item_id or item_classname
+    if (item_classname && item_id == 0) {
+
+        // throw error if invalid item_classname
+        PyErr_Format(PyExc_ValueError, "invalid item classname: %s.", item_classname);
+        return NULL;
+    } else if (item_id < 0 || item_id >= bg_numItems) {
+
+        // throw error if invalid item_id
+        PyErr_Format(PyExc_ValueError, "item_id needs to be between 0 and %d.", bg_numItems-1);
+        return NULL;
+    }
+
+    // Note: if item_id == 0 and item_classname == NULL, then item will be removed
+
+    if (entity_classname == NULL) {
+        // replacing item by entity_id
+
+        // entity_id checking
+        if (entity_id < 0 || entity_id >= MAX_GENTITIES) {
+            PyErr_Format(PyExc_ValueError, "entity_id needs to be between 0 and %d.", MAX_GENTITIES-1);
+            return NULL;
+        } else if (g_entities[entity_id].inuse == 0) {
+            PyErr_Format(PyExc_ValueError, "entity #%d is not in use.", entity_id);
+            return NULL;
+        } else if (g_entities[entity_id].s.eType != ET_ITEM) {
+            PyErr_Format(PyExc_ValueError, "entity #%d is not item. Cannot replace it.", entity_id);
+            return NULL;
+        }
+
+        Com_Printf("%s\n", g_entities[entity_id].classname);
+        replace_item_core(&g_entities[entity_id], item_id);
+        Py_RETURN_TRUE;
+
+    } else {
+        // replacing items by entity_classname
+
+        int is_entity_found = 0;
+        for (i=0; i<MAX_GENTITIES; i++) {
+            ent = &g_entities[i];
+
+            if (!ent->inuse)
+                continue;
+
+            if (ent->s.eType != ET_ITEM)
+                continue;
+
+            if (strcmp(ent->classname, entity_classname) == 0) {
+                is_entity_found = 1;
+                replace_item_core(ent, item_id);
+            }
+        }
+
+        if (is_entity_found)
+            Py_RETURN_TRUE;
+        else
+            Py_RETURN_FALSE;
+    }
+}
+
+/*
+* ================================================================
+*                         dev_print_items
+* ================================================================
+*/
+
+static PyObject* PyMinqlx_DevPrintItems(PyObject* self, PyObject* args) {
+    gentity_t* ent;
+    char buffer[1024], temp_buffer[1024];
+    int buffer_index = 0, chars_written;
+    const char format[]="%d %s\n";
+    qboolean is_buffer_enough = qtrue;
+
+    // default results
+    sprintf(buffer, "No items found in the map");
+
+    for (int i=0; i<MAX_GENTITIES; i++) {
+        ent = &g_entities[i];
+
+        if (!ent->inuse)
+            continue;
+
+        if (ent->s.eType != ET_ITEM)
+            continue;
+
+        chars_written = sprintf(temp_buffer, format, i, ent->classname);
+        if (is_buffer_enough && buffer_index + chars_written >= sizeof(buffer)) {
+            is_buffer_enough = qfalse;
+            SV_SendServerCommand(NULL, "print \"%s\"", buffer);
+            SV_SendServerCommand(NULL, "print \"%s\"\n", "Check server console for other items\n");
+        }
+
+        if (is_buffer_enough == qfalse) {
+            Com_Printf(format, i, ent->classname);
+        }
+
+        chars_written = sprintf(&buffer[buffer_index], format, i, ent->classname);
+        buffer_index += chars_written;
+    }
+
+    if (is_buffer_enough)
+        SV_SendServerCommand(NULL, "print \"%s\"", buffer);
+    Py_RETURN_NONE;
+}
+
+/*
  * ================================================================
  *             Module definition and initialization
  * ================================================================
@@ -1329,8 +1696,12 @@ static PyMethodDef minqlxMethods[] = {
      "Sets a player's powerups."},
     {"set_holdable", PyMinqlx_SetHoldable, METH_VARARGS,
      "Sets a player's holdable item."},
+    {"drop_holdable", PyMinqlx_DropHoldable, METH_VARARGS,
+     "Drops player's holdable item."},
     {"set_flight", PyMinqlx_SetFlight, METH_VARARGS,
      "Sets a player's flight parameters, such as current fuel, max fuel and, so on."},
+    {"set_invulnerability", PyMinqlx_SetInvulnerability, METH_VARARGS,
+     "Makes player invulnerable for limited time."},
     {"set_score", PyMinqlx_SetScore, METH_VARARGS,
      "Sets a player's score."},
     {"callvote", PyMinqlx_Callvote, METH_VARARGS,
@@ -1341,6 +1712,18 @@ static PyMethodDef minqlxMethods[] = {
      "Allows or disallows a game with only a single player in it to go on without forfeiting. Useful for race."},
     {"set_privileges", PyMinqlx_SetPrivileges, METH_VARARGS,
      "Sets a player's privileges. Does not persist."},
+    {"destroy_kamikaze_timers", PyMinqlx_DestroyKamikazeTimers, METH_NOARGS,
+     "Removes all current kamikaze timers."},
+    {"spawn_item", PyMinqlx_SpawnItem, METH_VARARGS,
+     "Spawns item with specified coordinates."},
+    {"remove_dropped_items", PyMinqlx_RemoveDroppedItems, METH_NOARGS,
+     "Removes all dropped items."},
+    {"slay_with_mod", PyMinqlx_SlayWithMod, METH_VARARGS,
+     "Slay player with mean of death."},
+    {"replace_items", PyMinqlx_ReplaceItems, METH_VARARGS,
+     "Replaces target entity's item with specified one."},
+    {"dev_print_items", PyMinqlx_DevPrintItems, METH_NOARGS,
+     "Prints all items and entity numbers to server console."},
     {NULL, NULL, 0, NULL}
 };
 
@@ -1351,17 +1734,17 @@ static PyModuleDef minqlxModule = {
 
 static PyObject* PyMinqlx_InitModule(void) {
     PyObject* module = PyModule_Create(&minqlxModule);
-    
+
     // Set minqlx version.
     PyModule_AddStringConstant(module, "__version__", MINQLX_VERSION);
-    
+
     // Set IS_DEBUG.
     #ifndef NDEBUG
     PyModule_AddObject(module, "DEBUG", Py_True);
     #else
     PyModule_AddObject(module, "DEBUG", Py_False);
     #endif
-    
+
     // Set a bunch of constants. We set them here because if you define functions in Python that use module
     // constants as keyword defaults, we have to always make sure they're exported first, and fuck that.
     PyModule_AddIntMacro(module, RET_NONE);
@@ -1408,6 +1791,42 @@ static PyObject* PyMinqlx_InitModule(void) {
     PyModule_AddIntMacro(module, TEAM_BLUE);
     PyModule_AddIntMacro(module, TEAM_SPECTATOR);
 
+    // Means of death.
+    PyModule_AddIntMacro(module, MOD_UNKNOWN);
+    PyModule_AddIntMacro(module, MOD_SHOTGUN);
+    PyModule_AddIntMacro(module, MOD_GAUNTLET);
+    PyModule_AddIntMacro(module, MOD_MACHINEGUN);
+    PyModule_AddIntMacro(module, MOD_GRENADE);
+    PyModule_AddIntMacro(module, MOD_GRENADE_SPLASH);
+    PyModule_AddIntMacro(module, MOD_ROCKET);
+    PyModule_AddIntMacro(module, MOD_ROCKET_SPLASH);
+    PyModule_AddIntMacro(module, MOD_PLASMA);
+    PyModule_AddIntMacro(module, MOD_PLASMA_SPLASH);
+    PyModule_AddIntMacro(module, MOD_RAILGUN);
+    PyModule_AddIntMacro(module, MOD_LIGHTNING);
+    PyModule_AddIntMacro(module, MOD_BFG);
+    PyModule_AddIntMacro(module, MOD_BFG_SPLASH);
+    PyModule_AddIntMacro(module, MOD_WATER);
+    PyModule_AddIntMacro(module, MOD_SLIME);
+    PyModule_AddIntMacro(module, MOD_LAVA);
+    PyModule_AddIntMacro(module, MOD_CRUSH);
+    PyModule_AddIntMacro(module, MOD_TELEFRAG);
+    PyModule_AddIntMacro(module, MOD_FALLING);
+    PyModule_AddIntMacro(module, MOD_SUICIDE);
+    PyModule_AddIntMacro(module, MOD_TARGET_LASER);
+    PyModule_AddIntMacro(module, MOD_TRIGGER_HURT);
+    PyModule_AddIntMacro(module, MOD_NAIL);
+    PyModule_AddIntMacro(module, MOD_CHAINGUN);
+    PyModule_AddIntMacro(module, MOD_PROXIMITY_MINE);
+    PyModule_AddIntMacro(module, MOD_KAMIKAZE);
+    PyModule_AddIntMacro(module, MOD_JUICED);
+    PyModule_AddIntMacro(module, MOD_GRAPPLE);
+    PyModule_AddIntMacro(module, MOD_SWITCH_TEAMS);
+    PyModule_AddIntMacro(module, MOD_THAW);
+    PyModule_AddIntMacro(module, MOD_LIGHTNING_DISCHARGE);
+    PyModule_AddIntMacro(module, MOD_HMG);
+    PyModule_AddIntMacro(module, MOD_RAILGUN_HEADSHOT);
+
     // Initialize struct sequence types.
     PyStructSequence_InitType(&player_info_type, &player_info_desc);
     PyStructSequence_InitType(&player_state_type, &player_state_desc);
@@ -1431,12 +1850,12 @@ static PyObject* PyMinqlx_InitModule(void) {
     PyModule_AddObject(module, "Weapons", (PyObject*)&weapons_type);
     PyModule_AddObject(module, "Powerups", (PyObject*)&powerups_type);
     PyModule_AddObject(module, "Flight", (PyObject*)&flight_type);
-    
+
     return module;
 }
 
 int PyMinqlx_IsInitialized(void) {
-   return initialized; 
+   return initialized;
 }
 
 PyMinqlx_InitStatus_t PyMinqlx_Initialize(void) {
@@ -1444,13 +1863,13 @@ PyMinqlx_InitStatus_t PyMinqlx_Initialize(void) {
         DebugPrint("%s was called while already initialized!\n", __func__);
         return PYM_ALREADY_INITIALIZED;
     }
-    
+
     DebugPrint("Initializing Python...\n");
     Py_SetProgramName(PYTHON_FILENAME);
     PyImport_AppendInittab("_minqlx", &PyMinqlx_InitModule);
     Py_Initialize();
     PyEval_InitThreads();
-    
+
     // Add the main module.
     PyObject* main_module = PyImport_AddModule("__main__");
     PyObject* main_dict = PyModule_GetDict(main_module);
@@ -1471,7 +1890,7 @@ PyMinqlx_InitStatus_t PyMinqlx_Initialize(void) {
 		// No need to print anything, since the traceback should be printed already.
 		return PYM_MAIN_SCRIPT_ERROR;
 	}
-    
+
     mainstate = PyEval_SaveThread();
     initialized = 1;
     DebugPrint("Python initialized!\n");
@@ -1483,7 +1902,7 @@ PyMinqlx_InitStatus_t PyMinqlx_Finalize(void) {
         DebugPrint("%s was called before being initialized!\n", __func__);
         return PYM_NOT_INITIALIZED_ERROR;
     }
-    
+
     for (handler_t* h = handlers; h->name; h++) {
 		*h->handler = NULL;
 	}
@@ -1491,6 +1910,6 @@ PyMinqlx_InitStatus_t PyMinqlx_Finalize(void) {
     PyEval_RestoreThread(mainstate);
     Py_Finalize();
     initialized = 0;
-    
+
     return PYM_SUCCESS;
 }

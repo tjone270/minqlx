@@ -77,7 +77,7 @@ def parse_variables(varstr, ordered=False):
         res = {}
     if not varstr.strip():
         return res
-    
+
     vars = varstr.lstrip("\\").split("\\")
     try:
         for i in range(0, len(vars), 2):
@@ -86,7 +86,7 @@ def parse_variables(varstr, ordered=False):
         # Log and return incomplete dict.
         logger = minqlx.get_logger()
         logger.warning("Uneven number of keys and values: {}".format(varstr))
-    
+
     return res
 
 main_logger = None
@@ -109,7 +109,7 @@ def get_logger(plugin=None):
 def _configure_logger():
     logger = logging.getLogger("minqlx")
     logger.setLevel(logging.DEBUG)
-    
+
     # File
     file_path = os.path.join(minqlx.get_cvar("fs_homepath"), "minqlx.log")
     maxlogs = minqlx.Plugin.get_cvar("qlx_logs", int)
@@ -174,14 +174,14 @@ def stats_listener():
     return _stats
 
 def set_cvar_once(name, value, flags=0):
-    if minqlx.get_cvar(name) == None:
+    if minqlx.get_cvar(name) is None:
         minqlx.set_cvar(name, value, flags)
         return True
 
     return False
 
 def set_cvar_limit_once(name, value, minimum, maximum, flags=0):
-    if minqlx.get_cvar(name) == None:
+    if minqlx.get_cvar(name) is None:
         minqlx.set_cvar_limit(name, value, minimum, maximum, flags)
         return True
 
@@ -210,7 +210,7 @@ def set_plugins_version(path):
         if p.returncode != 0:
             setattr(minqlx, "__plugins_version__", version)
             return
-        
+
         branch = p.stdout.read().decode().strip()
     except (FileNotFoundError, subprocess.TimeoutExpired):
         setattr(minqlx, "__plugins_version__", "NOT_SET")
@@ -241,7 +241,7 @@ def set_map_subtitles():
 def next_frame(func):
     def f(*args, **kwargs):
         minqlx.next_frame_tasks.append((func, args, kwargs))
-    
+
     return f
 
 def delay(time):
@@ -290,7 +290,7 @@ def thread(func, force=False):
             _thread_count += 1
 
             return t
-    
+
     return f
 
 # ====================================================================
@@ -339,10 +339,10 @@ def load_plugin(plugin):
         # We add the module regardless of whether it fails or not, otherwise we can't reload later.
         global _modules
         _modules[plugin] = module
-        
+
         if not hasattr(module, plugin):
             raise(PluginLoadError("The plugin needs to have a class with the exact name as the file, minus the .py."))
-        
+
         plugin_class = getattr(module, plugin)
         if issubclass(plugin_class, minqlx.Plugin):
             plugins[plugin] = plugin_class()
@@ -367,7 +367,7 @@ def unload_plugin(plugin):
             # Unregister commands.
             for cmd in plugins[plugin].commands:
                 plugins[plugin].remove_command(cmd.name, cmd.handler)
-                
+
             del plugins[plugin]
         except:
             log_exception(plugin)
@@ -437,7 +437,7 @@ def late_init():
 
     # Add the plugins path to PATH so that we can load plugins later.
     sys.path.append(os.path.dirname(plugins_path))
-    
+
     logger.info("Loading preset plugins...")
     load_preset_plugins()
 

@@ -37,6 +37,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define CS_VOTE_STRING			9
 #define	CS_VOTE_YES				10
 #define	CS_VOTE_NO				11
+#define CS_ITEMS          15
 
 #define MAX_CLIENTS 64
 #define MAX_CHALLENGES  1024
@@ -110,6 +111,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define	EF_AWARD_ASSIST		0x00020000		// draw a assist sprite
 #define EF_AWARD_DENIED		0x00040000		// denied
 #define EF_TEAMVOTED		0x00080000		// already cast a team vote
+
+#define FL_DROPPED_ITEM 0x00001000
+
+#define DAMAGE_NO_PROTECTION 0x00000008
 
 typedef enum {qfalse, qtrue} qboolean;
 typedef unsigned char byte;
@@ -435,6 +440,45 @@ typedef enum {
 
 	TEAM_NUM_TEAMS
 } team_t;
+
+// https://github.com/brugal/wolfcamql/blob/73e2d707e5dd1fb0fc50d4ad9f00940909c4b3ec/code/game/bg_public.h#L1142-L1188
+// means of death
+typedef enum {
+  MOD_UNKNOWN,
+  MOD_SHOTGUN,
+  MOD_GAUNTLET,
+  MOD_MACHINEGUN,
+  MOD_GRENADE,
+  MOD_GRENADE_SPLASH,
+  MOD_ROCKET,
+  MOD_ROCKET_SPLASH,
+  MOD_PLASMA,
+  MOD_PLASMA_SPLASH,
+  MOD_RAILGUN,
+  MOD_LIGHTNING,
+  MOD_BFG,
+  MOD_BFG_SPLASH,
+  MOD_WATER,
+  MOD_SLIME,
+  MOD_LAVA,
+  MOD_CRUSH,
+  MOD_TELEFRAG,
+  MOD_FALLING,
+  MOD_SUICIDE,
+  MOD_TARGET_LASER,
+  MOD_TRIGGER_HURT,
+  MOD_NAIL,
+  MOD_CHAINGUN,
+  MOD_PROXIMITY_MINE,
+  MOD_KAMIKAZE,
+  MOD_JUICED,
+  MOD_GRAPPLE,
+  MOD_SWITCH_TEAMS,
+  MOD_THAW,
+  MOD_LIGHTNING_DISCHARGE,
+  MOD_HMG,
+  MOD_RAILGUN_HEADSHOT
+} meansOfDeath_t;
 
 typedef enum {
 	SPECTATOR_NOT,
@@ -1095,6 +1139,26 @@ typedef struct gitem_s {
   unsigned int maskGametypeForceSpawn;
 } gitem_t;
 
+typedef enum {
+  ET_GENERAL,
+  ET_PLAYER,
+  ET_ITEM,
+  ET_MISSILE,
+  ET_MOVER,
+  ET_BEAM,
+  ET_PORTAL,
+  ET_SPEAKER,
+  ET_PUSH_TRIGGER,
+  ET_TELEPORT_TRIGGER,
+  ET_INVISIBLE,
+  ET_GRAPPLE,       // grapple hooked on wall
+  ET_TEAM,
+
+  ET_EVENTS       // any of the EV_* events can be added freestanding
+              // by setting eType to ET_EVENTS + eventNum
+              // this avoids having to set eFlags and eventNum
+} entityType_t;
+
 struct gclient_s;
 
 struct __attribute__((aligned(8))) gentity_s {
@@ -1400,6 +1464,8 @@ extern server_t* sv;
 extern serverStatic_t* svs;
 extern gentity_t* g_entities;
 extern level_locals_t* level;
+extern gitem_t* bg_itemlist;
+extern int bg_numItems;
 // Cvars.
 extern cvar_t* sv_maxclients;
 
@@ -1436,6 +1502,12 @@ typedef void (__cdecl *G_InitGame_ptr)(int levelTime, int randomSeed, int restar
 typedef int (__cdecl *CheckPrivileges_ptr)(gentity_t* ent, char* cmd);
 typedef char* (__cdecl *ClientConnect_ptr)(int clientNum, qboolean firstTime, qboolean isBot);
 typedef void (__cdecl *ClientSpawn_ptr)(gentity_t* ent);
+typedef void (__cdecl *G_Damage_ptr)(gentity_t *targ, gentity_t *inflictor, gentity_t *attacker, vec3_t dir, vec3_t point, int damage, int dflags, int mod);
+typedef void (__cdecl *Touch_Item_ptr)(gentity_t *ent, gentity_t *other, trace_t *trace);
+typedef gentity_t* (__cdecl *LaunchItem_ptr)(gitem_t *item, vec3_t origin, vec3_t velocity);
+typedef gentity_t* (__cdecl *Drop_Item_ptr)(gentity_t *ent, gitem_t *item, float angle);
+typedef void (__cdecl *G_StartKamikaze_ptr)(gentity_t *ent);
+typedef void (__cdecl *G_FreeEntity_ptr)(gentity_t *ed);
 
 // Some of them are initialized by Initialize(), but not all of them necessarily.
 extern Com_Printf_ptr Com_Printf;
@@ -1467,6 +1539,12 @@ extern G_InitGame_ptr G_InitGame;
 extern CheckPrivileges_ptr CheckPrivileges;
 extern ClientConnect_ptr ClientConnect;
 extern ClientSpawn_ptr ClientSpawn;
+extern G_Damage_ptr G_Damage;
+extern Touch_Item_ptr Touch_Item;
+extern LaunchItem_ptr LaunchItem;
+extern Drop_Item_ptr Drop_Item;
+extern G_StartKamikaze_ptr G_StartKamikaze;
+extern G_FreeEntity_ptr G_FreeEntity;
 
 // Server replacement functions for hooks.
 void __cdecl My_Cmd_AddCommand(char* cmd, void* func);
@@ -1484,6 +1562,8 @@ void __cdecl My_G_RunFrame(int time);
 void __cdecl My_G_InitGame(int levelTime, int randomSeed, int restart);
 char* __cdecl My_ClientConnect(int clientNum, qboolean firstTime, qboolean isBot);
 void __cdecl My_ClientSpawn(gentity_t* ent);
+
+void __cdecl My_G_StartKamikaze(gentity_t* ent);
 #endif
 
 // Custom commands added using Cmd_AddCommand during initialization.

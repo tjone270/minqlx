@@ -98,7 +98,7 @@ class Player():
     def update(self):
         """Update the player information with the latest data. If the player
         disconnected it will raise an exception and invalidates a player.
-        The player's name and Steam ID can still be accessed after being 
+        The player's name and Steam ID can still be accessed after being
         invalidated, but anything else will make it throw an exception too.
 
         :raises: minqlx.NonexistentPlayerError
@@ -129,7 +129,7 @@ class Player():
 
         if not self._userinfo:
             self._userinfo = minqlx.parse_variables(self._info.userinfo, ordered=True)
-        
+
         return self._userinfo.copy()
 
     @cvars.setter
@@ -140,7 +140,7 @@ class Player():
     @property
     def steam_id(self):
         return self._steam_id
-    
+
     @property
     def id(self):
         return self._id
@@ -170,7 +170,7 @@ class Player():
         cs["cn"] = tag
         new_cs = "".join(["\\{}\\{}".format(key, cs[key]) for key in cs])
         minqlx.set_configstring(index, new_cs)
-    
+
     @property
     def name(self):
         return self._name + "^7"
@@ -192,7 +192,7 @@ class Player():
             return int(self["qport"])
         else:
             return -1
-    
+
     @property
     def team(self):
         return minqlx.TEAMS[self._info.team]
@@ -200,7 +200,7 @@ class Player():
     @team.setter
     def team(self, new_team):
         self.put(new_team)
-    
+
     @property
     def colors(self):
         # Float because they can occasionally be floats for some reason.
@@ -213,7 +213,7 @@ class Player():
         new["color1"] = c1
         new["color2"] = c2
         self.cvars = new
-    
+
     @property
     def model(self):
         return self["model"]
@@ -317,7 +317,7 @@ class Player():
             minqlx.set_privileges(self.id, minqlx.PRIV_ADMIN)
         else:
             raise ValueError("Invalid privilege level.")
-    
+
     @property
     def country(self):
         return self["country"]
@@ -345,10 +345,10 @@ class Player():
             pos = minqlx.Vector3((0, 0, 0))
         else:
             pos = self.state.position
-        
+
         if not kwargs:
             return pos
-        
+
         x = pos.x if "x" not in kwargs else kwargs["x"]
         y = pos.y if "y" not in kwargs else kwargs["y"]
         z = pos.z if "z" not in kwargs else kwargs["z"]
@@ -360,10 +360,10 @@ class Player():
             vel = minqlx.Vector3((0, 0, 0))
         else:
             vel = self.state.velocity
-        
+
         if not kwargs:
             return vel
-        
+
         x = vel.x if "x" not in kwargs else kwargs["x"]
         y = vel.y if "y" not in kwargs else kwargs["y"]
         z = vel.z if "z" not in kwargs else kwargs["z"]
@@ -375,10 +375,10 @@ class Player():
             weaps = minqlx.Weapons(((False,)*15))
         else:
             weaps = self.state.weapons
-        
+
         if not kwargs:
             return weaps
-        
+
         g = weaps.g if "g" not in kwargs else kwargs["g"]
         mg = weaps.mg if "mg" not in kwargs else kwargs["mg"]
         sg = weaps.sg if "sg" not in kwargs else kwargs["sg"]
@@ -413,10 +413,10 @@ class Player():
             a = minqlx.Weapons(((0,)*15))
         else:
             a = self.state.ammo
-        
+
         if not kwargs:
             return a
-        
+
         g = a.g if "g" not in kwargs else kwargs["g"]
         mg = a.mg if "mg" not in kwargs else kwargs["mg"]
         sg = a.sg if "sg" not in kwargs else kwargs["sg"]
@@ -441,10 +441,10 @@ class Player():
             pu = minqlx.Powerups(((0,)*6))
         else:
             pu = self.state.powerups
-        
+
         if not kwargs:
             return pu
-        
+
         quad = pu.quad if "quad" not in kwargs else round(kwargs["quad"]*1000)
         bs = pu.battlesuit if "battlesuit" not in kwargs else round(kwargs["battlesuit"]*1000)
         haste = pu.haste if "haste" not in kwargs else round(kwargs["haste"]*1000)
@@ -479,18 +479,21 @@ class Player():
         else:
             raise ValueError("Invalid holdable item.")
 
+    def drop_holdable(self):
+        minqlx.drop_holdable(self.id)
+
     def flight(self, reset=False, **kwargs):
         state = self.state
         if state.holdable != "flight":
             self.holdable = "flight"
             reset = True
-        
+
         if reset:
             # Set to defaults on reset.
             fl = minqlx.Flight((16000, 16000, 1200, 0))
         else:
             fl = state.flight
-        
+
         fuel = fl.fuel if "fuel" not in kwargs else kwargs["fuel"]
         max_fuel = fl.max_fuel if "max_fuel" not in kwargs else kwargs["max_fuel"]
         thrust = fl.thrust if "thrust" not in kwargs else kwargs["thrust"]
@@ -525,18 +528,22 @@ class Player():
     @property
     def is_alive(self):
         return self.state.is_alive
-    
+
     @is_alive.setter
     def is_alive(self, value):
         if not isinstance(value, bool):
             raise ValueError("is_alive needs to be a boolean.")
 
         cur = self.is_alive
-        if cur and value == False:
+        if cur and value is False:
             # TODO: Proper death and not just setting health to 0.
             self.health = 0
-        elif not cur and value == True:
+        elif not cur and value is True:
             minqlx.player_spawn(self.id)
+
+    @property
+    def is_frozen(self):
+        return self.state.is_frozen
 
     @property
     def score(self):
@@ -595,6 +602,9 @@ class Player():
     def slay(self):
         return minqlx.Plugin.slay(self)
 
+    def slay_with_mod(self, mod):
+        return minqlx.slay_with_mod(self.id, mod)
+
     @classmethod
     def all_players(cls):
         return [cls(i, info=info) for i, info in enumerate(minqlx.players_info()) if info]
@@ -622,11 +632,11 @@ class AbstractDummyPlayer(Player):
 
     def tell(self, msg):
         raise NotImplementedError("tell() needs to be implemented.")
-    
+
 class RconDummyPlayer(AbstractDummyPlayer):
     def __init__(self):
         super().__init__(name=self.__class__.__name__)
-    
+
     @property
     def steam_id(self):
         return minqlx.owner()

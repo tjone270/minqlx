@@ -62,10 +62,18 @@ G_InitGame_ptr G_InitGame;
 CheckPrivileges_ptr CheckPrivileges;
 ClientConnect_ptr ClientConnect;
 ClientSpawn_ptr ClientSpawn;
+G_Damage_ptr G_Damage;
+Touch_Item_ptr Touch_Item;
+LaunchItem_ptr LaunchItem;
+Drop_Item_ptr Drop_Item;
+G_StartKamikaze_ptr G_StartKamikaze;
+G_FreeEntity_ptr G_FreeEntity;
 
 // VM global variables.
 gentity_t* g_entities;
 level_locals_t* level;
+gitem_t* bg_itemlist;
+int bg_numItems;
 
 // Cvars.
 cvar_t* sv_maxclients;
@@ -271,6 +279,7 @@ void SearchVmFunctions(void) {
 	// the module is mapped, so I think this is fine. If it ever breaks, it'll
 	// be trivial to fix.
 	G_AddEvent = (G_AddEvent_ptr)PatternSearch((void*)((pint)qagame + 0xB000), 0xB0000, PTRN_G_ADDEVENT, MASK_G_ADDEVENT);
+
 	if (G_AddEvent == NULL) {
 		DebugPrint("ERROR: Unable to find G_AddEvent.\n");
 		failed = 1;
@@ -300,6 +309,68 @@ void SearchVmFunctions(void) {
 		failed = 1;
 	}
 	else DebugPrint("ClientSpawn: %p\n", ClientSpawn);
+
+	G_Damage = (G_Damage_ptr)PatternSearch((void*)((pint)qagame + 0xB000),
+			0xB0000, PTRN_G_DAMAGE, MASK_G_DAMAGE);
+	if (G_Damage == NULL) {
+		DebugPrint("ERROR: Unable to find G_Damage.\n");
+		failed = 1;
+	}
+	else DebugPrint("G_Damage: %p\n", G_Damage);
+
+	Touch_Item = (Touch_Item_ptr)PatternSearch((void*)((pint)qagame + 0xB000),
+			0xB0000, PTRN_TOUCH_ITEM, MASK_TOUCH_ITEM);
+	if (Touch_Item == NULL) {
+		DebugPrint("ERROR: Unable to find Touch_Item.\n");
+		failed = 1;
+	}
+	else DebugPrint("Touch_Item: %p\n", Touch_Item);
+
+	LaunchItem = (LaunchItem_ptr)PatternSearch((void*)((pint)qagame + 0xB000),
+			0xB0000, PTRN_LAUNCHITEM, MASK_LAUNCHITEM);
+	if (LaunchItem == NULL) {
+		DebugPrint("ERROR: Unable to find LaunchItem.\n");
+		failed = 1;
+	}
+	else DebugPrint("LaunchItem: %p\n", LaunchItem);
+
+	Drop_Item = (Drop_Item_ptr)PatternSearch((void*)((pint)qagame + 0xB000),
+			0xB0000, PTRN_DROP_ITEM, MASK_DROP_ITEM);
+	if (Drop_Item == NULL) {
+		DebugPrint("ERROR: Unable to find Drop_Item.\n");
+		failed = 1;
+	}
+	else DebugPrint("Drop_Item: %p\n", Drop_Item);
+
+	G_StartKamikaze = (G_StartKamikaze_ptr)PatternSearch((void*)((pint)qagame + 0xB000),
+			0xB0000, PTRN_G_STARTKAMIKAZE, MASK_G_STARTKAMIKAZE);
+	if (G_StartKamikaze == NULL) {
+		DebugPrint("ERROR: Unable to find G_StartKamikaze.\n");
+		failed = 1;
+	}
+	else DebugPrint("G_StartKamikaze: %p\n", G_StartKamikaze);
+
+	G_FreeEntity = (G_FreeEntity_ptr)PatternSearch((void*)((pint)qagame + 0xB000),
+			0xB0000, PTRN_G_FREEENTITY, MASK_G_FREEENTITY);
+	if (G_FreeEntity == NULL) {
+		DebugPrint("ERROR: Unable to find G_FreeEntity.\n");
+		failed = 1;
+	}
+	else DebugPrint("G_FreeEntity: %p\n", G_FreeEntity);
+
+	//bg_itemlist = qagame + 0x2CB8A0;
+	bg_itemlist = (gitem_t*)PatternSearch((void*)((pint)qagame + 0x2CB000),
+			0xB0000, PTRN_BG_ITEMLIST, MASK_BG_ITEMLIST);
+	if (bg_itemlist == NULL) {
+		DebugPrint("ERROR: Unable to find bg_itemlist.\n");
+		failed = 1;
+	}
+	else {
+		DebugPrint("bg_itemlist: %p\n", bg_itemlist);
+		for (bg_numItems = 1; bg_itemlist[ bg_numItems ].classname; bg_numItems++);
+		DebugPrint("bg_numItems: %d\n", bg_numItems);
+	}
+
 
 	if (failed) {
 			DebugPrint("Exiting.\n");

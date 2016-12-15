@@ -35,7 +35,7 @@ _re_userinfo = re.compile(r"^userinfo \"(?P<vars>.+)\"$")
 
 # ====================================================================
 #                         LOW-LEVEL HANDLERS
-#        These are all called by the C code, not within Python.  
+#        These are all called by the C code, not within Python.
 # ====================================================================
 
 def handle_rcon(cmd):
@@ -65,7 +65,7 @@ def handle_client_command(client_id, cmd):
         # Dispatch the "client_command" event before further processing.
         player = minqlx.Player(client_id)
         retval = minqlx.EVENT_DISPATCHERS["client_command"].dispatch(player, cmd)
-        if retval == False:
+        if retval is False:
             return False
         elif isinstance(retval, str):
             # Allow plugins to modify the command before passing it on.
@@ -75,10 +75,10 @@ def handle_client_command(client_id, cmd):
         if res:
             msg = res.group("msg").replace("\"", "")
             channel = minqlx.CHAT_CHANNEL
-            if minqlx.EVENT_DISPATCHERS["chat"].dispatch(player, msg, channel) == False:
+            if minqlx.EVENT_DISPATCHERS["chat"].dispatch(player, msg, channel) is False:
                 return False
             return cmd
-        
+
         res = _re_say_team.match(cmd)
         if res:
             msg = res.group("msg").replace("\"", "")
@@ -90,7 +90,7 @@ def handle_client_command(client_id, cmd):
                 channel = minqlx.BLUE_TEAM_CHAT_CHANNEL
             else:
                 channel = minqlx.SPECTATOR_CHAT_CHANNEL
-            if minqlx.EVENT_DISPATCHERS["chat"].dispatch(player, msg, channel) == False:
+            if minqlx.EVENT_DISPATCHERS["chat"].dispatch(player, msg, channel) is False:
                 return False
             return cmd
 
@@ -100,7 +100,7 @@ def handle_client_command(client_id, cmd):
             args = res.group("args") if res.group("args") else ""
             # Set the caller for vote_started in case the vote goes through.
             minqlx.EVENT_DISPATCHERS["vote_started"].caller(player)
-            if minqlx.EVENT_DISPATCHERS["vote_called"].dispatch(player, vote, args) == False:
+            if minqlx.EVENT_DISPATCHERS["vote_called"].dispatch(player, vote, args) is False:
                 return False
             return cmd
 
@@ -108,10 +108,10 @@ def handle_client_command(client_id, cmd):
         if res and minqlx.Plugin.is_vote_active():
             arg = res.group("arg").lower()
             if arg == "y" or arg == "1":
-                if minqlx.EVENT_DISPATCHERS["vote"].dispatch(player, True) == False:
+                if minqlx.EVENT_DISPATCHERS["vote"].dispatch(player, True) is False:
                     return False
             elif arg == "n" or arg == "2":
-                if minqlx.EVENT_DISPATCHERS["vote"].dispatch(player, False) == False:
+                if minqlx.EVENT_DISPATCHERS["vote"].dispatch(player, False) is False:
                     return False
             return cmd
 
@@ -134,7 +134,7 @@ def handle_client_command(client_id, cmd):
                 target_team = "any"
 
             if target_team:
-                if minqlx.EVENT_DISPATCHERS["team_switch_attempt"].dispatch(player, player.team, target_team) == False:
+                if minqlx.EVENT_DISPATCHERS["team_switch_attempt"].dispatch(player, player.team, target_team) is False:
                     return False
             return cmd
 
@@ -150,7 +150,7 @@ def handle_client_command(client_id, cmd):
 
             if changed:
                 ret = minqlx.EVENT_DISPATCHERS["userinfo"].dispatch(player, changed)
-                if ret == False:
+                if ret is False:
                     return False
                 elif isinstance(ret, dict):
                     for key in ret:
@@ -171,7 +171,7 @@ def handle_server_command(client_id, cmd):
             return True
 
         retval = minqlx.EVENT_DISPATCHERS["server_command"].dispatch(player, cmd)
-        if retval == False:
+        if retval is False:
             return False
         elif isinstance(retval, str):
             cmd = retval
@@ -182,7 +182,7 @@ def handle_server_command(client_id, cmd):
                 minqlx.EVENT_DISPATCHERS["vote_ended"].dispatch(True)
             else:
                 minqlx.EVENT_DISPATCHERS["vote_ended"].dispatch(False)
-        
+
         return cmd
     except:
         minqlx.log_exception()
@@ -200,7 +200,7 @@ def handle_frame():
     and have it be executed here.
 
     """
-    
+
     while True:
         # This will run all tasks that are currently scheduled.
         # If one of the tasks throw an exception, it'll log it
@@ -249,7 +249,7 @@ def handle_new_game(is_restart):
     if not is_restart:
         try:
             minqlx.EVENT_DISPATCHERS["map"].dispatch(
-                minqlx.get_cvar("mapname"), 
+                minqlx.get_cvar("mapname"),
                 minqlx.get_cvar("g_factory"))
         except:
             minqlx.log_exception()
@@ -268,7 +268,7 @@ def handle_set_configstring(index, value):
     """
     try:
         res = minqlx.EVENT_DISPATCHERS["set_configstring"].dispatch(index, value)
-        if res == False:
+        if res is False:
             return False
         elif isinstance(res, str):
             value = res
@@ -285,7 +285,7 @@ def handle_set_configstring(index, value):
             old_cs = minqlx.parse_variables(minqlx.get_configstring(index))
             if not old_cs:
                 return
-            
+
             new_cs = minqlx.parse_variables(value)
             old_state = old_cs["g_gameState"]
             new_state = new_cs["g_gameState"]
@@ -387,17 +387,48 @@ def handle_player_spawn(client_id):
         minqlx.log_exception()
         return True
 
+def handle_kamikaze_use(client_id):
+    """This will be called whenever player uses kamikaze item.
+
+    :param client_id: The client identifier.
+    :type client_id: int
+
+    """
+    try:
+        player = minqlx.Player(client_id)
+        return minqlx.EVENT_DISPATCHERS["kamikaze_use"].dispatch(player)
+    except:
+        minqlx.log_exception()
+        return True
+
+def handle_kamikaze_explode(client_id, is_used_on_demand):
+    """This will be called whenever kamikaze explodes.
+
+    :param client_id: The client identifier.
+    :type client_id: int
+    :param is_used_on_demand: Non-zero if kamikaze is used on demand.
+    :type is_used_on_demand: int
+
+
+    """
+    try:
+        player = minqlx.Player(client_id)
+        return minqlx.EVENT_DISPATCHERS["kamikaze_explode"].dispatch(player, True if is_used_on_demand else False)
+    except:
+        minqlx.log_exception()
+        return True
+
 def handle_console_print(text):
     """Called whenever the server prints something to the console and when rcon is used."""
     try:
         if not text:
             return
-        
+
         # Log console output. Removes the need to have stdout logs in addition to minqlx.log.
         minqlx.get_logger().debug(text.rstrip("\n"))
 
         res = minqlx.EVENT_DISPATCHERS["console_print"].dispatch(text)
-        if res == False:
+        if res is False:
             return False
 
         if _print_redirection:
@@ -431,7 +462,7 @@ def redirect_print(channel):
         def __init__(self, channel):
             if not isinstance(channel, minqlx.AbstractChannel):
                 raise ValueError("The redirection channel must be an instance of minqlx.AbstractChannel.")
-            
+
             self.channel = channel
 
         def __enter__(self):
@@ -462,3 +493,6 @@ def register_handlers():
     minqlx.register_handler("player_disconnect", handle_player_disconnect)
     minqlx.register_handler("player_spawn", handle_player_spawn)
     minqlx.register_handler("console_print", handle_console_print)
+
+    minqlx.register_handler("kamikaze_use", handle_kamikaze_use)
+    minqlx.register_handler("kamikaze_explode", handle_kamikaze_explode)

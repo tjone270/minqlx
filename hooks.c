@@ -187,6 +187,33 @@ void __cdecl My_ClientSpawn(gentity_t* ent) {
     // us to set weapons and such without it getting overriden later.
     ClientSpawnDispatcher(ent - g_entities);
 }
+
+void __cdecl My_G_StartKamikaze(gentity_t* ent) {
+    int client_id, is_used_on_demand;
+
+    if (ent->client) {
+        // player activated kamikaze item
+        ent->client->ps.eFlags &= ~EF_KAMIKAZE;
+        client_id = ent->client->ps.clientNum;
+        is_used_on_demand = 1;
+    } else if (ent->activator) {
+        // dead player's body blast
+        client_id = ent->activator->r.ownerNum;
+        is_used_on_demand = 0;
+    } else {
+        // I don't know
+        client_id = -1;
+        is_used_on_demand = 0;
+    }
+
+    if (is_used_on_demand)
+       KamikazeUseDispatcher(client_id);
+
+    G_StartKamikaze(ent);
+
+    if (client_id != -1)
+        KamikazeExplodeDispatcher(client_id, is_used_on_demand);
+}
 #endif
 
 // Hook static functions. Can be done before program even runs.
@@ -250,6 +277,7 @@ void HookStatic(void) {
         DebugPrint("ERROR: Failed to hook SV_SpawnServer: %d\n", res);
         failed = 1;
     }
+
 #endif
 
     if (failed) {
@@ -291,6 +319,12 @@ void HookVm(void) {
 		DebugPrint("ERROR: Failed to hook ClientConnect: %d\n", res);
 		failed = 1;
 	}
+
+    res = Hook((void*)G_StartKamikaze, My_G_StartKamikaze, (void*)&G_StartKamikaze);
+    if (res) {
+        DebugPrint("ERROR: Failed to hook G_StartKamikaze: %d\n", res);
+        failed = 1;
+    }
 
     res = Hook((void*)ClientSpawn, My_ClientSpawn, (void*)&ClientSpawn);
     if (res) {

@@ -75,7 +75,7 @@ class AbstractDatabase:
 
     def clear_flag(self, player, flag):
         """Should clear specified player flag."""
-        return self.set_flag(self, player, flag, False)
+        return self.set_flag(player, flag, False)
 
     def get_flag(self, player, flag, default=False):
         """Abstract method. Should return specified player flag
@@ -91,7 +91,7 @@ class AbstractDatabase:
         "connection" obviously depends on the database, so the specifics will be up
         to the implementation.
 
-        A :class:`minqlx.Plugin` subclass can set 
+        A :class:`minqlx.Plugin` subclass can set
 
         :raises: NotImplementedError
 
@@ -135,7 +135,7 @@ class Redis(AbstractDatabase):
 
     def __setitem__(self, key, item):
         res = self.r.set(key, item)
-        if res == False:
+        if res is False:
             raise RuntimeError("The database assignment failed.")
 
     def __delitem__(self, key):
@@ -161,7 +161,7 @@ class Redis(AbstractDatabase):
             key = "minqlx:players:{}:permission".format(player.steam_id)
         else:
             key = "minqlx:players:{}:permission".format(player)
- 
+
         self[key] = level
 
     def get_permission(self, player):
@@ -184,7 +184,7 @@ class Redis(AbstractDatabase):
         # If it's the owner, treat it like a 5.
         if steam_id == minqlx.owner():
             return 5
- 
+
         key = "minqlx:players:{}:permission".format(steam_id)
         try:
             perm = self[key]
@@ -288,7 +288,7 @@ class Redis(AbstractDatabase):
                 port = int(split_host[1])
             else:
                 port = 6379 # Default port.
- 
+
             if unix_socket:
                 self._conn = redis.StrictRedis(unix_socket_path=host, db=database, password=password, decode_responses=True)
             else:
@@ -313,4 +313,3 @@ class Redis(AbstractDatabase):
             if Redis._pool:
                 Redis._pool.disconnect()
                 Redis._pool = None
-
