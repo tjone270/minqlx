@@ -1633,6 +1633,27 @@ static PyObject* PyMinqlx_DevPrintItems(PyObject* self, PyObject* args) {
     Py_RETURN_NONE;
 }
 
+static PyObject* PyMinqlx_ForceWeaponWait(float wait_time) {
+    gentity_t* ent;
+
+    for (int i=0; i<MAX_GENTITIES; i++) {
+        ent = &g_entities[i];
+
+        if (!ent->inuse)
+            continue;
+
+		if (ent->s.eType != ET_ITEM || ent->item == NULL)
+            continue;		
+		
+		if (ent->item->giType != IT_WEAPON)
+			continue;
+				
+		g_entities[i].wait = wait_time;
+    }
+
+    Py_RETURN_NONE;
+}
+
 /*
  * ================================================================
  *             Module definition and initialization
@@ -1724,6 +1745,8 @@ static PyMethodDef minqlxMethods[] = {
      "Replaces target entity's item with specified one."},
     {"dev_print_items", PyMinqlx_DevPrintItems, METH_NOARGS,
      "Prints all items and entity numbers to server console."},
+	{"force_weapon_wait", PyMinqlx_ForceWeaponWait, METH_VARARGS,
+     "Force all weapons to have a specified spawn wait time."},
     {NULL, NULL, 0, NULL}
 };
 
