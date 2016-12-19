@@ -1633,8 +1633,23 @@ static PyObject* PyMinqlx_DevPrintItems(PyObject* self, PyObject* args) {
     Py_RETURN_NONE;
 }
 
-static PyObject* PyMinqlx_ForceWeaponWait(float wait_time) {
+/*
+* ================================================================
+*                         force_weapon_respawn_time
+* ================================================================
+*/
+
+static PyObject* PyMinqlx_ForceWeaponRespawnTime(PyObject* self, PyObject* args) {
+	int respawn_time;
     gentity_t* ent;
+	
+	if (!PyArg_ParseTuple(args, "i:force_weapon_respawn_time", &respawn_time))
+		return NULL;
+	
+	if (respawn_time < 0) {    
+        PyErr_Format(PyExc_ValueError, "respawn time needs to be an integer 0 or greater");
+        return NULL;
+    }	
 
     for (int i=0; i<MAX_GENTITIES; i++) {
         ent = &g_entities[i];
@@ -1648,10 +1663,10 @@ static PyObject* PyMinqlx_ForceWeaponWait(float wait_time) {
 		if (ent->item->giType != IT_WEAPON)
 			continue;
 				
-		g_entities[i].wait = wait_time;
+		ent->wait = respawn_time;
     }
 
-    Py_RETURN_NONE;
+    Py_RETURN_TRUE;
 }
 
 /*
@@ -1745,8 +1760,8 @@ static PyMethodDef minqlxMethods[] = {
      "Replaces target entity's item with specified one."},
     {"dev_print_items", PyMinqlx_DevPrintItems, METH_NOARGS,
      "Prints all items and entity numbers to server console."},
-	{"force_weapon_wait", PyMinqlx_ForceWeaponWait, METH_VARARGS,
-     "Force all weapons to have a specified spawn wait time."},
+    {"force_weapon_respawn_time", PyMinqlx_ForceWeaponRespawnTime, METH_VARARGS,
+     "Force all weapons to have a specified respawn time, overriding custom map respawn times set for them."},
     {NULL, NULL, 0, NULL}
 };
 
