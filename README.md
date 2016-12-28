@@ -1,16 +1,13 @@
 minqlx
 ======
-minqlx is a modification to the Quake Live Dedicated Server that Quake Live's dedicated server with
+minqlx is a modification to the Quake Live Dedicated Server that extends Quake Live's dedicated server with
 extra functionality and allows scripting of server behavior through an embedded Python
 interpreter.
 
-**NOTE:** This is still in a very early development stage. Bugs **will** happen.
+The mod has been tested on Debian 7 and 8, Ubuntu 14.04 and 16.10. At the moment it only supports the x64 
+build of the server, but x86 might get added eventually.
 
-The mod has been tested on Debian 7 and 8, and Ubuntu 14.04. At the moment it only supports the x64 
-build of the server, but x86 will definitely be added. In fact, at some point it was x86 only,
-but I added x64 support and decided to keep only one of them up to date because the
-frequency of updates during the beta was a bit too much to keep up with, since key
-structures were changing all the time. Once the frequency drops, I will do it.
+As of writing, development of the core is pretty dead.
 
 If you have any questions, the IRC channel for the old bot,
 [#minqlbot on Quakenet](http://webchat.quakenet.org/?channels=minqlbot),
@@ -157,7 +154,10 @@ Python, you can compile it with `make nopy` and you should get a `minqlx_nopy.so
 
 Contribute
 ==========
-If you'd like to contribute with code, you can fork this or the plugin repository and create pull requests for changes. If you found a bug, please open an issue here on Github and include the relevant part from either the
+If you'd like to contribute with code, you can fork this or the plugin repository and create pull requests for changes.
+Please create pull requests into the `develop` branch and not to `master`.
+
+If you found a bug, please open an issue here on Github and include the relevant part from either the
 server's console output or from `minqlx.log` which is in your `fs_homepath`, preferably the latter as it is
 more verbose. Note that `minqlx.log` by default becomes `minqlx.log.1` whenever it goes above 5 MB, and keeps doing
 that until it goes to `minqlx.log.5`, at which point the 5th one gets deleted if the current one goes over

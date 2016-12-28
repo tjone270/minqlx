@@ -1133,7 +1133,7 @@ static PyObject* PyMinqlx_SetHoldable(PyObject* self, PyObject* args) {
 //        this generates holdable pickup sound on drop
 
 void __cdecl Switch_Touch_Item(gentity_t *ent) {
-    ent->touch = Touch_Item;
+    ent->touch = (void*)Touch_Item;
     ent->think = G_FreeEntity;
     ent->nextthink = level->time + 29000;
 }
@@ -1163,7 +1163,7 @@ static PyObject* PyMinqlx_DropHoldable(PyObject* self, PyObject* args) {
     if (item == 0) Py_RETURN_FALSE;
 
     gentity_t* entity = Drop_Item(&g_entities[client_id], bg_itemlist + item, 0);
-    entity->touch     = My_Touch_Item;
+    entity->touch     = (void*)My_Touch_Item;
     entity->parent    = &g_entities[client_id];
     entity->think     = Switch_Touch_Item;
     entity->nextthink = level->time + 1000;
@@ -1597,8 +1597,9 @@ static PyObject* PyMinqlx_ReplaceItems(PyObject* self, PyObject* args) {
 static PyObject* PyMinqlx_DevPrintItems(PyObject* self, PyObject* args) {
     gentity_t* ent;
     char buffer[1024], temp_buffer[1024];
-    int buffer_index = 0, chars_written;
-    const char format[]="%d %s\n";
+    int buffer_index = 0;
+    size_t chars_written;
+    char format[] = "%d %s\n";
     qboolean is_buffer_enough = qtrue;
 
     // default results
