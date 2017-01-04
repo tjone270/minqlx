@@ -4,10 +4,10 @@ minqlx is a modification to the Quake Live Dedicated Server that extends Quake L
 extra functionality and allows scripting of server behavior through an embedded Python
 interpreter.
 
-The mod has been tested on Debian 7 and 8, Ubuntu 14.04 and 16.10. At the moment it only supports the x64 
-build of the server, but x86 might get added eventually.
+The mod has been tested on Debian 7 and 8, Ubuntu 14.04 and 16.10. At the moment it only officially supports the x64 
+build of the server, but you can try building [this fork](https://github.com/em92/minqlx/tree/x86-support) for x86 support.
 
-As of writing, development of the core is pretty dead.
+As of writing, development of the core is pretty much dead save for the occasional pull request.
 
 If you have any questions, the IRC channel for the old bot,
 [#minqlbot on Quakenet](http://webchat.quakenet.org/?channels=minqlbot),
