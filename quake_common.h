@@ -116,6 +116,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define DAMAGE_NO_PROTECTION 0x00000008
 
+#define PMF_AIRCONTROL 0x10000
+
 typedef enum {qfalse, qtrue} qboolean;
 typedef unsigned char byte;
 
