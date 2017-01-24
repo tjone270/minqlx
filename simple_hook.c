@@ -27,7 +27,7 @@ static int findAddress64(void* target, uint64_t address, size_t size) {
 #if defined(__x86_64__) || defined(_M_X64)
 typedef uint64_t pint;
 typedef int64_t sint;
-#define WORST_CASE 			29
+#define WORST_CASE 			40
 #define JUMP_SIZE 			14 // Can be 6 in some cases, but 14 is worst-case.
 #define TRMPS_ARRAY_SIZE	10240
 #elif defined(__i386) || defined(_M_IX86)
@@ -39,7 +39,7 @@ typedef int32_t sint;
 #endif
 
 #define IS_RET(hde) (hde.opcode == 0xC3||hde.opcode == 0xCB||hde.opcode == 0xC2||hde.opcode == 0xCA)
-#define IS_RELATIVE8(hde) ((hde.flags & F_DISP8) || ((hde.flags & F_IMM8) && (hde.flags & F_RELATIVE)))
+#define IS_RELATIVE8(hde) (((hde.flags & F_DISP8) && (hde.opcode != 0x8D)) || ((hde.flags & F_IMM8) && (hde.flags & F_RELATIVE)))
 #define IS_RELATIVE16(hde) ((hde.flags & F_DISP16) || ((hde.flags & F_IMM16) && (hde.flags & F_RELATIVE)))
 #define IS_RELATIVE32(hde) (((hde.flags & F_DISP32) && !hde.modrm_mod && (hde.modrm_mod == 5 || hde.modrm_mod == 13)) || \
     ((hde.flags & F_IMM32) && (hde.flags & F_RELATIVE)))
