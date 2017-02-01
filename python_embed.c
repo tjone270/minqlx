@@ -1414,6 +1414,8 @@ static PyObject* PyMinqlx_SpawnItem(PyObject* self, PyObject* args) {
     gentity_t* ent = LaunchItem(bg_itemlist + item_id, origin, velocity);
     ent->nextthink = 0;
     ent->think = 0;
+    G_AddEvent(ent, EV_ITEM_RESPAWN, 0); // make item be scaled up
+
     Py_RETURN_TRUE;
 }
 
