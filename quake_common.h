@@ -1585,4 +1585,7 @@ void __cdecl PyCommand(void);
 void __cdecl RestartPython(void); // "pyrestart"
 #endif
 
+// em92: all extra features
+float speed_factors[MAX_CLIENTS];
+
 #endif /* QUAKE_COMMON_H */

@@ -1264,6 +1264,30 @@ static PyObject* PyMinqlx_SetScore(PyObject* self, PyObject* args) {
 
 /*
 * ================================================================
+*                       set_speed_factor
+* ================================================================
+*/
+
+static PyObject* PyMinqlx_SetSpeedFactor(PyObject* self, PyObject* args) {
+    int client_id;
+    float factor;
+    if (!PyArg_ParseTuple(args, "if:set_speed_factor", &client_id, &factor))
+        return NULL;
+    else if (client_id < 0 || client_id >= sv_maxclients->integer) {
+        PyErr_Format(PyExc_ValueError,
+                     "client_id needs to be a number from 0 to %d.",
+                     sv_maxclients->integer);
+        return NULL;
+    }
+    else if (!g_entities[client_id].client)
+        Py_RETURN_FALSE;
+
+    speed_factors[ client_id ] = factor;
+    Py_RETURN_TRUE;
+}
+
+/*
+* ================================================================
 *                           callvote
 * ================================================================
 */
@@ -1705,6 +1729,8 @@ static PyMethodDef minqlxMethods[] = {
      "Makes player invulnerable for limited time."},
     {"set_score", PyMinqlx_SetScore, METH_VARARGS,
      "Sets a player's score."},
+    {"set_speed_factor", PyMinqlx_SetSpeedFactor, METH_VARARGS,
+     "Sets a player's speed factor."},
     {"callvote", PyMinqlx_Callvote, METH_VARARGS,
      "Calls a vote as if started by the server and not a player."},
     {"allow_single_player", PyMinqlx_AllowSinglePlayer, METH_VARARGS,
