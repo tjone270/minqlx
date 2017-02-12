@@ -1288,6 +1288,61 @@ static PyObject* PyMinqlx_SetSpeedFactor(PyObject* self, PyObject* args) {
 
 /*
 * ================================================================
+*                       set_armor_type
+* ================================================================
+*/
+
+static PyObject* PyMinqlx_SetArmorType(PyObject* self, PyObject* args) {
+    int client_id, armor_type = -1;
+    PyObject* obj;
+    if (!PyArg_ParseTuple(args, "iO:set_armor_type", &client_id, &obj))
+        return NULL;
+    else if (client_id < 0 || client_id >= sv_maxclients->integer) {
+        PyErr_Format(PyExc_ValueError,
+                     "client_id needs to be a number from 0 to %d.",
+                     sv_maxclients->integer);
+        return NULL;
+    }
+    else if (!g_entities[client_id].client)
+        Py_RETURN_FALSE;
+
+    if ( PyUnicode_Check(obj) ) {
+      char* armor_types[] = {"green", "yellow", "red"};
+      for (int i=0; i<3; i++) {
+          if ( PyUnicode_CompareWithASCIIString(obj, armor_types[i]) == 0 ) {
+              armor_type = i;
+              break;
+          }
+      }
+
+      if ( armor_type == -1) {
+          PyErr_Format(PyExc_ValueError,
+                       "armor_type as string must be equal to green, yellow or red");
+          return NULL;
+      }
+
+    } else if ( PyLong_Check(obj) ) {
+      armor_type = PyLong_AsLong(obj);
+
+      if ( armor_type < 0 || armor_type > 2) {
+          PyErr_Format(PyExc_ValueError,
+                       "armor_type as integer must be equal to 0 (green), 1 (yellow) or 2 (red)");
+          return NULL;
+      }
+
+    } else {
+        PyErr_Format(PyExc_ValueError,
+                     "armor_type is not string");
+        return NULL;
+    }
+
+    g_entities[client_id].client->ps.stats[STAT_ARMORTYPE] = armor_type;
+
+    Py_RETURN_TRUE;
+}
+
+/*
+* ================================================================
 *                           callvote
 * ================================================================
 */
@@ -1731,6 +1786,8 @@ static PyMethodDef minqlxMethods[] = {
      "Sets a player's score."},
     {"set_speed_factor", PyMinqlx_SetSpeedFactor, METH_VARARGS,
      "Sets a player's speed factor."},
+    {"set_armor_type", PyMinqlx_SetArmorType, METH_VARARGS,
+     "Sets a player's type of armor."},
     {"callvote", PyMinqlx_Callvote, METH_VARARGS,
      "Calls a vote as if started by the server and not a player."},
     {"allow_single_player", PyMinqlx_AllowSinglePlayer, METH_VARARGS,
