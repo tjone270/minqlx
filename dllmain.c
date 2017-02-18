@@ -63,6 +63,7 @@ CheckPrivileges_ptr CheckPrivileges;
 ClientConnect_ptr ClientConnect;
 ClientSpawn_ptr ClientSpawn;
 Pmove_ptr Pmove;
+TossClientItems_ptr TossClientItems;
 G_Damage_ptr G_Damage;
 Touch_Item_ptr Touch_Item;
 LaunchItem_ptr LaunchItem;
@@ -318,6 +319,14 @@ void SearchVmFunctions(void) {
 		failed = 1;
 	}
 	else DebugPrint("Pmove: %p\n", Pmove);
+
+	TossClientItems = (TossClientItems_ptr)PatternSearch((void*)((pint)qagame + 0xB000),
+			0xB0000, PTRN_TOSSCLIENTITEMS, MASK_TOSSCLIENTITEMS);
+	if (TossClientItems == NULL) {
+		DebugPrint("ERROR: Unable to find TossClientItems.\n");
+		failed = 1;
+	}
+	else DebugPrint("TossClientItems: %p\n", TossClientItems);
 
 	G_Damage = (G_Damage_ptr)PatternSearch((void*)((pint)qagame + 0xB000),
 			0xB0000, PTRN_G_DAMAGE, MASK_G_DAMAGE);
