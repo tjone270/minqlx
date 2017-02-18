@@ -418,6 +418,20 @@ def handle_kamikaze_explode(client_id, is_used_on_demand):
         minqlx.log_exception()
         return True
 
+def handle_player_items_toss(client_id):
+    """This will be called client drops items on death or disconect.
+
+    :param client_id: The client identifier.
+    :type client_id: int
+
+    """
+    try:
+        player = minqlx.Player(client_id)
+        return minqlx.EVENT_DISPATCHERS["player_items_toss"].dispatch(player)
+    except:
+        minqlx.log_exception()
+        return True
+
 def handle_console_print(text):
     """Called whenever the server prints something to the console and when rcon is used."""
     try:
@@ -496,3 +510,4 @@ def register_handlers():
 
     minqlx.register_handler("kamikaze_use", handle_kamikaze_use)
     minqlx.register_handler("kamikaze_explode", handle_kamikaze_explode)
+    minqlx.register_handler("player_items_toss", handle_player_items_toss)

@@ -221,6 +221,11 @@ void __cdecl My_Pmove(pmove_t* pm) {
     pm->ps->speed *= speed_factors[ pm->ps->clientNum ];
     Pmove(pm);
 }
+
+void __cdecl My_TossClientItems(gentity_t* self) {
+  PlayerItemsTossDispatcher(self - g_entities);
+  TossClientItems(self);
+}
 #endif
 
 // Hook static functions. Can be done before program even runs.
@@ -330,6 +335,12 @@ void HookVm(void) {
     res = Hook((void*)Pmove, My_Pmove, (void*)&Pmove);
     if (res) {
         DebugPrint("ERROR: Failed to hook Pmove: %d\n", res);
+        failed = 1;
+    }
+
+    res = Hook((void*)TossClientItems, My_TossClientItems, (void*)&TossClientItems);
+    if (res) {
+        DebugPrint("ERROR: Failed to hook TossClientItems: %d\n", res);
         failed = 1;
     }
 
