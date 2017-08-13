@@ -14,22 +14,21 @@ typedef uint64_t pint;
 typedef int64_t sint;
 #define WORST_CASE 			40
 #define JUMP_SIZE 			sizeof(JMP_ABS)
-#define TRMPS_ARRAY_SIZE	10240
 #elif defined(__i386) || defined(_M_IX86)
 typedef uint32_t pint;
 typedef int32_t sint;
 #define WORST_CASE 			29
 #define JUMP_SIZE 			sizeof(JMP_REL)
-#define TRMPS_ARRAY_SIZE	10240
 #endif
 
+#define TRMPS_ARRAY_SIZE	30
 const uint8_t NOP = 0x90;
 
 static void* trmps;
 static int last_trmp = 0; // trmp[TRMPS_ARRAY_SIZE]
 
 static void initializeTrampolines(void) {
-	trmps = mmap(NULL, (WORST_CASE * TRMPS_ARRAY_SIZE) + (JUMP_SIZE * TRMPS_ARRAY_SIZE),
+	trmps = mmap(NULL, (WORST_CASE * TRMPS_ARRAY_SIZE),
 		        PROT_READ | PROT_WRITE | PROT_EXEC, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
 }
 
