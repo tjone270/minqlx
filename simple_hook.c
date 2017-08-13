@@ -82,3 +82,12 @@ int Hook(void* target, void* replacement, void** func_ptr) {
     last_trmp++;
     return 0;
 }
+
+int seek_hook_slot( int offset ) {
+
+    if ( (last_trmp + offset < 0) || (last_trmp + offset >= TRMPS_ARRAY_SIZE) )
+        return 0;
+
+    last_trmp += offset;
+    return 1;
+}
