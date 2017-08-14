@@ -119,7 +119,7 @@ BOOL CreateTrampolineFunction(PTRAMPOLINE ct)
             // The trampoline function is long enough.
             // Complete the function with the jump to the target function.
 #if defined(_M_X64) || defined(__x86_64__)
-            jmp.address = pOldInst;
+            jmp.address = (UINT64)pOldInst;
 #else
             jmp.operand = (UINT32)(pOldInst - (pNewInst + sizeof(jmp)));
 #endif
@@ -159,7 +159,7 @@ BOOL CreateTrampolineFunction(PTRAMPOLINE ct)
             // Direct relative CALL
             ULONG_PTR dest = pOldInst + hs.len + (INT32)hs.imm.imm32;
 #if defined(_M_X64) || defined(__x86_64__)
-            call.address = dest;
+            call.address = (UINT64)dest;
 #else
             call.operand = (UINT32)(dest - (pNewInst + sizeof(call)));
 #endif
@@ -186,7 +186,7 @@ BOOL CreateTrampolineFunction(PTRAMPOLINE ct)
             else
             {
 #if defined(_M_X64) || defined(__x86_64__)
-                jmp.address = dest;
+                jmp.address = (UINT64)dest;
 #else
                 jmp.operand = (UINT32)(dest - (pNewInst + sizeof(jmp)));
 #endif
@@ -228,7 +228,7 @@ BOOL CreateTrampolineFunction(PTRAMPOLINE ct)
 #if defined(_M_X64) || defined(__x86_64__)
                 // Invert the condition in x64 mode to simplify the conditional jump logic.
                 jcc.opcode  = 0x71 ^ cond;
-                jcc.address = dest;
+                jcc.address = (UINT64)dest;
 #else
                 jcc.opcode1 = 0x80 | cond;
                 jcc.operand = (UINT32)(dest - (pNewInst + sizeof(jcc)));
@@ -274,7 +274,7 @@ BOOL CreateTrampolineFunction(PTRAMPOLINE ct)
 
 #if defined(_M_X64) || defined(__x86_64__)
     // Create a relay function.
-    jmp.address = (ULONG_PTR)ct->pDetour;
+    jmp.address = (UINT64)ct->pDetour;
 
     ct->pRelay = (LPBYTE)ct->pTrampoline + newPos;
     memcpy(ct->pRelay, &jmp, sizeof(jmp));
