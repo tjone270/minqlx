@@ -10,6 +10,7 @@
 #include "common.h"
 #include "quake_common.h"
 #include "simple_hook.h"
+#include "patches.h"
 
 #ifndef NOPY
 #include "pyminqlx.h"
@@ -54,6 +55,7 @@ void __cdecl My_Sys_SetModuleOffset(char* moduleName, void* offset) {
     	SearchVmFunctions();
     	HookVm();
     	InitializeVm();
+    	patch_vm();
     }
 }
 
