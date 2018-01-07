@@ -134,13 +134,6 @@ static void SearchFunctions(void) {
 	}
 	else DebugPrint("Cmd_Argv: %p\n", Cmd_Argv);
 
-	Cmd_Argc = (Cmd_Argc_ptr)PatternSearchModule(&module, PTRN_CMD_ARGC, MASK_CMD_ARGC);
-	if (Cmd_Argc == NULL) {
-		DebugPrint("ERROR: Unable to find Cmd_Argc.\n");
-		failed = 1;
-	}
-	else DebugPrint("Cmd_Argc: %p\n", Cmd_Argc);
-
 	Cmd_TokenizeString = (Cmd_TokenizeString_ptr)PatternSearchModule(&module, PTRN_CMD_TOKENIZESTRING, MASK_CMD_TOKENIZESTRING);
 	if (Cmd_TokenizeString == NULL) {
 		DebugPrint("ERROR: Unable to find Cmd_TokenizeString.\n");
@@ -261,7 +254,10 @@ static void SearchFunctions(void) {
 	else DebugPrint("Cmd_ExecuteString: %p\n", Cmd_ExecuteString);
 
 	// Cmd_Argc is really small, making it hard to search for, so we use a reference to it instead.
-	Cmd_Argc = (Cmd_Argc_ptr)(*(int32_t*)OFFSET_RELP_CMD_ARGC + OFFSET_RELP_CMD_ARGC + 4);
+	if (SV_Map_f != NULL) {
+		Cmd_Argc = (Cmd_Argc_ptr)(*(int32_t*)OFFSET_RELP_CMD_ARGC + OFFSET_RELP_CMD_ARGC + 4);
+		DebugPrint("Cmd_Argc: %p\n", Cmd_Argc);
+	}
 
 	if (failed) {
 		DebugPrint("Exiting.\n");
