@@ -1460,7 +1460,6 @@ extern void* qagame;
 extern void* qagame_dllentry;
 
 // Additional key struct pointers.
-extern server_t* sv;
 extern serverStatic_t* svs;
 extern gentity_t* g_entities;
 extern level_locals_t* level;

@@ -29,7 +29,6 @@ const char qagame_name[] = "qagamei386.so";
 // Global variables.
 int common_initialized = 0;
 int cvars_initialized = 0;
-server_t* sv;
 serverStatic_t* svs;
 
 Com_Printf_ptr Com_Printf;
@@ -440,7 +439,6 @@ void EntryPoint(void) {
 	// might use some of the functions that could be hooked later to
 	// get the pointer, such as SV_SetConfigstring.
 #if defined(__x86_64__) || defined(_M_X64)
-	sv = (server_t*)(*(int32_t*)OFFSET_RELP_SV + OFFSET_RELP_SV + 5);
     // 32-bit pointer. intptr_t added to suppress warning about the casting.
     svs = (serverStatic_t*)(intptr_t)(*(uint32_t*)OFFSET_PP_SVS);
 #elif defined(__i386) || defined(_M_IX86)
