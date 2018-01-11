@@ -13,7 +13,7 @@ BINDIR = bin
 CC = gcc
 CFLAGS += -shared -std=gnu11
 LDFLAGS_NOPY += -ldl
-LDFLAGS += $(shell python3.5-config --libs)
+LDFLAGS += $(shell python3-config --libs)
 SOURCES_NOPY += dllmain.c commands.c simple_hook.c hooks.c misc.c maps_parser.c trampoline.c patches.c
 SOURCES += dllmain.c commands.c python_embed.c python_dispatchers.c simple_hook.c hooks.c misc.c maps_parser.c trampoline.c patches.c
 OBJS = $(SOURCES:.c=.o)
@@ -25,13 +25,13 @@ PYFILES = $(wildcard python/minqlx/*.py)
 
 .PHONY: depend clean
 
-all: CFLAGS += $(shell python3.5-config --cflags)
-all: VERSION := MINQLX_VERSION=\"$(shell python3.5 python/version.py)\"
+all: CFLAGS += $(shell python3-config --cflags)
+all: VERSION := MINQLX_VERSION=\"$(shell python3 python/version.py)\"
 all: $(OUTPUT) $(PYMODULE)
 	@echo Done!
 
-debug: CFLAGS += $(shell python3.5-config --includes) -gdwarf-2 -Wall -O0 -fvar-tracking
-debug: VERSION := MINQLX_VERSION=\"$(shell python3.5 python/version.py -d)\"
+debug: CFLAGS += $(shell python3-config --includes) -gdwarf-2 -Wall -O0 -fvar-tracking
+debug: VERSION := MINQLX_VERSION=\"$(shell python3 python/version.py -d)\"
 debug: $(OUTPUT)
 	@echo Done!
 
@@ -51,7 +51,7 @@ $(OUTPUT_NOPY): $(OBJS_NOPY)
 	$(CC) $(CFLAGS) -D$(VERSION) -o $(OUTPUT_NOPY) $(OBJS_NOPY) $(LDFLAGS_NOPY)
 
 $(PYMODULE): $(PYFILES)
-	@python3.5 -m zipfile -c $(PYMODULE) python/minqlx
+	@python3 -m zipfile -c $(PYMODULE) python/minqlx
 
 .c.o:
 	$(CC) $(CFLAGS) -D$(VERSION) -c $< -o $@
