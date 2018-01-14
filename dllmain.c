@@ -95,6 +95,8 @@ void DebugError(const char* fmt, const char* file, int line, const char* func, .
 	va_end(args);
 }
 
+#define STATIC_SEARCH(x, p, m) x = (x ## _ptr) PatternSearchModule(&module, p, m); if (x == NULL) { DebugPrint("ERROR: Unable to find " #x ".\n"); failed = 1;} else DebugPrint(#x ": %p\n", x)
+
 static void SearchFunctions(void) {
 	int failed = 0;
 	module_info_t module;
@@ -106,152 +108,28 @@ static void SearchFunctions(void) {
 	}
 
 	DebugPrint("Searching for necessary functions...\n");
-	Com_Printf = (Com_Printf_ptr)PatternSearchModule(&module, PTRN_COM_PRINTF, MASK_COM_PRINTF);
-	if (Com_Printf == NULL) {
-		DebugPrint("ERROR: Unable to find Com_Printf.\n");
-		failed = 1;
-	}
-	else DebugPrint("Com_Printf: %p\n", Com_Printf);
 
-	Cmd_AddCommand = (Cmd_AddCommand_ptr)PatternSearchModule(&module, PTRN_CMD_ADDCOMMAND, MASK_CMD_ADDCOMMAND);
-	if (Cmd_AddCommand == NULL) {
-		DebugPrint("ERROR: Unable to find Cmd_AddCommand.\n");
-		failed = 1;
-	}
-	else DebugPrint("Cmd_AddCommand: %p\n", Cmd_AddCommand);
-
-	Cmd_Args = (Cmd_Args_ptr)PatternSearchModule(&module, PTRN_CMD_ARGS, MASK_CMD_ARGS);
-	if (Cmd_Args == NULL) {
-		DebugPrint("ERROR: Unable to find Cmd_Args.\n");
-		failed = 1;
-	}
-	else DebugPrint("Cmd_Args: %p\n", Cmd_Args);
-
-	Cmd_Argv = (Cmd_Argv_ptr)PatternSearchModule(&module, PTRN_CMD_ARGV, MASK_CMD_ARGV);
-	if (Cmd_Argv == NULL) {
-		DebugPrint("ERROR: Unable to find Cmd_Argv.\n");
-		failed = 1;
-	}
-	else DebugPrint("Cmd_Argv: %p\n", Cmd_Argv);
-
-	Cmd_TokenizeString = (Cmd_TokenizeString_ptr)PatternSearchModule(&module, PTRN_CMD_TOKENIZESTRING, MASK_CMD_TOKENIZESTRING);
-	if (Cmd_TokenizeString == NULL) {
-		DebugPrint("ERROR: Unable to find Cmd_TokenizeString.\n");
-		failed = 1;
-	}
-	else DebugPrint("Cmd_TokenizeString: %p\n", Cmd_TokenizeString);
-
-	Cbuf_ExecuteText = (Cbuf_ExecuteText_ptr)PatternSearchModule(&module, PTRN_CBUF_EXECUTETEXT, MASK_CBUF_EXECUTETEXT);
-	if (Cbuf_ExecuteText == NULL) {
-		DebugPrint("ERROR: Unable to find Cbuf_ExecuteText.\n");
-		failed = 1;
-	}
-	else DebugPrint("Cbuf_ExecuteText: %p\n", Cbuf_ExecuteText);
-
-	Cvar_FindVar = (Cvar_FindVar_ptr)PatternSearchModule(&module, PTRN_CVAR_FINDVAR, MASK_CVAR_FINDVAR);
-	if (Cvar_FindVar == NULL) {
-		DebugPrint("ERROR: Unable to find Cvar_FindVar.\n");
-		failed = 1;
-	}
-	else DebugPrint("Cvar_FindVar: %p\n", Cvar_FindVar);
-
-	Cvar_Get = (Cvar_Get_ptr)PatternSearchModule(&module, PTRN_CVAR_GET, MASK_CVAR_GET);
-	if (Cvar_Get == NULL) {
-		DebugPrint("ERROR: Unable to find Cvar_Get.\n");
-		failed = 1;
-	}
-	else DebugPrint("Cvar_Get: %p\n", Cvar_Get);
-
-	Cvar_GetLimit = (Cvar_GetLimit_ptr)PatternSearchModule(&module, PTRN_CVAR_GETLIMIT, MASK_CVAR_GETLIMIT);
-	if (Cvar_GetLimit == NULL) {
-		DebugPrint("ERROR: Unable to find Cvar_GetLimit.\n");
-		failed = 1;
-	}
-	else DebugPrint("Cvar_GetLimit: %p\n", Cvar_GetLimit);
-
-	Cvar_Set2 = (Cvar_Set2_ptr)PatternSearchModule(&module, PTRN_CVAR_SET2, MASK_CVAR_SET2);
-	if (Cvar_Set2 == NULL) {
-		DebugPrint("ERROR: Unable to find Cvar_Set2.\n");
-		failed = 1;
-	}
-	else DebugPrint("Cvar_Set2: %p\n", Cvar_Set2);
-
-	SV_SendServerCommand = (SV_SendServerCommand_ptr)PatternSearchModule(&module, PTRN_SV_SENDSERVERCOMMAND, MASK_SV_SENDSERVERCOMMAND);
-	if (SV_SendServerCommand == NULL) {
-		DebugPrint("ERROR: Unable to find SV_SendServerCommand.\n");
-		failed = 1;
-	}
-	else DebugPrint("SV_SendServerCommand: %p\n", SV_SendServerCommand);
-
-	SV_ExecuteClientCommand = (SV_ExecuteClientCommand_ptr)PatternSearchModule(&module, PTRN_SV_EXECUTECLIENTCOMMAND, MASK_SV_EXECUTECLIENTCOMMAND);
-	if (SV_ExecuteClientCommand == NULL) {
-		DebugPrint("ERROR: Unable to find SV_ExecuteClientCommand.\n");
-		failed = 1;
-	}
-	else DebugPrint("SV_ExecuteClientCommand: %p\n", SV_ExecuteClientCommand);
-
-	SV_Shutdown = (SV_Shutdown_ptr)PatternSearchModule(&module, PTRN_SV_SHUTDOWN, MASK_SV_SHUTDOWN);
-	if (SV_Shutdown == NULL) {
-		DebugPrint("ERROR: Unable to find SV_Shutdown.\n");
-		failed = 1;
-	}
-	else DebugPrint("SV_Shutdown: %p\n", SV_Shutdown);
-
-	SV_Map_f = (SV_Map_f_ptr)PatternSearchModule(&module, PTRN_SV_MAP_F, MASK_SV_MAP_F);
-	if (SV_Map_f == NULL) {
-		DebugPrint("ERROR: Unable to find SV_Map_f.\n");
-		failed = 1;
-	}
-	else DebugPrint("SV_Map_f: %p\n", SV_Map_f);
-
-	SV_ClientEnterWorld = (SV_ClientEnterWorld_ptr)PatternSearchModule(&module, PTRN_SV_CLIENTENTERWORLD, MASK_SV_CLIENTENTERWORLD);
-	if (SV_ClientEnterWorld == NULL) {
-		DebugPrint("ERROR: Unable to find SV_ClientEnterWorld.\n");
-		failed = 1;
-	}
-	else DebugPrint("SV_ClientEnterWorld: %p\n", SV_ClientEnterWorld);
-
-	SV_SetConfigstring = (SV_SetConfigstring_ptr)PatternSearchModule(&module, PTRN_SV_SETCONFIGSTRING, MASK_SV_SETCONFIGSTRING);
-	if (SV_SetConfigstring == NULL) {
-		DebugPrint("ERROR: Unable to find SV_SetConfigstring.\n");
-		failed = 1;
-	}
-	else DebugPrint("SV_SetConfigstring: %p\n", SV_SetConfigstring);
-
-	SV_GetConfigstring = (SV_GetConfigstring_ptr)PatternSearchModule(&module, PTRN_SV_GETCONFIGSTRING, MASK_SV_GETCONFIGSTRING);
-	if (SV_GetConfigstring == NULL) {
-		DebugPrint("ERROR: Unable to find SV_GetConfigstring.\n");
-		failed = 1;
-	}
-	else DebugPrint("SV_GetConfigstring: %p\n", SV_GetConfigstring);
-
-	SV_DropClient = (SV_DropClient_ptr)PatternSearchModule(&module, PTRN_SV_DROPCLIENT, MASK_SV_DROPCLIENT);
-	if (SV_DropClient == NULL) {
-		DebugPrint("ERROR: Unable to find SV_DropClient.\n");
-		failed = 1;
-	}
-	else DebugPrint("SV_DropClient: %p\n", SV_DropClient);
-
-	Sys_SetModuleOffset = (Sys_SetModuleOffset_ptr)PatternSearchModule(&module, PTRN_SYS_SETMODULEOFFSET, MASK_SYS_SETMODULEOFFSET);
-	if (Sys_SetModuleOffset == NULL) {
-		DebugPrint("ERROR: Unable to find Sys_SetModuleOffset.\n");
-		failed = 1;
-	}
-	else DebugPrint("Sys_SetModuleOffset: %p\n", Sys_SetModuleOffset);
-
-	SV_SpawnServer = (SV_SpawnServer_ptr)PatternSearchModule(&module, PTRN_SV_SPAWNSERVER, MASK_SV_SPAWNSERVER);
-	if (SV_SpawnServer == NULL) {
-		DebugPrint("ERROR: Unable to find SV_SpawnServer.\n");
-		failed = 1;
-	}
-	else DebugPrint("SV_SpawnServer: %p\n", SV_SpawnServer);
-
-	Cmd_ExecuteString = (Cmd_ExecuteString_ptr)PatternSearchModule(&module, PTRN_CMD_EXECUTESTRING, MASK_CMD_EXECUTESTRING);
-	if (Cmd_ExecuteString == NULL) {
-		DebugPrint("ERROR: Unable to find Cmd_ExecuteString.\n");
-		failed = 1;
-	}
-	else DebugPrint("Cmd_ExecuteString: %p\n", Cmd_ExecuteString);
+	STATIC_SEARCH(Com_Printf, PTRN_COM_PRINTF, MASK_COM_PRINTF);
+	STATIC_SEARCH(Cmd_AddCommand, PTRN_CMD_ADDCOMMAND, MASK_CMD_ADDCOMMAND);
+	STATIC_SEARCH(Cmd_Args, PTRN_CMD_ARGS, MASK_CMD_ARGS);
+	STATIC_SEARCH(Cmd_Argv, PTRN_CMD_ARGV, MASK_CMD_ARGV);
+	STATIC_SEARCH(Cmd_TokenizeString, PTRN_CMD_TOKENIZESTRING, MASK_CMD_TOKENIZESTRING);
+	STATIC_SEARCH(Cbuf_ExecuteText, PTRN_CBUF_EXECUTETEXT, MASK_CBUF_EXECUTETEXT);
+	STATIC_SEARCH(Cvar_FindVar, PTRN_CVAR_FINDVAR, MASK_CVAR_FINDVAR);
+	STATIC_SEARCH(Cvar_Get, PTRN_CVAR_GET, MASK_CVAR_GET);
+	STATIC_SEARCH(Cvar_GetLimit, PTRN_CVAR_GETLIMIT, MASK_CVAR_GETLIMIT);
+	STATIC_SEARCH(Cvar_Set2, PTRN_CVAR_SET2, MASK_CVAR_SET2);
+	STATIC_SEARCH(SV_SendServerCommand, PTRN_SV_SENDSERVERCOMMAND, MASK_SV_SENDSERVERCOMMAND);
+	STATIC_SEARCH(SV_ExecuteClientCommand, PTRN_SV_EXECUTECLIENTCOMMAND, MASK_SV_EXECUTECLIENTCOMMAND);
+	STATIC_SEARCH(SV_Shutdown, PTRN_SV_SHUTDOWN, MASK_SV_SHUTDOWN);
+	STATIC_SEARCH(SV_Map_f, PTRN_SV_MAP_F, MASK_SV_MAP_F);
+	STATIC_SEARCH(SV_ClientEnterWorld, PTRN_SV_CLIENTENTERWORLD, MASK_SV_CLIENTENTERWORLD);
+	STATIC_SEARCH(SV_SetConfigstring, PTRN_SV_SETCONFIGSTRING, MASK_SV_SETCONFIGSTRING);
+	STATIC_SEARCH(SV_GetConfigstring, PTRN_SV_GETCONFIGSTRING, MASK_SV_GETCONFIGSTRING);
+	STATIC_SEARCH(SV_DropClient, PTRN_SV_DROPCLIENT, MASK_SV_DROPCLIENT);
+	STATIC_SEARCH(Sys_SetModuleOffset, PTRN_SYS_SETMODULEOFFSET, MASK_SYS_SETMODULEOFFSET);
+	STATIC_SEARCH(SV_SpawnServer, PTRN_SV_SPAWNSERVER, MASK_SV_SPAWNSERVER);
+	STATIC_SEARCH(Cmd_ExecuteString, PTRN_CMD_EXECUTESTRING, MASK_CMD_EXECUTESTRING);
 
 	// Cmd_Argc is really small, making it hard to search for, so we use a reference to it instead.
 	if (SV_Map_f != NULL) {
@@ -265,6 +143,8 @@ static void SearchFunctions(void) {
 	}
 }
 
+#define VM_SEARCH(x, p, m) x = (x ## _ptr) PatternSearch((void*)((pint)qagame + 0xB000), 0xB0000, p, m); if (x == NULL) { DebugPrint("ERROR: Unable to find " #x ".\n"); failed = 1;} else DebugPrint(#x ": %p\n", x)
+
 // NOTE: Some functions can easily and reliably be found on the VM_Call table instead.
 void SearchVmFunctions(void) {
 	int failed = 0;
@@ -273,85 +153,16 @@ void SearchVmFunctions(void) {
 	// Perhaps this needs to be called later? In any case, we know exactly where
 	// the module is mapped, so I think this is fine. If it ever breaks, it'll
 	// be trivial to fix.
-	G_AddEvent = (G_AddEvent_ptr)PatternSearch((void*)((pint)qagame + 0xB000), 0xB0000, PTRN_G_ADDEVENT, MASK_G_ADDEVENT);
-
-	if (G_AddEvent == NULL) {
-		DebugPrint("ERROR: Unable to find G_AddEvent.\n");
-		failed = 1;
-	}
-	else DebugPrint("G_AddEvent: %p\n", G_AddEvent);
-
-	CheckPrivileges = (CheckPrivileges_ptr)PatternSearch((void*)((pint)qagame + 0xB000),
-			0xB0000, PTRN_CHECKPRIVILEGES, MASK_CHECKPRIVILEGES);
-	if (CheckPrivileges == NULL) {
-		DebugPrint("ERROR: Unable to find CheckPrivileges.\n");
-		failed = 1;
-	}
-	else DebugPrint("CheckPrivileges: %p\n", CheckPrivileges);
-
-	ClientConnect = (ClientConnect_ptr)PatternSearch((void*)((pint)qagame + 0xB000),
-			0xB0000, PTRN_CLIENTCONNECT, MASK_CLIENTCONNECT);
-	if (ClientConnect == NULL) {
-		DebugPrint("ERROR: Unable to find ClientConnect.\n");
-		failed = 1;
-	}
-	else DebugPrint("ClientConnect: %p\n", ClientConnect);
-
-	ClientSpawn = (ClientSpawn_ptr)PatternSearch((void*)((pint)qagame + 0xB000),
-			0xB0000, PTRN_CLIENTSPAWN, MASK_CLIENTSPAWN);
-	if (ClientSpawn == NULL) {
-		DebugPrint("ERROR: Unable to find ClientSpawn.\n");
-		failed = 1;
-	}
-	else DebugPrint("ClientSpawn: %p\n", ClientSpawn);
-
-	G_Damage = (G_Damage_ptr)PatternSearch((void*)((pint)qagame + 0xB000),
-			0xB0000, PTRN_G_DAMAGE, MASK_G_DAMAGE);
-	if (G_Damage == NULL) {
-		DebugPrint("ERROR: Unable to find G_Damage.\n");
-		failed = 1;
-	}
-	else DebugPrint("G_Damage: %p\n", G_Damage);
-
-	Touch_Item = (Touch_Item_ptr)PatternSearch((void*)((pint)qagame + 0xB000),
-			0xB0000, PTRN_TOUCH_ITEM, MASK_TOUCH_ITEM);
-	if (Touch_Item == NULL) {
-		DebugPrint("ERROR: Unable to find Touch_Item.\n");
-		failed = 1;
-	}
-	else DebugPrint("Touch_Item: %p\n", Touch_Item);
-
-	LaunchItem = (LaunchItem_ptr)PatternSearch((void*)((pint)qagame + 0xB000),
-			0xB0000, PTRN_LAUNCHITEM, MASK_LAUNCHITEM);
-	if (LaunchItem == NULL) {
-		DebugPrint("ERROR: Unable to find LaunchItem.\n");
-		failed = 1;
-	}
-	else DebugPrint("LaunchItem: %p\n", LaunchItem);
-
-	Drop_Item = (Drop_Item_ptr)PatternSearch((void*)((pint)qagame + 0xB000),
-			0xB0000, PTRN_DROP_ITEM, MASK_DROP_ITEM);
-	if (Drop_Item == NULL) {
-		DebugPrint("ERROR: Unable to find Drop_Item.\n");
-		failed = 1;
-	}
-	else DebugPrint("Drop_Item: %p\n", Drop_Item);
-
-	G_StartKamikaze = (G_StartKamikaze_ptr)PatternSearch((void*)((pint)qagame + 0xB000),
-			0xB0000, PTRN_G_STARTKAMIKAZE, MASK_G_STARTKAMIKAZE);
-	if (G_StartKamikaze == NULL) {
-		DebugPrint("ERROR: Unable to find G_StartKamikaze.\n");
-		failed = 1;
-	}
-	else DebugPrint("G_StartKamikaze: %p\n", G_StartKamikaze);
-
-	G_FreeEntity = (G_FreeEntity_ptr)PatternSearch((void*)((pint)qagame + 0xB000),
-			0xB0000, PTRN_G_FREEENTITY, MASK_G_FREEENTITY);
-	if (G_FreeEntity == NULL) {
-		DebugPrint("ERROR: Unable to find G_FreeEntity.\n");
-		failed = 1;
-	}
-	else DebugPrint("G_FreeEntity: %p\n", G_FreeEntity);
+	VM_SEARCH(G_AddEvent, PTRN_G_ADDEVENT, MASK_G_ADDEVENT);
+	VM_SEARCH(CheckPrivileges, PTRN_CHECKPRIVILEGES, MASK_CHECKPRIVILEGES);
+	VM_SEARCH(ClientConnect, PTRN_CLIENTCONNECT, MASK_CLIENTCONNECT);
+	VM_SEARCH(ClientSpawn, PTRN_CLIENTSPAWN, MASK_CLIENTSPAWN);
+	VM_SEARCH(G_Damage, PTRN_G_DAMAGE, MASK_G_DAMAGE);
+	VM_SEARCH(Touch_Item, PTRN_TOUCH_ITEM, MASK_TOUCH_ITEM);
+	VM_SEARCH(LaunchItem, PTRN_LAUNCHITEM, MASK_LAUNCHITEM);
+	VM_SEARCH(Drop_Item, PTRN_DROP_ITEM, MASK_DROP_ITEM);
+	VM_SEARCH(G_StartKamikaze, PTRN_G_STARTKAMIKAZE, MASK_G_STARTKAMIKAZE);
+	VM_SEARCH(G_FreeEntity, PTRN_G_FREEENTITY, MASK_G_FREEENTITY);
 
 	if (failed) {
 			DebugPrint("Exiting.\n");
