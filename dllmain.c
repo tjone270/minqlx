@@ -353,20 +353,6 @@ void SearchVmFunctions(void) {
 	}
 	else DebugPrint("G_FreeEntity: %p\n", G_FreeEntity);
 
-	//bg_itemlist = qagame + 0x2CB8A0;
-	bg_itemlist = (gitem_t*)PatternSearch((void*)((pint)qagame + 0x2CB000),
-			0xB0000, PTRN_BG_ITEMLIST, MASK_BG_ITEMLIST);
-	if (bg_itemlist == NULL) {
-		DebugPrint("ERROR: Unable to find bg_itemlist.\n");
-		failed = 1;
-	}
-	else {
-		DebugPrint("bg_itemlist: %p\n", bg_itemlist);
-		for (bg_numItems = 1; bg_itemlist[ bg_numItems ].classname; bg_numItems++);
-		DebugPrint("bg_numItems: %d\n", bg_numItems);
-	}
-
-
 	if (failed) {
 			DebugPrint("Exiting.\n");
 			exit(1);
@@ -412,10 +398,13 @@ void InitializeVm(void) {
 #if defined(__x86_64__) || defined(_M_X64)
     g_entities = (gentity_t*)(*(int32_t*)OFFSET_RELP_G_ENTITIES + OFFSET_RELP_G_ENTITIES + 4);
     level = (level_locals_t*)(*(int32_t*)OFFSET_RELP_LEVEL + OFFSET_RELP_LEVEL + 4);
+    bg_itemlist = (gitem_t*)*(int64_t*)((*(int32_t*)OFFSET_RELP_BG_ITEMLIST + OFFSET_RELP_BG_ITEMLIST + 4));
 #elif defined(__i386) || defined(_M_IX86)
     g_entities = (gentity_t*)(*(int32_t*)OFFSET_RELP_G_ENTITIES + 0xCEFF4 + (pint)qagame);
     level = (level_locals_t*)(*(int32_t*)OFFSET_RELP_LEVEL + 0xCEFF4 + (pint)qagame);
+    bg_itemlist = (gitem_t*)*(int32_t*)((*(int32_t*)OFFSET_RELP_BG_ITEMLIST + 0xCEFF4 + (pint)qagame));
 #endif
+    for (bg_numItems = 1; bg_itemlist[ bg_numItems ].classname; bg_numItems++);
 }
 
 // Called after the game is initialized.
