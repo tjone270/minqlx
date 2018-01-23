@@ -35,6 +35,10 @@ sudo apt-get -y install python3 python3-dev
 python3 --version
 ```
 
+- For Debian 7 or 8: You should remove `stretch` by commenting out or removing the line you added to `sources.list`
+earlier and then do `sudo apt-get update` again to make sure you don't install any other `stretch`
+packages unintentionally later.
+
 - Now you should get Redis and Git, which will be used by minqlx's plugins:
 
 ```
