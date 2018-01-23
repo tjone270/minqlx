@@ -15,8 +15,10 @@ is being used for this one as well. Feel free to drop by.
 
 Installation
 ============
-These instructions are for Debian 7 or 8 (use the latter if you can choose). For Ubuntu,
-see the [wiki entry](https://github.com/MinoMino/minqlx/wiki/Ubuntu) for details.
+These instructions are for Debian 9 "Stretch". By default it will install required python 3.5 version.
+If you are using Debian 7 "Wheezy" or Debian 8 "Jessie", you need to add `stretch` repository to apt.
+This can be done by adding the line `deb http://ftp.debian.org/debian stretch main` to `/etc/apt/sources.list`
+For Ubuntu, see the [wiki entry](https://github.com/MinoMino/minqlx/wiki/Ubuntu) for details.
 You're on your own for the time being on other distros,
 but feel free to add instructions to the [wiki](https://github.com/MinoMino/minqlx/wiki)
 if you want to help out.
@@ -26,6 +28,11 @@ if you want to help out.
 ```
 sudo apt-get update
 sudo apt-get -y install python3 python3-dev
+```
+
+- Make sure, that you have installed Python 3.5 or later:
+```
+python3 --version
 ```
 
 - Now you should get Redis and Git, which will be used by minqlx's plugins:
