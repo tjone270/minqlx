@@ -36,6 +36,12 @@ import os
 
 from logging.handlers import RotatingFileHandler
 
+# em92: reasons not to support older than 3.5
+# https://docs.python.org/3.5/whatsnew/3.5.html#whatsnew-ordereddict
+# plugins already assume, that they are running on python >= 3.5
+if sys.version_info < (3,5):
+    raise AssertionError("Only python 3.5 and later is supported by minqlx")
+
 # Team number -> string
 TEAMS = collections.OrderedDict(enumerate(("free", "red", "blue", "spectator")))
 

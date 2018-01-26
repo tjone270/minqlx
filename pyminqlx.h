@@ -1,7 +1,7 @@
 #ifndef PYMINQLX_H
 #define PYMINQLX_H
 
-#define PYTHON_FILENAME L"python3.5"
+#define PYTHON_FILENAME L"python3"
 #define CORE_MODULE "minqlx.zip"
 
 #include <Python.h>

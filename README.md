@@ -4,10 +4,9 @@ minqlx is a modification to the Quake Live Dedicated Server that extends Quake L
 extra functionality and allows scripting of server behavior through an embedded Python
 interpreter.
 
-The mod has been tested on Debian 7 and 8, Ubuntu 14.04 and 16.10. At the moment it only supports the x64 
-build of the server, but x86 might get added eventually.
+The mod has been tested on Debian 7, 8 and 9, Ubuntu 14.04 and 16.10. Supports both x64 and x86 builds of the server.
 
-As of writing, development of the core is pretty dead.
+As of writing, development of the core is pretty much dead save for the occasional pull request.
 
 If you have any questions, the IRC channel for the old bot,
 [#minqlbot on Quakenet](http://webchat.quakenet.org/?channels=minqlbot),
@@ -15,22 +14,28 @@ is being used for this one as well. Feel free to drop by.
 
 Installation
 ============
-These instructions are for Debian 7 or 8 (use the latter if you can choose). For Ubuntu,
-see the [wiki entry](https://github.com/MinoMino/minqlx/wiki/Ubuntu) for details.
+These instructions are for Debian 9 "Stretch". By default it will install required python 3.5 version.
+If you are using Debian 7 "Wheezy" or Debian 8 "Jessie", you need to add `stretch` repository to apt.
+This can be done by adding the line `deb http://ftp.debian.org/debian stretch main` to `/etc/apt/sources.list`
+For Ubuntu, see the [wiki entry](https://github.com/MinoMino/minqlx/wiki/Ubuntu) for details.
 You're on your own for the time being on other distros,
 but feel free to add instructions to the [wiki](https://github.com/MinoMino/minqlx/wiki)
 if you want to help out.
 
-- Install Python 3.5. At the time of writing, in Debian 7 or 8 you can install it by adding the `sid` repository to apt. This can be done by adding the line `deb http://ftp.debian.org/debian sid main` to
-`/etc/apt/sources.list`. You can now go ahead and install it with the following:
+- Install Python 3.
 
 ```
 sudo apt-get update
-sudo apt-get -y install python3.5 python3.5-dev
+sudo apt-get -y install python3 python3-dev
 ```
 
-- You should remove `sid` by commenting out or removing the line you added to `sources.list`
-earlier and then do `sudo apt-get update` again to make sure you don't install any unstable
+- Make sure, that you have installed Python 3.5 or later:
+```
+python3 --version
+```
+
+- For Debian 7 or 8: You should remove `stretch` by commenting out or removing the line you added to `sources.list`
+earlier and then do `sudo apt-get update` again to make sure you don't install any other `stretch`
 packages unintentionally later.
 
 - Now you should get Redis and Git, which will be used by minqlx's plugins:
@@ -49,11 +54,11 @@ the directory with all the server files (and where you extracted the above files
 ```
 git clone https://github.com/MinoMino/minqlx-plugins.git
 wget https://bootstrap.pypa.io/get-pip.py
-sudo python3.5 get-pip.py
+sudo python3 get-pip.py
 rm get-pip.py
 sudo apt-get -y install build-essential
-sudo python3.5 -m easy_install pyzmq hiredis
-sudo python3.5 -m pip install -r minqlx-plugins/requirements.txt
+sudo python3 -m easy_install pyzmq hiredis
+sudo python3 -m pip install -r minqlx-plugins/requirements.txt
 ```
 
 **NOTE**: During the pip and easy_install steps, you might get a lot of warnings. You can safely
@@ -144,8 +149,8 @@ Compiling
 **NOTE**: This is *not* required if you are using binaries.
 
 It's just a makefile for now. No autoconf or anything, so you might need to edit the file in some cases.
-It assumes you have GCC and that `python3.5-config` is Python 3.5's python-config. On Debian, install
-`python3.5-dev` and it should compile right off the bat assuming you have all the build tools.
+It assumes you have GCC and that `python3-config` is Python 3's python-config. On Debian, install
+`python3-dev` and it should compile right off the bat assuming you have all the build tools.
 
 To compile, just do a `make` and you should get a `minqlx.so` and a `minqlx.zip` in the `bin` directory.
 The `bin` directory also has launch scripts, so you can simply copy the contents of the `bin` directory

@@ -1161,7 +1161,7 @@ typedef enum {
 
 struct gclient_s;
 
-struct __attribute__((aligned(8))) gentity_s {
+struct gentity_s {
   entityState_t s;
   entityShared_t r;
   struct gclient_s *client;
@@ -1460,7 +1460,6 @@ extern void* qagame;
 extern void* qagame_dllentry;
 
 // Additional key struct pointers.
-extern server_t* sv;
 extern serverStatic_t* svs;
 extern gentity_t* g_entities;
 extern level_locals_t* level;
@@ -1503,6 +1502,7 @@ typedef int (__cdecl *CheckPrivileges_ptr)(gentity_t* ent, char* cmd);
 typedef char* (__cdecl *ClientConnect_ptr)(int clientNum, qboolean firstTime, qboolean isBot);
 typedef void (__cdecl *ClientSpawn_ptr)(gentity_t* ent);
 typedef void (__cdecl *Pmove_ptr)(pmove_t* pmove);
+typedef void (__cdecl *Cmd_CallVote_f_ptr)(gentity_t *ent);
 typedef void (__cdecl *TossClientItems_ptr)( gentity_t *self );
 typedef void (__cdecl *G_Damage_ptr)(gentity_t *targ, gentity_t *inflictor, gentity_t *attacker, vec3_t dir, vec3_t point, int damage, int dflags, int mod);
 typedef void (__cdecl *Touch_Item_ptr)(gentity_t *ent, gentity_t *other, trace_t *trace);
@@ -1542,6 +1542,7 @@ extern CheckPrivileges_ptr CheckPrivileges;
 extern ClientConnect_ptr ClientConnect;
 extern ClientSpawn_ptr ClientSpawn;
 extern Pmove_ptr Pmove;
+extern Cmd_CallVote_f_ptr Cmd_CallVote_f;
 extern TossClientItems_ptr TossClientItems;
 extern G_Damage_ptr G_Damage;
 extern Touch_Item_ptr Touch_Item;

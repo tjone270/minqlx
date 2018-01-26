@@ -10,6 +10,7 @@
 #include "common.h"
 #include "quake_common.h"
 #include "simple_hook.h"
+#include "patches.h"
 
 #ifndef NOPY
 #include "pyminqlx.h"
@@ -54,6 +55,7 @@ void __cdecl My_Sys_SetModuleOffset(char* moduleName, void* offset) {
     	SearchVmFunctions();
     	HookVm();
     	InitializeVm();
+    	patch_vm();
     }
 }
 
@@ -314,7 +316,7 @@ void HookVm(void) {
 #if defined(__x86_64__) || defined(_M_X64)
     pint vm_call_table = *(int32_t*)OFFSET_RELP_VM_CALL_TABLE + OFFSET_RELP_VM_CALL_TABLE + 4;
 #elif defined(__i386) || defined(_M_IX86)
-    pint vm_call_table = *(int32_t*)OFFSET_RELP_VM_CALL_TABLE + 0xCAFF4 + (pint)qagame;
+    pint vm_call_table = *(int32_t*)OFFSET_RELP_VM_CALL_TABLE + 0xCEFF4 + (pint)qagame;
 #endif
 
 	G_InitGame = *(G_InitGame_ptr*)(vm_call_table + RELOFFSET_VM_CALL_INITGAME);
@@ -325,12 +327,13 @@ void HookVm(void) {
 #ifndef NOPY
 	*(void**)(vm_call_table + RELOFFSET_VM_CALL_RUNFRAME) = My_G_RunFrame;
 
-	int res, failed = 0;
+	int res, failed = 0, count = 0;
 	res = Hook((void*)ClientConnect, My_ClientConnect, (void*)&ClientConnect);
 	if (res) {
 		DebugPrint("ERROR: Failed to hook ClientConnect: %d\n", res);
 		failed = 1;
 	}
+  count++;
 
     res = Hook((void*)Pmove, My_Pmove, (void*)&Pmove);
     if (res) {
@@ -349,17 +352,24 @@ void HookVm(void) {
         DebugPrint("ERROR: Failed to hook G_StartKamikaze: %d\n", res);
         failed = 1;
     }
+    count++;
 
     res = Hook((void*)ClientSpawn, My_ClientSpawn, (void*)&ClientSpawn);
     if (res) {
         DebugPrint("ERROR: Failed to hook ClientSpawn: %d\n", res);
         failed = 1;
     }
+    count++;
 
 	if (failed) {
 		DebugPrint("Exiting.\n");
 		exit(1);
 	}
+
+    if ( !seek_hook_slot( -count ) ) {
+        DebugPrint("ERROR: Failed to rewind hook slot\nExiting.\n");
+        exit(1);
+    }
 #endif
 }
 
