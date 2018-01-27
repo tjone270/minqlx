@@ -1004,6 +1004,7 @@ static PyObject* PyMinqlx_SetWeapon(PyObject* self, PyObject* args) {
         return NULL;
     }
 
+    g_entities[client_id].s.weapon = weapon;
     g_entities[client_id].client->ps.weapon = weapon;
     Py_RETURN_TRUE;
 }
