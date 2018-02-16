@@ -294,3 +294,27 @@ void KamikazeExplodeDispatcher(int client_id, int is_used_on_demand) {
 
     PyGILState_Release(gstate);
 }
+
+int ClientInactivityKickDispatcher(int client_id) {
+    int ret = 1;
+    if (!client_inactivity_kick_handler)
+        return ret; // No registered handler.
+
+    PyGILState_STATE gstate = PyGILState_Ensure();
+
+    PyObject* result = PyObject_CallFunction(client_inactivity_kick_handler, "i", client_id);
+
+    // Only change to 0 if we got False returned to us.
+    if (result == NULL) {
+        DebugError("PyObject_CallFunction() returned NULL.\n",
+                __FILE__, __LINE__, __func__);
+    } else if (PyBool_Check(result) && result == Py_False) {
+        ret = 0;
+    }
+
+    Py_XDECREF(result);
+
+    PyGILState_Release(gstate);
+
+    return ret;
+}
