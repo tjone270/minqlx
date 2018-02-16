@@ -61,6 +61,7 @@ G_InitGame_ptr G_InitGame;
 CheckPrivileges_ptr CheckPrivileges;
 ClientConnect_ptr ClientConnect;
 ClientSpawn_ptr ClientSpawn;
+ClientThink_real_ptr ClientThink_real;
 G_Damage_ptr G_Damage;
 Touch_Item_ptr Touch_Item;
 LaunchItem_ptr LaunchItem;
@@ -157,6 +158,7 @@ void SearchVmFunctions(void) {
 	VM_SEARCH(CheckPrivileges, PTRN_CHECKPRIVILEGES, MASK_CHECKPRIVILEGES);
 	VM_SEARCH(ClientConnect, PTRN_CLIENTCONNECT, MASK_CLIENTCONNECT);
 	VM_SEARCH(ClientSpawn, PTRN_CLIENTSPAWN, MASK_CLIENTSPAWN);
+	VM_SEARCH(ClientThink_real, PTRN_CLIENTTHINK_REAL, MASK_CLIENTTHINK_REAL);
 	VM_SEARCH(G_Damage, PTRN_G_DAMAGE, MASK_G_DAMAGE);
 	VM_SEARCH(Touch_Item, PTRN_TOUCH_ITEM, MASK_TOUCH_ITEM);
 	VM_SEARCH(LaunchItem, PTRN_LAUNCHITEM, MASK_LAUNCHITEM);
