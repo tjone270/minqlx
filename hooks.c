@@ -219,19 +219,18 @@ void __cdecl My_G_StartKamikaze(gentity_t* ent) {
 
 void __cdecl My_ClientThink_real( gentity_t* ent ) {
     int result;
-
     gclient_t* client = ent->client;
-    if (client->pers.inactivityWarning && level->time > client->pers.inactivityTime) {
+    int msec = client->pers.cmd.serverTime - client->ps.commandTime;
+
+    if (
+      g_inactivity->integer &&
+      client->pers.inactivityTime + msec >= g_inactivity->integer * 1000 &&
+      client->sess.sessionTeam != TEAM_SPECTATOR
+    ) {
         result = ClientInactivityKickDispatcher( client->ps.clientNum );
-        if (result == 0) {
-            // plugin denied player drop
-
-            // if player was moved to spectators, we must deny any other actions in ClientThink for current frame
-            if (client->sess.sessionTeam == TEAM_SPECTATOR)
-                return qfalse;
-
-            return qtrue;
-        }
+        if (result == 0)
+            client->pers.inactivityTime = 0;
+            client->pers.inactivityWarning = qfalse;
     }
 
     ClientThink_real( ent );
