@@ -77,6 +77,7 @@ int bg_numItems;
 
 // Cvars.
 cvar_t* sv_maxclients;
+cvar_t* g_inactivity;
 
 // TODO: Make it output everything to a file too.
 void DebugPrint(const char* fmt, ...) {
@@ -223,6 +224,7 @@ void InitializeVm(void) {
 // Called after the game is initialized.
 void InitializeCvars(void) {
     sv_maxclients = Cvar_FindVar("sv_maxclients");
+    g_inactivity  = Cvar_FindVar("g_inactivity");
     
     cvars_initialized = 1;
 }
