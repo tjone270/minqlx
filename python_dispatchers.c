@@ -296,7 +296,7 @@ void KamikazeExplodeDispatcher(int client_id, int is_used_on_demand) {
 }
 
 void toss_item( gentity_t* ent, PyObject* item ) {
-    if ( item == Py_None ) {
+    if ( ( item == Py_None ) || PyBool_Check( item ) ) {
         return;
 
     } else if ( PyLong_Check( item ) ) {
