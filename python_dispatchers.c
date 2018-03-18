@@ -343,12 +343,10 @@ void PlayerItemsTossDispatcher(int client_id) {
                 __FILE__, __LINE__, __func__);
     }
 
-    // ToDo: if result is array - spawn items, with item id
     if ( PyList_Check(result) ) {
         Py_ssize_t size = PyList_Size(result);
 
         for (Py_ssize_t i=0; i<size; i++) {
-            // ToDo: wat is borrowed reference
             toss_item( &g_entities[client_id], PyList_GetItem( result, i ) );
         }
 
