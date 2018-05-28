@@ -168,6 +168,18 @@ void  __cdecl My_G_RunFrame(int time) {
     FrameDispatcher();
 
     G_RunFrame(time);
+    for(int i=0; i < sv_maxclients->integer; i++) {
+        gentity_t* ent = &g_entities[i];
+
+        if (!ent->client)
+            continue;
+
+        if (ent->client->ps.weaponstate == WEAPON_FIRING && ent->client->ps.weapon == WP_LIGHTNING) {
+            ent->r.svFlags |= SVF_BROADCAST;
+        } else {
+            ent->r.svFlags &= ~SVF_BROADCAST;
+        }
+    }
 }
 
 char* __cdecl My_ClientConnect(int clientNum, qboolean firstTime, qboolean isBot) {
