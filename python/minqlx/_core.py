@@ -313,10 +313,17 @@ class PluginUnloadError(Exception):
     pass
 
 def load_preset_plugins():
-    plugins = minqlx.Plugin.get_cvar("qlx_plugins", set)
-    if "DEFAULT" in plugins:
-        plugins.remove("DEFAULT")
-        plugins.update(DEFAULT_PLUGINS)
+    plugins_temp = []
+    for p in minqlx.Plugin.get_cvar("qlx_plugins", list):
+        if p == "DEFAULT":
+           plugins_temp += list(DEFAULT_PLUGINS)
+        else:
+           plugins_temp.append(p)
+
+    plugins = []
+    for p in plugins_temp:
+        if p not in plugins:
+           plugins.append(p)
 
     plugins_path = os.path.abspath(minqlx.get_cvar("qlx_pluginsPath"))
     plugins_dir = os.path.basename(plugins_path)
