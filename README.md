@@ -169,6 +169,3 @@ the limit again. In other words, your logs will keep the last 30 MB of data, but
 Both when compiling and when using binaries, the core module is in a zip file. If you want to modify
 the code, simply unzip the contents of it in the same directory and then delete the zip file. minqlx will
 continue to function in the same manner, but using the code that is now in the `minqlx` directory.
-
-Donations would also be greatly appreciated. It helps me with motivation, QL server costs, and to fund
-the stupid amount of tea I drink. You can do so with [PayPal](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=mino%40minomino%2eorg&lc=US&item_name=Mino&item_number=minqlbot&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donate_SM%2egif%3aNonHosted) or with Bitcoins to `1MinoB3DxijyXSLgzA6JYGKmM3Jj6Gw2wW`.
