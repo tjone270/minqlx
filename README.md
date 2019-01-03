@@ -57,12 +57,10 @@ wget https://bootstrap.pypa.io/get-pip.py
 sudo python3 get-pip.py
 rm get-pip.py
 sudo apt-get -y install build-essential
-sudo python3 -m easy_install pyzmq hiredis
 sudo python3 -m pip install -r minqlx-plugins/requirements.txt
 ```
 
-**NOTE**: During the pip and easy_install steps, you might get a lot of warnings. You can safely
-ignore them.
+**NOTE**: During the pip step, you might get a lot of warnings. You can safely ignore them.
 
 - Redis should work right off the bat, but you might want to edit the config and make
 it use UNIX sockets instead for the sake of speed. minqlx is configured through cvars,
