@@ -227,6 +227,7 @@ def handle_frame():
 
 _zmq_warning_issued = False
 _first_game = True
+_ad_round_number = 0
 
 def handle_new_game(is_restart):
     # This is called early in the launch process, so it's a good place to initialize
@@ -266,6 +267,8 @@ def handle_set_configstring(index, value):
     False to stop the event.
 
     """
+    global _ad_round_number
+
     try:
         res = minqlx.EVENT_DISPATCHERS["set_configstring"].dispatch(index, value)
         if res is False:
@@ -293,6 +296,7 @@ def handle_set_configstring(index, value):
                 if old_state == "PRE_GAME" and new_state == "IN_PROGRESS":
                     pass
                 elif old_state == "PRE_GAME" and new_state == "COUNT_DOWN":
+                    _ad_round_number = 1
                     minqlx.EVENT_DISPATCHERS["game_countdown"].dispatch()
                 elif old_state == "COUNT_DOWN" and new_state == "IN_PROGRESS":
                     pass
@@ -308,7 +312,21 @@ def handle_set_configstring(index, value):
         elif index == 661:
             cvars = minqlx.parse_variables(value)
             if cvars:
-                round_number = int(cvars["round"])
+                if "turn" in cvars:
+                    # it is A&D
+                    if int(cvars["state"]) == 0:
+                        return
+                    # round cvar appears only on round countdown
+                    # and first round is 0, not 1
+                    try:
+                        round_number = int(cvars["round"]) + 1
+                        _ad_round_number = round_number
+                    except KeyError:
+                        round_number = _ad_round_number
+                else:
+                    # it is CA
+                    round_number = int(cvars["round"])
+
                 if round_number and "time" in cvars:
                     if round_number == 1:  # This is the case when the first countdown starts.
                         minqlx.EVENT_DISPATCHERS["round_countdown"].dispatch(round_number)
