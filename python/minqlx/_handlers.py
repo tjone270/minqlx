@@ -328,10 +328,6 @@ def handle_set_configstring(index, value):
                     round_number = int(cvars["round"])
 
                 if round_number and "time" in cvars:
-                    if round_number == 1:  # This is the case when the first countdown starts.
-                        minqlx.EVENT_DISPATCHERS["round_countdown"].dispatch(round_number)
-                        return
-
                     minqlx.EVENT_DISPATCHERS["round_countdown"].dispatch(round_number)
                     return
                 elif round_number:
