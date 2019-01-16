@@ -319,7 +319,7 @@ def handle_set_configstring(index, value):
                     # round cvar appears only on round countdown
                     # and first round is 0, not 1
                     try:
-                        round_number = int(cvars["round"]) + 1
+                        round_number = int(cvars["round"]) * 2 + 1 + int(cvars["turn"])
                         _ad_round_number = round_number
                     except KeyError:
                         round_number = _ad_round_number
