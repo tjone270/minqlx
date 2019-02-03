@@ -228,6 +228,25 @@ void __cdecl My_G_StartKamikaze(gentity_t* ent) {
     if (client_id != -1)
         KamikazeExplodeDispatcher(client_id, is_used_on_demand);
 }
+
+void __cdecl My_ClientThink_real( gentity_t* ent ) {
+    int result;
+    gclient_t* client = ent->client;
+    int msec = client->pers.cmd.serverTime - client->ps.commandTime;
+
+    if (
+      g_inactivity->integer &&
+      client->pers.inactivityTime + msec >= g_inactivity->integer * 1000 &&
+      client->sess.sessionTeam != TEAM_SPECTATOR
+    ) {
+        result = ClientInactivityKickDispatcher( client->ps.clientNum );
+        if (result == 0)
+            client->pers.inactivityTime = 0;
+            client->pers.inactivityWarning = qfalse;
+    }
+
+    ClientThink_real( ent );
+}
 #endif
 
 // Hook static functions. Can be done before program even runs.
@@ -345,6 +364,13 @@ void HookVm(void) {
     res = Hook((void*)ClientSpawn, My_ClientSpawn, (void*)&ClientSpawn);
     if (res) {
         DebugPrint("ERROR: Failed to hook ClientSpawn: %d\n", res);
+        failed = 1;
+    }
+    count++;
+
+    res = Hook((void*)ClientThink_real, My_ClientThink_real, (void*)&ClientThink_real);
+    if (res) {
+        DebugPrint("ERROR: Failed to hook ClientThink_real: %d\n", res);
         failed = 1;
     }
     count++;

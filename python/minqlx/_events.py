@@ -581,6 +581,13 @@ class KamikazeExplodeDispatcher(EventDispatcher):
     def dispatch(self, player, is_used_on_demand):
         return super().dispatch(player, is_used_on_demand)
 
+class PlayerInactivityKickDispatcher(EventDispatcher):
+    """Event that goes off when inactive player is going be kicked."""
+    name = "player_inactivity_kick"
+
+    def dispatch(self, player):
+        return super().dispatch(player)
+
 
 EVENT_DISPATCHERS = EventDispatcherManager()
 EVENT_DISPATCHERS.add_dispatcher(ConsolePrintDispatcher)
@@ -615,3 +622,4 @@ EVENT_DISPATCHERS.add_dispatcher(NewGameDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(KillDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(DeathDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(UserinfoDispatcher)
+EVENT_DISPATCHERS.add_dispatcher(PlayerInactivityKickDispatcher)
