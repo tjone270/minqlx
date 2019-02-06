@@ -27,6 +27,7 @@ PyObject* client_spawn_handler = NULL;
 PyObject* kamikaze_use_handler = NULL;
 PyObject* kamikaze_explode_handler = NULL;
 PyObject* client_inactivity_kick_handler = NULL;
+PyObject* player_items_toss_handler = NULL;
 
 static PyThreadState* mainstate;
 static int initialized = 0;
@@ -72,7 +73,7 @@ static handler_t handlers[] = {
         {"kamikaze_use",        &kamikaze_use_handler},
         {"kamikaze_explode",    &kamikaze_explode_handler},
         {"player_inactivity_kick", &client_inactivity_kick_handler},
-
+        {"player_items_toss",   &player_items_toss_handler},
 
 		{NULL, NULL}
 };
@@ -121,6 +122,7 @@ static PyStructSequence_Field player_state_fields[] = {
     {"holdable", "The player's holdable item."},
     {"flight", "A struct sequence with flight parameters."},
     {"is_frozen", "Whether the player is frozen(freezetag)."},
+    {"air_control", "Whether the player's air control enabled."},
     {NULL}
 };
 
@@ -762,6 +764,8 @@ static PyObject* PyMinqlx_PlayerState(PyObject* self, PyObject* args) {
 
     PyStructSequence_SetItem(state, 12, PyBool_FromLong(g_entities[client_id].client->ps.pm_type == 4));
 
+    PyStructSequence_SetItem(state, 13, PyBool_FromLong(g_entities[client_id].client->ps.pm_flags & PMF_AIRCONTROL));
+
     return state;
 }
 
@@ -1005,6 +1009,7 @@ static PyObject* PyMinqlx_SetWeapon(PyObject* self, PyObject* args) {
         return NULL;
     }
 
+    g_entities[client_id].s.weapon = weapon;
     g_entities[client_id].client->ps.weapon = weapon;
     Py_RETURN_TRUE;
 }
@@ -1267,6 +1272,119 @@ static PyObject* PyMinqlx_SetScore(PyObject* self, PyObject* args) {
         Py_RETURN_FALSE;
 
     g_entities[client_id].client->ps.persistant[PERS_ROUND_SCORE] = score;
+    Py_RETURN_TRUE;
+}
+
+/*
+* ================================================================
+*                       set_speed_factor
+* ================================================================
+*/
+
+static PyObject* PyMinqlx_SetSpeedFactor(PyObject* self, PyObject* args) {
+    int client_id;
+    float factor;
+    if (!PyArg_ParseTuple(args, "if:set_speed_factor", &client_id, &factor))
+        return NULL;
+    else if (client_id < 0 || client_id >= sv_maxclients->integer) {
+        PyErr_Format(PyExc_ValueError,
+                     "client_id needs to be a number from 0 to %d.",
+                     sv_maxclients->integer);
+        return NULL;
+    }
+    else if (!g_entities[client_id].client)
+        Py_RETURN_FALSE;
+
+    speed_factors[ client_id ] = factor;
+    Py_RETURN_TRUE;
+}
+
+/*
+* ================================================================
+*                       set_armor_type
+* ================================================================
+*/
+
+static PyObject* PyMinqlx_SetArmorType(PyObject* self, PyObject* args) {
+    int client_id, armor_type = -1;
+    PyObject* obj;
+    if (!PyArg_ParseTuple(args, "iO:set_armor_type", &client_id, &obj))
+        return NULL;
+    else if (client_id < 0 || client_id >= sv_maxclients->integer) {
+        PyErr_Format(PyExc_ValueError,
+                     "client_id needs to be a number from 0 to %d.",
+                     sv_maxclients->integer);
+        return NULL;
+    }
+    else if (!g_entities[client_id].client)
+        Py_RETURN_FALSE;
+
+    if ( PyUnicode_Check(obj) ) {
+      char* armor_types[] = {"green", "yellow", "red"};
+      for (int i=0; i<3; i++) {
+          if ( PyUnicode_CompareWithASCIIString(obj, armor_types[i]) == 0 ) {
+              armor_type = i;
+              break;
+          }
+      }
+
+      if ( armor_type == -1) {
+          PyErr_Format(PyExc_ValueError,
+                       "armor_type as string must be equal to green, yellow or red");
+          return NULL;
+      }
+
+    } else if ( PyLong_Check(obj) ) {
+      armor_type = PyLong_AsLong(obj);
+
+      if ( armor_type < 0 || armor_type > 2) {
+          PyErr_Format(PyExc_ValueError,
+                       "armor_type as integer must be equal to 0 (green), 1 (yellow) or 2 (red)");
+          return NULL;
+      }
+
+    } else {
+        PyErr_Format(PyExc_ValueError,
+                     "armor_type is not string");
+        return NULL;
+    }
+
+    g_entities[client_id].client->ps.stats[STAT_ARMORTYPE] = armor_type;
+
+    Py_RETURN_TRUE;
+}
+
+/*
+* ================================================================
+*                         set_air_control
+* ================================================================
+*/
+
+static PyObject* PyMinqlx_SetAirControl(PyObject* self, PyObject* args) {
+    int client_id;
+    PyObject* obj;
+    if (!PyArg_ParseTuple(args, "iO:set_air_control", &client_id, &obj))
+        return NULL;
+    else if (client_id < 0 || client_id >= sv_maxclients->integer) {
+        PyErr_Format(PyExc_ValueError,
+                     "client_id needs to be a number from 0 to %d.",
+                     sv_maxclients->integer);
+        return NULL;
+    }
+    else if (!g_entities[client_id].client)
+        Py_RETURN_FALSE;
+    else if (!PyBool_Check(obj)) {
+        PyErr_Format(PyExc_ValueError,
+                     "second argument needs to be a boolean.");
+        return NULL;
+    }
+
+    if (obj == Py_True) {
+        g_entities[client_id].client->ps.pm_flags |= PMF_AIRCONTROL;
+    } else {
+        g_entities[client_id].client->ps.pm_flags &= ~PMF_AIRCONTROL;
+    }
+
     Py_RETURN_TRUE;
 }
 
@@ -1751,6 +1869,12 @@ static PyMethodDef minqlxMethods[] = {
      "Makes player invulnerable for limited time."},
     {"set_score", PyMinqlx_SetScore, METH_VARARGS,
      "Sets a player's score."},
+    {"set_speed_factor", PyMinqlx_SetSpeedFactor, METH_VARARGS,
+     "Sets a player's speed factor."},
+    {"set_armor_type", PyMinqlx_SetArmorType, METH_VARARGS,
+     "Sets a player's type of armor."},
+    {"set_air_control", PyMinqlx_SetAirControl, METH_VARARGS,
+     "Sets player's air control."},
     {"callvote", PyMinqlx_Callvote, METH_VARARGS,
      "Calls a vote as if started by the server and not a player."},
     {"allow_single_player", PyMinqlx_AllowSinglePlayer, METH_VARARGS,

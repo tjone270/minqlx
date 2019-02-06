@@ -438,11 +438,24 @@ def handle_player_inactivity_kick(client_id):
     :param client_id: The client identifier.
     :type client_id: int
 
-
     """
     try:
         player = minqlx.Player(client_id)
         return minqlx.EVENT_DISPATCHERS["player_inactivity_kick"].dispatch(player)
+    except:
+        minqlx.log_exception()
+        return True
+
+def handle_player_items_toss(client_id):
+    """This will be called client drops items on death or disconect.
+
+    :param client_id: The client identifier.
+    :type client_id: int
+
+    """
+    try:
+        player = minqlx.Player(client_id)
+        return minqlx.EVENT_DISPATCHERS["player_items_toss"].dispatch(player)
     except:
         minqlx.log_exception()
         return True
@@ -526,3 +539,4 @@ def register_handlers():
     minqlx.register_handler("kamikaze_use", handle_kamikaze_use)
     minqlx.register_handler("kamikaze_explode", handle_kamikaze_explode)
     minqlx.register_handler("player_inactivity_kick", handle_player_inactivity_kick)
+    minqlx.register_handler("player_items_toss", handle_player_items_toss)

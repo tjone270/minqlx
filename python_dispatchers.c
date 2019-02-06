@@ -318,3 +318,67 @@ int ClientInactivityKickDispatcher(int client_id) {
 
     return ret;
 }
+
+void toss_item( gentity_t* ent, PyObject* item ) {
+    if ( ( item == Py_None ) || PyBool_Check( item ) ) {
+        return;
+
+    } else if ( PyLong_Check( item ) ) {
+        int item_id = PyLong_AsLong( item );
+
+        if (item_id < 1 || item_id >= bg_numItems ) {
+            DebugPrint("toss_item: invalid item_id: %d\n", item_id);
+            return;
+        }
+
+        Drop_Item(ent, bg_itemlist + item_id, 0);
+
+    } else if ( PyUnicode_Check( item ) ) {
+        char* item_classname = PyUnicode_AsUTF8( item );
+        int item_id = 0;
+
+        for (int i=1; i<bg_numItems; i++) {
+            if ( PyUnicode_CompareWithASCIIString( item, bg_itemlist[i].classname ) == 0 ) {
+                item_id = i;
+                break;
+            }
+        }
+
+        if (item_id) {
+            Drop_Item(ent, bg_itemlist + item_id, 0);
+        } else {
+            DebugPrint("toss_item: invalid item_classname: %s\n", item_classname);
+        }
+
+    }
+}
+
+void PlayerItemsTossDispatcher(int client_id) {
+    if (!player_items_toss_handler)
+        return; // No registered handler.
+
+    PyGILState_STATE gstate = PyGILState_Ensure();
+
+    PyObject* result = PyObject_CallFunction(player_items_toss_handler, "i", client_id);
+
+    // Only change to 0 if we got False returned to us.
+    if (result == NULL) {
+        DebugError("PyObject_CallFunction() returned NULL.\n",
+                __FILE__, __LINE__, __func__);
+    }
+
+    if ( PyList_Check(result) ) {
+        Py_ssize_t size = PyList_Size(result);
+
+        for (Py_ssize_t i=0; i<size; i++) {
+            toss_item( &g_entities[client_id], PyList_GetItem( result, i ) );
+        }
+
+    } else {
+      toss_item( &g_entities[client_id], result );
+    }
+
+    Py_XDECREF(result);
+
+    PyGILState_Release(gstate);
+}

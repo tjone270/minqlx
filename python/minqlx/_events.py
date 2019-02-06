@@ -588,6 +588,18 @@ class PlayerInactivityKickDispatcher(EventDispatcher):
     def dispatch(self, player):
         return super().dispatch(player)
 
+class PlayerItemsTossDispatcher(EventDispatcher):
+    """Event that goes off when player's items are dropeed (on death or disconnects."""
+    name = "player_items_toss"
+
+    def dispatch(self, player):
+        return super().dispatch(player)
+
+    def handle_return(self, handler, value):
+        if isinstance(value, int) or isinstance(value, list) or isinstance(value, str):
+            self.return_value = value
+        else:
+            return super().handle_return(handler, value)
 
 EVENT_DISPATCHERS = EventDispatcherManager()
 EVENT_DISPATCHERS.add_dispatcher(ConsolePrintDispatcher)
@@ -604,6 +616,7 @@ EVENT_DISPATCHERS.add_dispatcher(PlayerDisonnectDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(PlayerSpawnDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(KamikazeUseDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(KamikazeExplodeDispatcher)
+EVENT_DISPATCHERS.add_dispatcher(PlayerItemsTossDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(StatsDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(VoteCalledDispatcher)
 EVENT_DISPATCHERS.add_dispatcher(VoteStartedDispatcher)
