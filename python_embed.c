@@ -2061,6 +2061,22 @@ static PyObject* PyMinqlx_InitModule(void) {
     PyModule_AddIntMacro(module, ITEM_GOLDKEY);
     PyModule_AddIntMacro(module, ITEM_MASTERKEY);
 
+    // Weapons
+    PyModule_AddIntMacro(module, WP_GAUNTLET);
+    PyModule_AddIntMacro(module, WP_MACHINEGUN);
+    PyModule_AddIntMacro(module, WP_SHOTGUN);
+    PyModule_AddIntMacro(module, WP_GRENADE_LAUNCHER);
+    PyModule_AddIntMacro(module, WP_ROCKET_LAUNCHER);
+    PyModule_AddIntMacro(module, WP_LIGHTNING);
+    PyModule_AddIntMacro(module, WP_RAILGUN);
+    PyModule_AddIntMacro(module, WP_PLASMAGUN);
+    PyModule_AddIntMacro(module, WP_BFG);
+    PyModule_AddIntMacro(module, WP_GRAPPLING_HOOK);
+    PyModule_AddIntMacro(module, WP_NAILGUN);
+    PyModule_AddIntMacro(module, WP_PROX_LAUNCHER);
+    PyModule_AddIntMacro(module, WP_CHAINGUN);
+    PyModule_AddIntMacro(module, WP_HMG);
+
     // Initialize struct sequence types.
     PyStructSequence_InitType(&player_info_type, &player_info_desc);
     PyStructSequence_InitType(&player_state_type, &player_state_desc);
