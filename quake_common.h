@@ -551,6 +551,78 @@ typedef enum {
 	EXEC_APPEND			// add to end of the command buffer (normal case)
 } cbufExec_t;
 
+// em92: names are based on Q2 items and Q3's MODELINDEX constants
+#define ITEM_ARMORSHARD   1
+#define ITEM_ARMORCOMBAT  2
+#define ITEM_ARMORBODY    3
+#define ITEM_ARMORJACKET  4
+
+#define ITEM_HEALTHSMALL  5
+#define ITEM_HEALTH       6
+#define ITEM_HEALTHLARGE  7
+#define ITEM_HEALTHMEGA   8
+
+#define ITEM_GAUNTLET     9
+#define ITEM_SHOTGUN      10
+#define ITEM_MACHINEGUN   11
+#define ITEM_GRENADELAUNCHER  12
+#define ITEM_ROCKETLAUNCHER 13
+#define ITEM_LIGHTNING    14
+#define ITEM_RAILGUN      15
+#define ITEM_PLASMAGUN    16
+#define ITEM_BFG10K       17
+#define ITEM_GRAPPLINGHOOK  18
+
+#define ITEM_SHELLS       19
+#define ITEM_BULLETS      20
+#define ITEM_GRENADES     21
+#define ITEM_CELLS        21
+#define ITEM_LIGHTNINGAMMO  23
+#define ITEM_ROCKETS      24
+#define ITEM_SLUGS        25
+#define ITEM_BFGAMMO      26
+
+#define ITEM_TELEPORTER   27
+#define ITEM_MEDKIT       28
+#define ITEM_QUAD         29
+#define ITEM_ENVIRONMENTSUIT  30
+#define ITEM_HASTE        31
+#define ITEM_INVISIBILITY   32
+#define ITEM_REGEN        33
+#define ITEM_FLIGHT       34
+
+#define ITEM_REDFLAG      35
+#define ITEM_BLUEFLAG     36
+
+#define ITEM_KAMIKAZE     37
+#define ITEM_PORTAL       38
+#define ITEM_INVULNERABILITY  39
+
+#define ITEM_NAILS        40
+#define ITEM_MINES        41
+#define ITEM_BELT         42
+
+#define ITEM_SCOUT        43
+#define ITEM_GUARD        44
+#define ITEM_DOUBLER      45
+#define ITEM_AMMOREGEN    46
+
+#define ITEM_NEUTRALFLAG  47
+#define ITEM_REDCUBE      48
+#define ITEM_BLUECUBE     49
+
+#define ITEM_NAILGUN      50
+#define ITEM_PROXLAUNCHER 51
+#define ITEM_CHAINGUN     52
+
+#define ITEM_SPAWNARMOR   53
+#define ITEM_HMG          54
+#define ITEM_HEAVYBULLETS 55
+#define ITEM_AMMOPACK     56
+#define ITEM_SILVERKEY    57
+#define ITEM_GOLDKEY      58
+#define ITEM_MASTERKEY    59
+
 // Mino: Quite different from Q3. Not sure on everything.
 typedef struct cvar_s {
 	char		*name;
