@@ -1,3 +1,4 @@
+import os
 import sys
 
 from subprocess import check_output
@@ -9,7 +10,9 @@ if __name__ == "__main__":
     version = check_output(["git", "describe", "--long", "--tags", "--dirty", "--always"]).decode().strip()
     branch = check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"]).decode().strip()
 
-    if len(sys.argv) < 2:
+    if os.environ.get("MINQLX_VERSION"):
+        print(os.environ.get("MINQLX_VERSION"))
+    elif len(sys.argv) < 2:
         print("{}-{}".format(version, branch))
     elif sys.argv[1] == "-d":
         print("{}_debug-{}".format(version, branch))
