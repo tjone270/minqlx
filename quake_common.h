@@ -1544,6 +1544,7 @@ extern int bg_numItems;
 // Cvars.
 extern cvar_t* sv_maxclients;
 extern cvar_t* g_inactivity;
+extern cvar_t* g_inactivitywarning;
 
 // Internal QL function pointer types.
 typedef void (__cdecl *Com_Printf_ptr)(char* fmt, ...);
