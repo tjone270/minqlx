@@ -319,6 +319,30 @@ int ClientInactivityKickDispatcher(int client_id) {
     return ret;
 }
 
+int ClientInactivityKickWarningDispatcher(int client_id) {
+    int ret = 1;
+    if (!client_inactivity_kick_warning_handler)
+        return ret; // No registered handler.
+
+    PyGILState_STATE gstate = PyGILState_Ensure();
+
+    PyObject* result = PyObject_CallFunction(client_inactivity_kick_warning_handler, "i", client_id);
+
+    // Only change to 0 if we got False returned to us.
+    if (result == NULL) {
+        DebugError("PyObject_CallFunction() returned NULL.\n",
+                __FILE__, __LINE__, __func__);
+    } else if (PyBool_Check(result) && result == Py_False) {
+        ret = 0;
+    }
+
+    Py_XDECREF(result);
+
+    PyGILState_Release(gstate);
+
+    return ret;
+}
+
 void toss_item( gentity_t* ent, PyObject* item ) {
     if ( ( item == Py_None ) || PyBool_Check( item ) ) {
         return;
