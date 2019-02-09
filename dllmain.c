@@ -80,6 +80,7 @@ int bg_numItems;
 // Cvars.
 cvar_t* sv_maxclients;
 cvar_t* g_inactivity;
+cvar_t* g_inactivitywarning;
 
 // TODO: Make it output everything to a file too.
 void DebugPrint(const char* fmt, ...) {
@@ -229,6 +230,7 @@ void InitializeVm(void) {
 void InitializeCvars(void) {
     sv_maxclients = Cvar_FindVar("sv_maxclients");
     g_inactivity  = Cvar_FindVar("g_inactivity");
+    g_inactivitywarning = Cvar_FindVar("g_inactivityWarning");
     
     cvars_initialized = 1;
 }

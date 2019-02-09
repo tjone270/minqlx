@@ -27,6 +27,7 @@ PyObject* client_spawn_handler = NULL;
 PyObject* kamikaze_use_handler = NULL;
 PyObject* kamikaze_explode_handler = NULL;
 PyObject* client_inactivity_kick_handler = NULL;
+PyObject* client_inactivity_kick_warning_handler = NULL;
 PyObject* player_items_toss_handler = NULL;
 
 static PyThreadState* mainstate;
@@ -73,6 +74,7 @@ static handler_t handlers[] = {
         {"kamikaze_use",        &kamikaze_use_handler},
         {"kamikaze_explode",    &kamikaze_explode_handler},
         {"player_inactivity_kick", &client_inactivity_kick_handler},
+        {"player_inactivity_kick_warning", &client_inactivity_kick_warning_handler},
         {"player_items_toss",   &player_items_toss_handler},
 
 		{NULL, NULL}
