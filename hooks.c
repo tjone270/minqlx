@@ -242,9 +242,10 @@ void __cdecl My_ClientThink_real( gentity_t* ent ) {
       client->sess.sessionTeam != TEAM_SPECTATOR
     ) {
         result = ClientInactivityKickDispatcher( client->ps.clientNum );
-        if (result == 0)
+        if (result == 0) {
             client->pers.inactivityTime = 0;
             client->pers.inactivityWarning = qfalse;
+	}
     }
 
     ClientThink_real( ent );
