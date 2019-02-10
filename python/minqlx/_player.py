@@ -613,6 +613,9 @@ class Player():
     def slay_with_mod(self, mod):
         return minqlx.slay_with_mod(self.id, mod)
 
+    def reset_inactivity_timer(self):
+        return minqlx.reset_inactivity_timer(self.id)
+
     @classmethod
     def all_players(cls):
         return [cls(i, info=info) for i, info in enumerate(minqlx.players_info()) if info]

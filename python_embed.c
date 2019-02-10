@@ -1801,6 +1801,31 @@ static PyObject* PyMinqlx_ForceWeaponRespawnTime(PyObject* self, PyObject* args)
 }
 
 /*
+* ================================================================
+*                      reset_inactivity_timer
+* ================================================================
+*/
+
+static PyObject* PyMinqlx_ResetInactivityTimer(PyObject* self, PyObject* args) {
+    int client_id;
+
+    if (!PyArg_ParseTuple(args, "i:reset_inactivity_timer", &client_id))
+        return NULL;
+
+    if (client_id < 0 || client_id >= sv_maxclients->integer) {
+        PyErr_Format(PyExc_ValueError,
+                     "client_id needs to be a number from 0 to %d.",
+                     sv_maxclients->integer);
+        return NULL;
+    }
+
+    level->clients[client_id].pers.inactivityTime = 0;
+    level->clients[client_id].pers.inactivityWarning = qfalse;
+
+    Py_RETURN_NONE;
+}
+
+/*
  * ================================================================
  *             Module definition and initialization
  * ================================================================
@@ -1899,6 +1924,8 @@ static PyMethodDef minqlxMethods[] = {
      "Prints all items and entity numbers to server console."},
     {"force_weapon_respawn_time", PyMinqlx_ForceWeaponRespawnTime, METH_VARARGS,
      "Force all weapons to have a specified respawn time, overriding custom map respawn times set for them."},
+    {"reset_inactivity_timer", PyMinqlx_ResetInactivityTimer, METH_VARARGS,
+     "Resets inactivity timer for specified client id"},
     {NULL, NULL, 0, NULL}
 };
 
