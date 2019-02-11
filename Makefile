@@ -25,7 +25,7 @@ PYFILES = $(wildcard python/minqlx/*.py)
 
 .PHONY: depend clean
 
-all: CFLAGS += $(shell python3-config --cflags)
+all: CFLAGS += $(shell python3-config --includes)
 all: VERSION := MINQLX_VERSION=\"$(shell python3 python/version.py)\"
 all: $(OUTPUT) $(PYMODULE)
 	@echo Done!
