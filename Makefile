@@ -3,10 +3,12 @@ ifeq ($(LBITS),64)
 	CFLAGS += -m64 -fPIC
 	SOURCES = HDE/hde64.c
 	SOURCES_NOPY = HDE/hde64.c
+	SUFFIX = .x64
 else
 	CFLAGS += -m32 -fPIC
 	SOURCES = HDE/hde32.c
 	SOURCES_NOPY =  HDE/hde32.c
+	SUFFIX = .x86
 endif
 
 BINDIR = bin
@@ -18,7 +20,7 @@ SOURCES_NOPY += dllmain.c commands.c simple_hook.c hooks.c misc.c maps_parser.c 
 SOURCES += dllmain.c commands.c python_embed.c python_dispatchers.c simple_hook.c hooks.c misc.c maps_parser.c trampoline.c patches.c
 OBJS = $(SOURCES:.c=.o)
 OBJS_NOPY = $(SOURCES_NOPY:.c=.o)
-OUTPUT = $(BINDIR)/minqlx.so
+OUTPUT = $(BINDIR)/minqlx$(SUFFIX).so
 OUTPUT_NOPY = $(BINDIR)/minqlx_nopy.so
 PYMODULE = $(BINDIR)/minqlx.zip
 PYFILES = $(wildcard python/minqlx/*.py)
