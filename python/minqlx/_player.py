@@ -570,6 +570,14 @@ class Player():
         minqlx.set_speed_ratio(self.id, value)
 
     @property
+    def armor_type(self):
+        return self.state.armor_type
+
+    @armor_type.setter
+    def armor_type(self, value):
+        minqlx.set_armor_type(self.id, value)
+
+    @property
     def channel(self):
         return minqlx.TellChannel(self)
 

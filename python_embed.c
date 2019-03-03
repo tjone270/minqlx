@@ -126,6 +126,7 @@ static PyStructSequence_Field player_state_fields[] = {
     {"is_frozen", "Whether the player is frozen(freezetag)."},
     {"air_control", "Whether the player's air control enabled."},
     {"speed_ratio", "The player's speed ratio."},
+    {"armor_type", "The player's armor type"},
     {NULL}
 };
 
@@ -770,6 +771,8 @@ static PyObject* PyMinqlx_PlayerState(PyObject* self, PyObject* args) {
     PyStructSequence_SetItem(state, 13, PyBool_FromLong(g_entities[client_id].client->ps.pm_flags & PMF_AIRCONTROL));
 
     PyStructSequence_SetItem(state, 14, PyFloat_FromDouble(speed_ratios[client_id]));
+
+    PyStructSequence_SetItem(state, 15, PyLong_FromLong(g_entities[client_id].client->ps.stats[STAT_ARMORTYPE]));
 
     return state;
 }
