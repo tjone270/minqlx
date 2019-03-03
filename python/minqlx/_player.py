@@ -562,6 +562,14 @@ class Player():
         minqlx.set_air_control(self.id, value)
 
     @property
+    def speed_ratio(self):
+        return self.state.speed_ratio
+
+    @speed_ratio.setter
+    def speed_ratio(self, value):
+        minqlx.set_speed_ratio(self.id, value)
+
+    @property
     def channel(self):
         return minqlx.TellChannel(self)
 

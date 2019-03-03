@@ -125,6 +125,7 @@ static PyStructSequence_Field player_state_fields[] = {
     {"flight", "A struct sequence with flight parameters."},
     {"is_frozen", "Whether the player is frozen(freezetag)."},
     {"air_control", "Whether the player's air control enabled."},
+    {"speed_ratio", "The player's speed ratio."},
     {NULL}
 };
 
@@ -767,6 +768,8 @@ static PyObject* PyMinqlx_PlayerState(PyObject* self, PyObject* args) {
     PyStructSequence_SetItem(state, 12, PyBool_FromLong(g_entities[client_id].client->ps.pm_type == 4));
 
     PyStructSequence_SetItem(state, 13, PyBool_FromLong(g_entities[client_id].client->ps.pm_flags & PMF_AIRCONTROL));
+
+    PyStructSequence_SetItem(state, 14, PyFloat_FromDouble(speed_ratios[client_id]));
 
     return state;
 }
