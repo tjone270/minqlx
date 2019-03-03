@@ -407,12 +407,15 @@ void HookVm(void) {
     }
     count++;
 
+#if defined(__x86_64__) || defined(_M_X64)
+    // em92: 32-bit version segfaults in My_ClientThink_real
     res = Hook((void*)ClientThink_real, My_ClientThink_real, (void*)&ClientThink_real);
     if (res) {
         DebugPrint("ERROR: Failed to hook ClientThink_real: %d\n", res);
         failed = 1;
     }
     count++;
+#endif
 
 	if (failed) {
 		DebugPrint("Exiting.\n");
