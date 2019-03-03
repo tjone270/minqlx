@@ -194,7 +194,7 @@ char* __cdecl My_ClientConnect(int clientNum, qboolean firstTime, qboolean isBot
 }
 
 void __cdecl My_ClientSpawn(gentity_t* ent) {
-    speed_factors[ent - g_entities] = 1;
+    speed_ratios[ent - g_entities] = 1;
 
     ClientSpawn(ent);
     
@@ -266,7 +266,7 @@ void __cdecl My_ClientThink_real( gentity_t* ent ) {
 }
 
 void __cdecl My_Pmove(pmove_t* pm) {
-    pm->ps->speed *= speed_factors[ pm->ps->clientNum ];
+    pm->ps->speed *= speed_ratios[ pm->ps->clientNum ];
     Pmove(pm);
 }
 

@@ -1279,14 +1279,14 @@ static PyObject* PyMinqlx_SetScore(PyObject* self, PyObject* args) {
 
 /*
 * ================================================================
-*                       set_speed_factor
+*                       set_speed_ratio
 * ================================================================
 */
 
-static PyObject* PyMinqlx_SetSpeedFactor(PyObject* self, PyObject* args) {
+static PyObject* PyMinqlx_SetSpeedRatio(PyObject* self, PyObject* args) {
     int client_id;
     float factor;
-    if (!PyArg_ParseTuple(args, "if:set_speed_factor", &client_id, &factor))
+    if (!PyArg_ParseTuple(args, "if:set_speed_ratio", &client_id, &factor))
         return NULL;
     else if (client_id < 0 || client_id >= sv_maxclients->integer) {
         PyErr_Format(PyExc_ValueError,
@@ -1297,7 +1297,7 @@ static PyObject* PyMinqlx_SetSpeedFactor(PyObject* self, PyObject* args) {
     else if (!g_entities[client_id].client)
         Py_RETURN_FALSE;
 
-    speed_factors[ client_id ] = factor;
+    speed_ratios[ client_id ] = factor;
     Py_RETURN_TRUE;
 }
 
@@ -1896,8 +1896,8 @@ static PyMethodDef minqlxMethods[] = {
      "Makes player invulnerable for limited time."},
     {"set_score", PyMinqlx_SetScore, METH_VARARGS,
      "Sets a player's score."},
-    {"set_speed_factor", PyMinqlx_SetSpeedFactor, METH_VARARGS,
-     "Sets a player's speed factor."},
+    {"set_speed_ratio", PyMinqlx_SetSpeedRatio, METH_VARARGS,
+     "Sets a player's speed ratio."},
     {"set_armor_type", PyMinqlx_SetArmorType, METH_VARARGS,
      "Sets a player's type of armor."},
     {"set_air_control", PyMinqlx_SetAirControl, METH_VARARGS,
