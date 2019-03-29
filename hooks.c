@@ -168,6 +168,9 @@ void  __cdecl My_G_RunFrame(int time) {
     FrameDispatcher();
 
     G_RunFrame(time);
+
+    if (level->restarted) return;
+
     for(int i=0; i < sv_maxclients->integer; i++) {
         gentity_t* ent = &g_entities[i];
 
@@ -237,6 +240,7 @@ void __cdecl My_ClientThink_real( gentity_t* ent ) {
     int msec = client->pers.cmd.serverTime - client->ps.commandTime;
 
     if (
+        client->pers.connected == CON_CONNECTED &&
         g_inactivity->integer &&
         client->sess.sessionTeam != TEAM_SPECTATOR
     ) {
