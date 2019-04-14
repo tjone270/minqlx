@@ -10,6 +10,7 @@
 #include "common.h"
 #include "quake_common.h"
 #include "simple_hook.h"
+#include "patches.h"
 
 #ifndef NOPY
 #include "pyminqlx.h"
@@ -54,6 +55,7 @@ void __cdecl My_Sys_SetModuleOffset(char* moduleName, void* offset) {
     	SearchVmFunctions();
     	HookVm();
     	InitializeVm();
+    	patch_vm();
     }
 }
 
@@ -302,7 +304,7 @@ void HookVm(void) {
 #if defined(__x86_64__) || defined(_M_X64)
     pint vm_call_table = *(int32_t*)OFFSET_RELP_VM_CALL_TABLE + OFFSET_RELP_VM_CALL_TABLE + 4;
 #elif defined(__i386) || defined(_M_IX86)
-    pint vm_call_table = *(int32_t*)OFFSET_RELP_VM_CALL_TABLE + 0xCAFF4 + (pint)qagame;
+    pint vm_call_table = *(int32_t*)OFFSET_RELP_VM_CALL_TABLE + 0xCEFF4 + (pint)qagame;
 #endif
 
 	G_InitGame = *(G_InitGame_ptr*)(vm_call_table + RELOFFSET_VM_CALL_INITGAME);
