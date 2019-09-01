@@ -278,7 +278,7 @@ class Plugin():
                     return p
         else:
             cid = cls.client_id(name, players)
-            if cid:
+            if cid is not None:
                 for p in players:
                     if p.id == cid:
                         return p
