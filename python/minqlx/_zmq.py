@@ -99,7 +99,11 @@ class StatsListener():
                         minqlx.EVENT_DISPATCHERS["kill"].dispatch(player, player_killer, stats["DATA"])
                 elif stats["TYPE"] == "PLAYER_SWITCHTEAM":
                     # No idea why they named it "KILLER" here, but whatever.
-                    player = minqlx.Plugin.player(int(stats["DATA"]["KILLER"]["STEAM_ID"]))
+                    sid = int(stats["DATA"]["KILLER"]["STEAM_ID"])
+                    if sid:
+                        player = minqlx.Plugin.player(sid)
+                    else: # It's a bot. Forced to use name as an identifier.
+                        player = minqlx.Plugin.player(stats["DATA"]["KILLER"]["NAME"])
                     old_team = stats["DATA"]["KILLER"]["OLD_TEAM"].lower()
                     new_team = stats["DATA"]["KILLER"]["TEAM"].lower()
                     if old_team != new_team:
