@@ -85,6 +85,10 @@ class Game():
         return minqlx.GAMETYPES_SHORT[int(self["g_gametype"])]
 
     @property
+    def is_team_game(self):
+        return 2 < int(self["g_gametype"]) < 12
+
+    @property
     def map(self):
         """The short name of the map. Ex.: ``longestyard``."""
         return self["mapname"]
