@@ -86,7 +86,7 @@ class Game():
 
     @property
     def is_team_game(self):
-        return 2 < int(self["g_gametype"] < 12
+        return 2 < int(self["g_gametype"]) < 12
 
     @property
     def map(self):
